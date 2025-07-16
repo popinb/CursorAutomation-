@@ -1,0 +1,11 @@
+[
+    {
+        "profile_id": "Profile1",
+        "down_payment": 30000,
+        "credit_score": "good",
+        "annual_income": 100000,
+        "monthly_debts": 200,
+        "preferred_monthly_payment": 1000,
+        "comfortable_max_monthly_payment": 3967
+    }
+]
