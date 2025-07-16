@@ -4,13 +4,14 @@ This project converts a Custom GPT–based "LLM as a Judge" evaluator into a Pyt
 
 ## Overview
 
-The Zillow Judge Evaluator replicates the behavior of a Custom GPT that evaluates LLM responses about home-buying and financial guidance. It uses two knowledge sources:
+The Zillow Judge Evaluator replicates the behavior of a Custom GPT that evaluates LLM responses about home-buying and financial guidance. It uses three knowledge sources:
 1. **Golden Responses** (`godenresponsealpha.docx`) - Reference answers for various buyability questions
 2. **Buyability Profiles** (`buyabilityprofile.rtf`) - User financial profiles for personalization
+3. **Fair Housing Guide** - Comprehensive guidelines for equal housing opportunity and compliance
 
 ## Evaluation Metrics
 
-The evaluator assesses responses across 10 metrics:
+The evaluator assesses responses across 12 metrics:
 
 1. **Personalization Accuracy** (Accurate/Inaccurate) - Matches user-specific figures
 2. **Context-Based Personalization** (1-5) - Percentage of relevant customizations included
@@ -18,11 +19,12 @@ The evaluator assesses responses across 10 metrics:
 4. **Assumption Listing** (True/False) - Explicit statement of assumptions
 5. **Assumption Trust** (1-5) - Transparency about limitations and gaps
 6. **Calculation Accuracy** (True/False) - Mathematical correctness verification
-7. **Faithfulness to Ground Truth** (True/False) - Alignment with Zillow guidance
-8. **Overall Accuracy** (True/False) - Holistic correctness assessment
-9. **Structured Presentation** (1-5) - Quality of formatting and organization
-10. **Coherence** (True/False) - Logical consistency and flow
-11. **Completeness** (1-5) - Coverage of expected question elements
+7. **Faithfulness to Ground Truth** (True/False) - Alignment with all knowledge sources
+8. **Fair Housing Compliance** (True/False) - Adherence to fair housing laws
+9. **Overall Accuracy** (True/False) - Holistic correctness assessment
+10. **Structured Presentation** (1-5) - Quality of formatting and organization
+11. **Coherence** (True/False) - Logical consistency and flow
+12. **Completeness** (1-5) - Coverage of expected question elements
 
 ## File Structure
 
@@ -32,7 +34,8 @@ The evaluator assesses responses across 10 metrics:
 ├── oai_evals_zillow_judge.py     # OpenAI Evals compatible interface
 ├── assets/
 │   ├── golden_responses.json     # Processed ground truth responses
-│   └── buyability_profiles.json  # Processed user profiles
+│   ├── buyability_profiles.json  # Processed user profiles
+│   └── fair_housing_guide.json   # Processed fair housing guidelines
 └── README.md                     # This documentation
 ```
 
@@ -192,6 +195,7 @@ The evaluator returns a markdown table with scores and detailed justifications:
 - **Mathematical Accuracy**: Verifies DTI calculations and financial math
 - **Content Quality**: Assesses structure, coherence, and completeness
 - **Practical Value**: Checks for actionable guidance and transparency
+- **Legal Compliance**: Ensures fair housing law adherence and non-discriminatory language
 
 ### Flexible Integration
 - Standalone Python classes

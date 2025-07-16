@@ -27,6 +27,7 @@ class ZillowJudgeEvaluator:
         # Load ground truth data
         self.golden_responses = self._load_json(script_dir / "assets" / "golden_responses.json")
         self.buyability_profiles = self._load_json(script_dir / "assets" / "buyability_profiles.json")
+        self.fair_housing_guide = self._load_json(script_dir / "assets" / "fair_housing_guide.json")
         
     def _load_json(self, filepath: Path) -> Dict[str, Any]:
         """Load JSON data from file."""
@@ -62,6 +63,7 @@ class ZillowJudgeEvaluator:
         results["assumption_trust"] = self._evaluate_assumption_trust(candidate_answer, scratchpad)
         results["calculation_accuracy"] = self._evaluate_calculation_accuracy(candidate_answer, user_profile, scratchpad)
         results["faithfulness_to_ground_truth"] = self._evaluate_faithfulness_to_ground_truth(candidate_answer, scratchpad)
+        results["fair_housing_compliance"] = self._evaluate_fair_housing_compliance(candidate_answer, scratchpad)
         results["overall_accuracy"] = self._evaluate_overall_accuracy(candidate_answer, question, scratchpad)
         results["structured_presentation"] = self._evaluate_structured_presentation(candidate_answer, scratchpad)
         results["coherence"] = self._evaluate_coherence(candidate_answer, scratchpad)
@@ -487,25 +489,27 @@ class ZillowJudgeEvaluator:
     
     def _evaluate_faithfulness_to_ground_truth(self, answer: str, scratchpad: str) -> Dict[str, str]:
         """Evaluate faithfulness to ground truth (True/False)."""
-        # Check alignment with golden responses and Zillow guidance
+        # Check alignment with golden responses, Zillow guidance, and fair housing compliance
         answer_lower = answer.lower()
         
-        # Key ground truth elements from the golden responses
+        # Key ground truth elements from all three knowledge sources
         ground_truth_elements = [
             "36% dti recommendation",
-            "3% minimum down payment",
+            "3% minimum down payment", 
             "property taxes included in payment",
             "homeowners insurance required",
             "pmi for down payments below 20%",
             "interest rate based on credit score",
             "zillow tools and calculations",
-            "personalized estimates"
+            "personalized estimates",
+            "fair housing compliance",
+            "equal housing opportunity"
         ]
         
         aligned_elements = []
         contradictions = []
         
-        # Check for alignment with key concepts
+        # Check for alignment with buyability/mortgage concepts
         if any(term in answer_lower for term in ["36%", "thirty-six percent"]) and "dti" in answer_lower:
             aligned_elements.append("36% DTI guideline")
         
@@ -521,30 +525,119 @@ class ZillowJudgeEvaluator:
         if "credit score" in answer_lower and "rate" in answer_lower:
             aligned_elements.append("credit-rate relationship")
         
-        # Check for potential contradictions (simplified check)
-        if "zillow" not in answer_lower and "personalized" in answer_lower:
-            # Could be using different source - not necessarily wrong
-            pass
+        # Check for fair housing compliance
+        fair_housing_terms = ["fair housing", "equal housing", "discrimination", "protected class", 
+                             "reasonable accommodation", "reasonable modification", "familial status"]
+        if any(term in answer_lower for term in fair_housing_terms):
+            aligned_elements.append("fair housing awareness")
+        
+        # Check for discriminatory language or practices
+        discriminatory_patterns = [
+            r'\b(?:no|avoid|prefer).{0,20}(?:children|kids|families)',
+            r'\b(?:perfect|ideal).{0,20}(?:for|young|senior|couple)',
+            r'\b(?:no|avoid).{0,20}(?:section\s*8|voucher|assistance)',
+            r'\bsteer.{0,20}(?:to|away|from)',
+            r'\b(?:different|special).{0,20}(?:rules|requirements).{0,20}(?:for|based on)'
+        ]
+        
+        for pattern in discriminatory_patterns:
+            if re.search(pattern, answer_lower):
+                contradictions.append("Potential discriminatory language or steering")
         
         # Look for obviously wrong information
         wrong_patterns = [
             r'0%.*down.*required',  # Wrong - VA loans exist but not universal
             r'(?:50|60|70)%.*dti.*recommended',  # Wrong DTI recommendations
-            r'no.*insurance.*required'  # Wrong about insurance
+            r'no.*insurance.*required',  # Wrong about insurance
+            r'refuse.*rent.*to.*families',  # Fair housing violation
+            r'charge.*extra.*for.*children'  # Fair housing violation
         ]
         
         for pattern in wrong_patterns:
             if re.search(pattern, answer_lower):
-                contradictions.append(f"Potential error: {pattern}")
+                contradictions.append(f"Potential ground truth violation: {pattern}")
         
         if contradictions:
             faithfulness = "False"
-            justification = f"The response contains statements that contradict established ground truth information. Identified contradictions: {'; '.join(contradictions)}. Faithfulness to ground truth is essential for providing accurate, reliable guidance that aligns with Zillow's tools and established mortgage industry standards. Contradictions undermine user trust and could provide misleading information about home-buying processes and requirements."
+            justification = f"The response contains statements that contradict established ground truth information from knowledge sources. Identified contradictions: {'; '.join(contradictions)}. Faithfulness to ground truth is essential for providing accurate, reliable guidance that aligns with Zillow's tools, established mortgage industry standards, and fair housing laws. Contradictions undermine user trust and could provide misleading or legally problematic information about home-buying processes and requirements."
         else:
             faithfulness = "True"
-            justification = f"The response aligns well with ground truth information from Zillow tools and established mortgage guidance. Verified alignments include: {', '.join(aligned_elements) if aligned_elements else 'general consistency with industry standards'}. Faithfulness evaluation confirms that statements align with established mortgage practices, Zillow's calculation methods, and industry-standard recommendations. This alignment ensures users receive accurate, trustworthy information consistent with reliable sources."
+            justification = f"The response aligns well with ground truth information from Zillow tools, established mortgage guidance, and fair housing principles. Verified alignments include: {', '.join(aligned_elements) if aligned_elements else 'general consistency with industry standards'}. Faithfulness evaluation confirms that statements align with established mortgage practices, Zillow's calculation methods, fair housing compliance, and industry-standard recommendations. This alignment ensures users receive accurate, trustworthy, and legally compliant information."
         
         return {"score": faithfulness, "justification": justification}
+    
+    def _evaluate_fair_housing_compliance(self, answer: str, scratchpad: str) -> Dict[str, str]:
+        """Evaluate fair housing compliance (True/False)."""
+        answer_lower = answer.lower()
+        
+        compliance_issues = []
+        compliance_strengths = []
+        
+        # Check for discriminatory language patterns
+        discriminatory_patterns = [
+            (r'\b(?:no|avoid|prefer).{0,30}(?:children|kids|families)', "Familial status discrimination"),
+            (r'\b(?:perfect|ideal).{0,30}(?:for|young|senior|couple)', "Age/familial status steering"),
+            (r'\b(?:no|avoid).{0,30}(?:section\s*8|voucher|assistance)', "Source of income discrimination"),
+            (r'\bsteer.{0,30}(?:to|away|from)', "Unlawful steering"),
+            (r'\b(?:different|special).{0,30}(?:rules|requirements).{0,30}(?:for|families|children)', "Inconsistent qualification criteria"),
+            (r'\bcharge.{0,20}extra.{0,20}(?:for|children|families)', "Discriminatory fees"),
+            (r'\brefuse.{0,20}rent.{0,20}(?:to|families|children)', "Refusal to rent based on protected class"),
+            (r'\b(?:must|should|need).{0,20}(?:speak|understand).{0,20}english', "National origin discrimination"),
+            (r'\bno.{0,20}(?:pets|animals).{0,20}(?:allowed|permitted)', "Potential ESA/service animal violation")
+        ]
+        
+        for pattern, violation_type in discriminatory_patterns:
+            if re.search(pattern, answer_lower):
+                compliance_issues.append(violation_type)
+        
+        # Check for positive fair housing practices
+        positive_indicators = [
+            (r'\bequal\s+(?:housing\s+)?opportunity', "Equal housing opportunity awareness"),
+            (r'\bfair\s+housing', "Fair housing awareness"),
+            (r'\breasonable\s+(?:accommodation|modification)', "Disability accommodation awareness"),
+            (r'\bassistance\s+animal|emotional\s+support\s+animal|service\s+animal', "ESA/service animal awareness"),
+            (r'\bprotected\s+class', "Protected class awareness"),
+            (r'\bconsult.{0,20}(?:attorney|lawyer|legal)', "Legal consultation recommendation"),
+            (r'\bcomply.{0,20}(?:with|fair\s+housing|laws)', "Compliance awareness")
+        ]
+        
+        for pattern, strength_type in positive_indicators:
+            if re.search(pattern, answer_lower):
+                compliance_strengths.append(strength_type)
+        
+        # Check for occupancy-related issues
+        occupancy_patterns = [
+            (r'\bno.{0,20}(?:children|kids).{0,20}(?:allowed|permitted)', "Children exclusion"),
+            (r'\b(?:adults\s+only|no\s+minors)', "Age discrimination"),
+            (r'\bmaximum.{0,20}(?:2|two).{0,20}(?:people|persons).{0,20}(?:per|bedroom)', "Potentially discriminatory occupancy"),
+            (r'\b(?:one|1).{0,20}child.{0,20}(?:maximum|limit|only)', "Child limitation")
+        ]
+        
+        for pattern, violation_type in occupancy_patterns:
+            if re.search(pattern, answer_lower):
+                compliance_issues.append(violation_type)
+        
+        # Check for advertising/marketing compliance
+        if any(term in answer_lower for term in ["marketing", "advertising", "listing", "description"]):
+            marketing_violations = [
+                (r'\b(?:great|perfect|ideal).{0,30}(?:for|young|senior|professional|couple)', "Discriminatory advertising"),
+                (r'\b(?:family|adult|mature|quiet).{0,20}(?:oriented|friendly|community)', "Potentially discriminatory marketing"),
+                (r'\b(?:no|avoid).{0,20}(?:college|student|youth)', "Age discrimination in advertising")
+            ]
+            
+            for pattern, violation_type in marketing_violations:
+                if re.search(pattern, answer_lower):
+                    compliance_issues.append(violation_type)
+        
+        if compliance_issues:
+            compliance = "False"
+            justification = f"The response contains potential fair housing compliance violations. Identified issues: {'; '.join(set(compliance_issues))}. Fair housing compliance is legally mandated and essential for protecting equal housing opportunities. Violations can result in serious legal consequences including lawsuits, fines, and regulatory action. All housing-related communications must comply with federal, state, and local fair housing laws to ensure equal treatment regardless of protected class status."
+        else:
+            compliance = "True"
+            compliance_note = f" Positive compliance indicators: {', '.join(set(compliance_strengths))}" if compliance_strengths else ""
+            justification = f"The response demonstrates fair housing compliance with no detected discriminatory language or practices.{compliance_note} Fair housing compliance evaluation ensures that communications align with federal Fair Housing Act requirements and related laws protecting against discrimination based on race, color, religion, sex, national origin, familial status, and disability. Compliant responses promote equal housing opportunity and protect against legal liability."
+        
+        return {"score": compliance, "justification": justification}
     
     def _evaluate_overall_accuracy(self, answer: str, question: str, scratchpad: str) -> Dict[str, str]:
         """Evaluate overall accuracy (True/False)."""
@@ -804,6 +897,7 @@ class ZillowJudgeEvaluator:
             "assumption_trust": "Assumption Trust",
             "calculation_accuracy": "Calculation Accuracy", 
             "faithfulness_to_ground_truth": "Faithfulness to Ground Truth",
+            "fair_housing_compliance": "Fair Housing Compliance",
             "overall_accuracy": "Overall Accuracy",
             "structured_presentation": "Structured Presentation",
             "coherence": "Coherence",

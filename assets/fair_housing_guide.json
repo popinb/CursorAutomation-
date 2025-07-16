@@ -1,0 +1,95 @@
+{
+    "title": "Fair Housing and Rental Discrimination Guide",
+    "purpose": "Guidelines for equal housing opportunity and compliance with fair housing laws",
+    "key_concepts": {
+        "equal_housing_opportunity": "The notion that all persons should be granted the same chances when it comes to choosing housing",
+        "rental_discrimination": "When a landlord or property manager treats an applicant differently based on the applicant's inclusion in a protected class",
+        "intentional_discrimination": "Disparate treatment - occurs when someone treats a renter adversely because of their status in a protected class",
+        "unintentional_discrimination": "Disparate impact - occurs when an action or policy adversely affects members of a protected class, even without intention to discriminate"
+    },
+    "protected_classes": {
+        "federal": [
+            "Race",
+            "Color", 
+            "Religion",
+            "Sex (including sexual orientation and gender identity)",
+            "National origin",
+            "Familial status",
+            "Physical or mental disability"
+        ],
+        "state_and_local": [
+            "Citizenship",
+            "Age",
+            "Veteran or military status",
+            "Genetic information",
+            "Sexual orientation",
+            "Gender identity or expression",
+            "Source of income (including Section 8 vouchers)",
+            "Criminal history"
+        ]
+    },
+    "prohibited_practices": [
+        "Advertising for a specific group of people",
+        "Discrimination in the screening process",
+        "Denying renters access to housing opportunities", 
+        "Setting inconsistent qualification criteria",
+        "Retaliation against or harassment of tenants",
+        "Refusing to accommodate persons with disabilities"
+    ],
+    "occupancy_standards": {
+        "keating_memorandum": "Two persons are allowed for each bedroom, subject to exceptions and limitations",
+        "boca_code": {
+            "first_occupant": "150 square feet minimum",
+            "additional_occupants": "100 square feet per additional occupant",
+            "sleeping_rooms": "70 square feet for one person, 50 square feet per person for multiple occupants"
+        }
+    },
+    "reasonable_accommodation": {
+        "definition": "An exception to rules or policies based on a disability-related need to allow equal opportunity to use and enjoy the dwelling",
+        "examples": [
+            "Allowing a live-in caregiver or assistance animal",
+            "Setting up reserved parking",
+            "Changing cleaning products or pesticides for chemical sensitivities"
+        ],
+        "process": "Handle case-by-case based on specific circumstances, engage in interactive process"
+    },
+    "reasonable_modification": {
+        "definition": "A physical change to the property that gives the resident equal opportunity to access the property and its amenities",
+        "examples": [
+            "A ramp leading to the entryway",
+            "Grab bars in the shower", 
+            "Lower countertops"
+        ]
+    },
+    "emotional_support_animals": {
+        "status": "Type of assistance animal recognized as reasonable accommodation under Fair Housing Act",
+        "landlord_restrictions": [
+            "Cannot require pet deposit or pet fee",
+            "Cannot limit based on general assumptions about species or breeds",
+            "Cannot ask about nature or severity of disability",
+            "Cannot limit access - ESA allowed wherever tenants are allowed"
+        ]
+    },
+    "exemptions": {
+        "federal_exemptions": [
+            "Owner-occupied building with four or fewer units",
+            "Single-family houses sold/rented by owner without real estate agent",
+            "Housing run by religious organization or private club limiting occupancy to members"
+        ],
+        "housing_for_older_persons": "Properties where all units occupied by persons 62+ or 80% of units have at least one person 55+"
+    },
+    "compliance_tips": [
+        "Focus advertising on property and amenities, not ideal renter demographics", 
+        "Use documented and consistent screening methods for all applicants",
+        "Ask same questions of all tenants",
+        "Provide equal access to all listings and vacancies",
+        "Make policies inclusive and standard across all groups",
+        "Document all interactions with renters and applicants",
+        "Receive regular training on fair housing laws",
+        "Consult legal professionals for guidance"
+    ],
+    "enforcement": {
+        "federal_agency": "Office of Fair Housing and Equal Opportunity (FHEO) within HUD",
+        "complaint_statistics": "In fiscal year 2021, 41.5% of housing complaints were disability-related"
+    }
+}
