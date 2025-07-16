@@ -1,0 +1,63 @@
+# OpenAI Evals Configuration for Custom GPT Judge
+# This file follows the OpenAI evals registry format
+
+# Main evaluation definition
+custom-gpt-judge:
+  id: custom-gpt-judge.dev.v1
+  description: Custom GPT LLM as a Judge evaluator that simulates a Custom GPT with knowledge sources for comprehensive response evaluation
+  disclaimer: This evaluator uses LLM-as-a-judge methodology and may have subjective biases. Results should be validated with human evaluation for critical applications.
+  metrics: [accuracy, average_score, pass_rate]
+
+# Specific evaluation configuration
+custom-gpt-judge.dev.v1:
+  class: custom_gpt_judge_eval:CustomGPTEvaluator
+  args:
+    # Knowledge sources (would be actual file paths in real implementation)
+    knowledge_sources:
+      - evaluation_guidelines.pdf
+      - quality_standards.txt
+      - scoring_rubric.md
+    
+    # Evaluation parameters
+    model: gpt-4  # Judge model
+    temperature: 0.1  # Low temperature for consistent evaluations
+    max_tokens: 1000
+    
+    # Scoring configuration
+    scoring:
+      scale: "0-5"
+      pass_threshold: 3.0
+      criteria:
+        - accuracy
+        - relevance
+        - completeness
+        - clarity
+        - coherence
+    
+    # Sample data configuration
+    samples_jsonl: custom_gpt_samples.jsonl
+
+# Model-graded evaluation configuration
+custom-gpt-judge-graded:
+  id: custom-gpt-judge-graded.dev.v1
+  description: Model-graded version using structured evaluation prompts
+  disclaimer: Uses GPT-4 as judge with chain-of-thought reasoning
+  metrics: [accuracy, reasoning_quality, score_distribution]
+
+custom-gpt-judge-graded.dev.v1:
+  class: evals.elsuite.modelgraded.classify:ModelBasedClassify
+  args:
+    samples_jsonl: custom_gpt_samples.jsonl
+    eval_type: cot_classify
+    modelgraded_spec: custom_gpt_judge_spec
+    
+# Alternative configuration for different use cases
+custom-gpt-judge-basic:
+  id: custom-gpt-judge-basic.dev.v1
+  description: Basic string matching evaluation for factual questions
+  metrics: [exact_match, partial_match]
+
+custom-gpt-judge-basic.dev.v1:
+  class: evals.elsuite.basic.match:Match
+  args:
+    samples_jsonl: custom_gpt_factual_samples.jsonl
