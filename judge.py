@@ -4,10 +4,10 @@ import argparse
 from pathlib import Path
 from typing import List, Dict
 
-import openai
 from docx import Document
 from striprtf.striprtf import rtf_to_text
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # -----------------------------------------------------------------------------
 # Utility loaders for different file types (extended)
@@ -112,16 +112,18 @@ SYSTEM_TEMPLATE = """{evaluation_guidelines}\n\n---\nGROUND TRUTH DOCUMENTS (for
 # OpenAI helper
 # -----------------------------------------------------------------------------
 
-def _chat_completion(messages: List[Dict[str, str]], model: str = "gpt-4o-mini", **kwargs) -> str:
-    """Thin wrapper around openai.ChatCompletion to allow easy mocking."""
-    response = openai.ChatCompletion.create(
+client = OpenAI()
+
+
+def _chat_completion(messages: List[Dict[str, str]], model: str = "gpt-4o", **kwargs) -> str:
+    response = client.chat.completions.create(
         model=model,
         messages=messages,
         temperature=0.0,
         max_tokens=2048,
         **kwargs,
     )
-    return response.choices[0].message["content"].strip()
+    return response.choices[0].message.content.strip()
 
 # -----------------------------------------------------------------------------
 # Core evaluation logic
@@ -133,7 +135,7 @@ def evaluate_candidate(
     golden_doc: str,
     buyability_doc: str,
     housing_doc: str,
-    model: str = "gpt-4o-mini",
+    model: str = "gpt-4o",
 ) -> str:
     """Return the evaluation table produced by the model."""
     system_prompt = SYSTEM_TEMPLATE.format(
@@ -171,7 +173,7 @@ def _parse_args():
     ap.add_argument("--housing", type=Path, required=True, help="Path to Zillow_Fair_Housing_Classifier.docx")
     ap.add_argument("--input", type=Path, required=True, help="JSON file with list of {prompt, response}")
     ap.add_argument("--output", type=Path, default=Path("evaluations.json"), help="Where to save evaluation results")
-    ap.add_argument("--model", type=str, default="gpt-4o-mini", help="OpenAI chat model name")
+    ap.add_argument("--model", type=str, default="gpt-4o", help="OpenAI chat model name")
     return ap.parse_args()
 
 

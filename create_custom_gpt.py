@@ -2,8 +2,11 @@ import os
 from pathlib import Path
 from typing import List
 
-import openai
 from dotenv import load_dotenv
+from openai import OpenAI
+
+# Instantiate a single OpenAI client
+client = OpenAI()
 
 # Paths to reference docs (adjust if different)
 DOCS = [
@@ -27,6 +30,8 @@ EVALUATOR_INSTRUCTIONS = (
     "When responding, strictly output the evaluation table and final Alpha evaluation score as defined."
 )
 
+MODEL_NAME = "gpt-4o"
+
 
 def upload_files(paths: List[Path]) -> List[str]:
     """Upload files to OpenAI and return the list of file IDs."""
@@ -36,7 +41,7 @@ def upload_files(paths: List[Path]) -> List[str]:
             raise FileNotFoundError(p)
         print(f"Uploading {p} ...", end=" ")
         with open(p, "rb") as fp:
-            resp = openai.File.create(file=fp, purpose="assistants")
+            resp = client.files.create(file=fp, purpose="assistants")
             file_ids.append(resp["id"])
         print("done.")
     return file_ids
@@ -44,11 +49,11 @@ def upload_files(paths: List[Path]) -> List[str]:
 
 def create_assistant(file_ids: List[str]):
     """Create the assistant and print its ID and dashboard link."""
-    assistant = openai.Assistant.create(
+    assistant = client.beta.assistants.create(
         name=ASSISTANT_NAME,
         instructions=EVALUATOR_INSTRUCTIONS,
         tools=[{"type": "retrieval"}],
-        model="gpt-4o-mini",
+        model=MODEL_NAME,
         file_ids=file_ids,
     )
     print("\nAssistant created!")
