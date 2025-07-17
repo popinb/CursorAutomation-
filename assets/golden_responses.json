@@ -1,0 +1,44 @@
+{
+    "questions": {
+        "1": {
+            "question": "What factors and inputs were considered to calculate my Buyability? How does each impact the Buyability?",
+            "response_template": "Your personalized BuyAbility estimate is ${buyability}, and it is calculated using the following inputs you provided. We leveraged real-time market conditions to determine a customized rate estimate:\nAnnual Income: ${annual_income}\nMonthly Debts: ${monthly_debts}\nDown Payment: ${down_payment}\nCredit Score Range: ${credit_score_range}\nTarget Monthly Payment: ${target_monthly_payment}\nLocation: ${location}\nInterest rate estimate: ${interest_rate}%\n\nHere's how each input impacts your BuyAbility:\n1. Income and Debt-to-Income Ratio (DTI)\n Lenders typically recommend up to 36% of your gross monthly income to go toward debts (for financial stability), including the mortgage. Based on your ${annual_income} annual income (or ${monthly_income}/month), this means up to ${max_dti_payment}/month could be available for all debt obligations. Subtracting your current ${monthly_debts}/month debt leaves around ${available_payment}/month for a potential mortgage payment, which aligns with your target.\n\n2. Down Payment and Loan Amount\n You have saved ${down_payment} for a down payment. That amount influences how much you need to borrow and impacts the kind of loans available to you:\n • As low as 3% down payment is generally the minimum required for most loans.\n • With ${down_payment}, the maximum purchase price you could target is approximately ${max_purchase_price} assuming a 3% down payment.\n • However, for your BuyAbility to be ${buyability}, this down payment puts you above the minimum threshold, which slightly helps reduce your overall loan amount and thus your monthly payments.\n\n3. Credit Score and Interest Rate\n Your credit score range of ${credit_score_range} places you in a good position to get a mortgage in most cases:\n • Higher scores (720+) could further improve your rate (${interest_rate}%), reducing monthly payments and increasing BuyAbility.\n\n4. Location: ${location} (Property Taxes & Insurance)\n BuyAbility also factors in location-based expenses like property taxes and homeowners insurance:\n • ${location} typically has an avg X% property tax rates, which is favorable.\n • Homeowners insurance, which is mandatory, is also location-sensitive and is included in the estimated monthly payment.\n\n5. Mortgage Insurance (PMI)\n Because your down payment is less than 20% of the home price, lenders will require Private Mortgage Insurance (PMI):\n • PMI adds an additional monthly cost and slightly reduces your BuyAbility.\n • However, once you reach 20% equity, you may be able to remove PMI.",
+            "variables": ["buyability", "annual_income", "monthly_debts", "down_payment", "credit_score_range", "target_monthly_payment", "location", "interest_rate", "monthly_income", "max_dti_payment", "available_payment", "max_purchase_price"]
+        },
+        "2": {
+            "question": "How was my Buyability calculated? Is it based on what I told you? Is this personalized to me?",
+            "response_template": "Yes, your BuyAbility is fully personalized to your unique financial profile. It reflects the actual income, debt, credit score, down payment, and location you provided. Your estimated interest rate of ${interest_rate}% is tailored to you, based on the inputs you provided us. This means the estimate of ${buyability} is tailored specifically to you—not a generic or national average.\n\nIt takes into account:\n• Your ${annual_income} annual income\n• Your current debt load of ${monthly_debts}/month\n• The ${down_payment} you've saved for a down payment\n• Your credit score range of ${credit_score_range}\n• The property tax and insurance assumptions specific to ${location}\n• And your personal comfort target of ${target_monthly_payment}/month for a mortgage payment\n\nBuyAbility is designed to provide a realistic and individualized estimate of what you could afford in the housing market today.",
+            "variables": ["buyability", "interest_rate", "annual_income", "monthly_debts", "down_payment", "credit_score_range", "location", "target_monthly_payment"]
+        },
+        "3": {
+            "question": "What's included in the total monthly payment?",
+            "response_template": "What's Included in Your Target Monthly Payment?\nYour target monthly payment of ${target_monthly_payment} reflects the full estimated cost of owning a home each month—not just the mortgage. Here's how that total breaks down:\n\nBreakdown of Your ${target_monthly_payment} Monthly Payment\n• Principal & Interest: ${principal_interest} This reflects the mortgage payment, based on a 30-year fixed loan at an interest rate of ${interest_rate}%. It covers the amount borrowed (principal) and the cost of borrowing (interest).\n• Property Taxes: ${property_taxes} This is an estimate using the average property tax rate for the state you selected. Zillow applies this rate to your estimated home value to calculate monthly taxes.\n• Homeowners Insurance: ${homeowners_insurance} This covers typical property insurance requirements for mortgage approval, providing financial protection against damage or loss.\n• Private Mortgage Insurance (PMI): ${pmi} Because your down payment is below 20%, this monthly cost protects the lender in case of default. It's common in low-down-payment loans.\n\nAssumptions to Know\n• HOA fees are not included in this estimate. If you're considering a home with a homeowners association, that monthly cost would be additional.\n• Property tax estimates use the average rate for your selected state, not county-specific rates.",
+            "variables": ["target_monthly_payment", "principal_interest", "interest_rate", "property_taxes", "homeowners_insurance", "pmi"]
+        },
+        "4": {
+            "question": "Can I afford to buy a home right now, given my current financial situation, income, debts, and expenses?",
+            "response_template": "Yes, based on your BuyAbility of ${buyability}, you can afford to buy a home in ${location}!\n\nYour financial readiness aligns well with current market dynamics. With your BuyAbility at ${buyability_short}, and DTI < 36% (as recommended by experts for financial stability) you're in a strong position to shop for homes in many parts of ${location}, especially in suburban and rural regions.\n\nGiven the improving inventory and balanced market conditions, this is a promising time to take the next step toward homeownership. Many homes in the ${price_range} range are becoming more accessible and well-aligned to your estimated budget.",
+            "variables": ["buyability", "location", "buyability_short", "price_range"]
+        }
+    },
+    "example_values": {
+        "buyability": "$318,431",
+        "annual_income": "$90,000",
+        "monthly_debts": "$200",
+        "down_payment": "$18,000",
+        "credit_score_range": "660–719",
+        "target_monthly_payment": "$2,500",
+        "location": "Georgia",
+        "interest_rate": "6.88",
+        "monthly_income": "$7,500",
+        "max_dti_payment": "$2,700",
+        "available_payment": "$2,500",
+        "max_purchase_price": "$514,000",
+        "principal_interest": "$1,975",
+        "property_taxes": "$212",
+        "homeowners_insurance": "$106",
+        "pmi": "$207",
+        "buyability_short": "$318K",
+        "price_range": "$250K–$350K"
+    }
+}
