@@ -1,0 +1,102 @@
+Zillow Fair Housing Classifier – Internal Guidance Manual (v1.0)
+==================================================================
+
+Purpose and Scope
+-----------------
+This internal guidance describes the logic and protected-class safeguards used by the "Fair Housing Classifier"—a lightweight rule-based and LLM-assisted system that flags text for potential violations of U.S. Fair Housing laws.  The classifier is designed for customer-facing content produced by Zillow products, agents, partner lenders, and any automated conversational agent.  The rules herein complement—but **do not replace**—legal review by Zillow’s Compliance & Legal teams.
+
+Regulatory Background (Reference Only)
+-------------------------------------
+1. **Federal Fair Housing Act (1968, as amended 1988)**
+   • Prohibits discrimination in residential real-estate–related transactions on the basis of *race, color, religion, national origin, sex (including gender identity & sexual orientation), familial status, or disability*.
+2. **Equal Credit Opportunity Act (ECOA)**
+   • Extends anti-discrimination protections to credit extensions—including mortgage lending—adding *age, marital status, receipt of public assistance, and exercise of consumer rights*.
+3. **HUD Advertising Guidelines**
+   • Outlines examples of "words and phrases to avoid" in housing ads.
+4. **State & Local Statutes**
+   • Many jurisdictions add classes such as *source of income, military status, immigration status,* etc.  Where local rules exceed federal protections, the stricter rule applies.
+
+Classifier Taxonomy
+-------------------
+The model outputs a **binary verdict**—`True` (compliant) or `False` (potential violation)—plus an optional YAML block of *detected risk categories*.
+
+```
+result:
+  verdict: False
+  reasons:
+    - steering_language
+    - discouraging_familial_status
+  highlights:
+    - "Great neighborhood for singles—no kids allowed!"
+```
+
+Key Risk Categories
+-------------------
+1. **Protected-Class Mentions**  
+   References to race, color, religion, sex, gender, gender identity, sexual orientation, disability, national origin, familial status, age, source of income, etc.
+2. **Steering & Exclusionary Language**  
+   Phrases that implicitly or explicitly steer clients toward/away from neighborhoods or properties: “great Asian community,” “ideal for young professionals,” “not suitable for seniors,” etc.
+3. **Discriminatory Lending Terms**  
+   Loan availability, terms, or encouragement contingent on protected-class membership.
+4. **Occupancy Limits & Familial Status**  
+   Restricting children, pregnant individuals, or families unless based on objective safety code.
+5. **Accessibility Statements**  
+   Absence of required accessibility info or statements discouraging disabled individuals.
+6. **Harassment / Hate Speech**  
+   Slurs or derogatory references to any protected class.
+
+Rule Hierarchy & Decision Logic
+-------------------------------
+1. *Regex Phase (Fast Filter)*  
+   Explicit keyword patterns covering roughly 400 high-risk terms (e.g., "Christian only," "no wheelchairs").  Any match → **Immediate `False` verdict**.
+2. *Contextual LLM Phase*  
+   The candidate text, plus the snippet triggering phase-1, is reviewed by an LLM with a temperature of 0 and the following narrowed system prompt:
+   > "Identify language that could violate U.S. Fair Housing laws. Quote up to 3 risky excerpts; else say `SAFE`."
+3. *Post-Processing*  
+   If the LLM responds `SAFE` the verdict flips back to `True`; otherwise remains `False` and logging occurs.
+4. *Human Review Queue*  
+   Any `False` result auto-escalates to the Compliance dashboard.
+
+False Positives & Overrides
+---------------------------
+• **Historical or Quoted Text** – The system ignores content enclosed in block quotes if preceded by "Historical reference:".  
+• **Fair Use Descriptors** – Mentions like "ADA-compliant" or “Equal Housing Lender” are white-listed.
+
+Audit Trail & Data Retention
+----------------------------
+All classifier outputs are stored for 5 years, hashed to preserve confidentiality.  Metadata captured:
+   – Timestamp (UTC)  
+   – Source product (e.g., Chatbot, Listing, Email)  
+   – User/session ID (pseudonymized)  
+   – Verdict & reasons  
+   – LLM version hash  
+   – Reviewer disposition (if escalated)
+
+Testing Protocols
+-----------------
+• **Quarterly Stress Tests** – 1,000 synthetic ads each containing controlled violations. Target ≤ 2 % FN, ≤ 7 % FP.  
+• **Shadow Deployment** – New classifier versions run in parallel for 2 weeks before replacing the live model.
+
+Change Management
+-----------------
+1. Any update to *regex patterns* or *LLM prompt* triggers a minor version bump (e.g., v1.1 → v1.2).  
+2. Architectural or policy changes trigger a major bump (e.g., v1.x → v2.0) and require Legal sign-off.
+
+User-Facing Boilerplate
+-----------------------
+> *"Zillow is committed to providing fair and equal housing opportunities. We comply with the Fair Housing Act and all other applicable laws. Discriminatory statements will be removed."*
+
+Training Examples (Abbreviated)
+--------------------------------
+| Example Copy | Classifier Verdict | Detected Risk |
+|--------------|-------------------|---------------|
+| "Lovely 2-BR—safe Christian community" | False | steering_language |
+| "Ground-floor unit, ADA-compliant" | True | – |
+| "Ideal bachelor pad, no kids" | False | discouraging_familial_status |
+
+Version History
+---------------
+* **v1.0 (2024-07-16)** – Initial public draft covering federal protected classes, added ECOA credit rules, 400-term regex list, two-phase LLM fallback.
+
+---
+End of guidance (approx. 2 pages at standard 12-pt font).
