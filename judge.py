@@ -10,7 +10,7 @@ from striprtf.striprtf import rtf_to_text
 from dotenv import load_dotenv
 
 # -----------------------------------------------------------------------------
-# Utility loaders for different file types
+# Utility loaders for different file types (extended)
 # -----------------------------------------------------------------------------
 
 def _load_docx(path: Path) -> str:
@@ -23,6 +23,23 @@ def _load_rtf(path: Path) -> str:
     """Extract text from an .rtf file as plain text."""
     with open(path, "r", encoding="utf-8", errors="ignore") as fp:
         return rtf_to_text(fp.read())
+
+
+def _load_plain_text(path: Path) -> str:
+    """Read a plain-text file (.txt, .md, .rst, etc.)."""
+    with open(path, "r", encoding="utf-8", errors="ignore") as fp:
+        return fp.read()
+
+
+def load_document(path: Path) -> str:
+    """Heuristic loader that chooses the right parser based on file extension."""
+    suffix = path.suffix.lower()
+    if suffix == ".docx":
+        return _load_docx(path)
+    if suffix == ".rtf":
+        return _load_rtf(path)
+    # Fallback to plain text (txt, md, etc.)
+    return _load_plain_text(path)
 
 # -----------------------------------------------------------------------------
 # Prompt builder
@@ -165,9 +182,9 @@ def main():
 
     args = _parse_args()
 
-    golden_doc = _load_docx(args.golden)
-    buyability_doc = _load_rtf(args.buyability)
-    housing_doc = _load_docx(args.housing)
+    golden_doc = load_document(args.golden)
+    buyability_doc = load_document(args.buyability)
+    housing_doc = load_document(args.housing)
 
     with open(args.input) as fp:
         dataset: List[Dict[str, str]] = json.load(fp)
