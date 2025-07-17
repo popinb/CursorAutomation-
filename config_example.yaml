@@ -1,0 +1,118 @@
+name: "Custom GPT Content Evaluator"
+description: "Evaluates content quality, accuracy, and helpfulness based on custom criteria"
+
+# Model configuration
+model: "gpt-4"
+temperature: 0.2
+max_tokens: 2000
+
+# Knowledge sources to load (paths relative to config file)
+knowledge_sources:
+  - "knowledge/guidelines.json"
+  - "knowledge/examples.txt"
+  - "knowledge/rubric.yaml"
+
+# Evaluation metrics
+metrics:
+  - name: "Content Accuracy"
+    type: "binary"
+    description: "Whether the content is factually accurate based on knowledge sources"
+    weight: 2.0
+    required: true
+    scoring_criteria:
+      true_indicators: ["accurate", "correct", "factual", "verified"]
+      false_indicators: ["inaccurate", "incorrect", "wrong", "false"]
+
+  - name: "Helpfulness"
+    type: "scale"
+    description: "How helpful the response is to the user (1-5 scale)"
+    weight: 1.5
+    required: true
+    scoring_criteria:
+      min_scale: 1
+      max_scale: 5
+      scale_descriptions:
+        1: "Not helpful at all"
+        2: "Slightly helpful"
+        3: "Moderately helpful"
+        4: "Very helpful"
+        5: "Extremely helpful"
+
+  - name: "Completeness"
+    type: "scale"
+    description: "How complete the answer is (1-5 scale)"
+    weight: 1.0
+    required: true
+    scoring_criteria:
+      min_scale: 1
+      max_scale: 5
+
+  - name: "Tone Appropriateness"
+    type: "categorical"
+    description: "Whether the tone is appropriate for the context"
+    weight: 1.0
+    required: false
+    scoring_criteria:
+      categories: ["Professional", "Casual", "Inappropriate"]
+
+  - name: "Technical Accuracy"
+    type: "binary"
+    description: "Whether technical information is correct"
+    weight: 1.8
+    required: true
+    scoring_criteria:
+      verification_required: true
+
+  - name: "Clarity Score"
+    type: "numeric"
+    description: "Numerical clarity score (0-100)"
+    weight: 1.2
+    required: false
+    scoring_criteria:
+      min_value: 0
+      max_value: 100
+
+# Evaluation prompt template
+evaluation_prompt_template: |
+  You are {judge_name}, an expert evaluator for content quality assessment.
+  
+  {judge_description}
+  
+  ## Knowledge Base
+  {knowledge_context}
+  
+  ## Evaluation Metrics
+  You must evaluate the candidate answer on the following metrics:
+  {metrics_description}
+  
+  ## Evaluation Task
+  
+  **Original Question:** {question}
+  
+  **Candidate Answer to Evaluate:**
+  {candidate_answer}
+  
+  **Reference Answer (if available):** {reference_answer}
+  
+  **Additional Context:** {context}
+  
+  ## Instructions
+  
+  1. Carefully read the candidate answer and compare it against the knowledge base and reference materials.
+  
+  2. For each metric listed above, provide:
+     - A score according to the metric's type and criteria
+     - A clear justification for the score
+  
+  3. Format your evaluation as follows:
+  
+  **Content Accuracy:** [Score] - [Justification]
+  **Helpfulness:** [Score] - [Justification]
+  **Completeness:** [Score] - [Justification]
+  **Tone Appropriateness:** [Score] - [Justification]
+  **Technical Accuracy:** [Score] - [Justification]
+  **Clarity Score:** [Score] - [Justification]
+  
+  4. Be objective, thorough, and consistent in your evaluation.
+  
+  5. Base your scores strictly on the provided criteria and knowledge sources.
