@@ -1,0 +1,57 @@
+# OpenAI Evals Registry Configuration for Zillow Home Affordability Judge
+# This file defines the evaluation specification for the OpenAI Evals framework
+
+zillow-affordability:
+  id: zillow-affordability.dev.v0
+  metrics: [alpha_accuracy, full_accuracy]
+  description: >
+    Comprehensive evaluation of home affordability responses using Zillow's methodology.
+    Evaluates responses on 12 metrics including personalization, accuracy, transparency,
+    and fair housing compliance. Uses LLM-as-a-judge with detailed 150+ word justifications.
+  disclaimer: >
+    This evaluation uses LLM-as-a-judge methodology which may have inherent biases.
+    Results should be validated with human evaluation for production use cases.
+    Fair housing compliance scoring is not a substitute for legal review.
+
+zillow-affordability.dev.v0:
+  class: openaieval_zillow_judge:ZillowAffordabilityEval
+  args:
+    samples_jsonl: zillow_eval_samples.jsonl
+    eval_registry_path: null
+    seed: 42
+    judge_model: gpt-4
+    max_tokens: 4000
+    temperature: 0
+
+# Alternative configuration for different models
+zillow-affordability-o1:
+  id: zillow-affordability-o1.dev.v0
+  metrics: [alpha_accuracy, full_accuracy] 
+  description: >
+    Zillow Home Affordability evaluation using o1-preview model for enhanced reasoning.
+    Same 12-metric framework with improved analytical capabilities.
+
+zillow-affordability-o1.dev.v0:
+  class: openaieval_zillow_judge:ZillowAffordabilityEval
+  args:
+    samples_jsonl: zillow_eval_samples.jsonl
+    judge_model: o1-preview
+    seed: 42
+    max_tokens: 10000
+
+# Batch evaluation configuration
+zillow-affordability-batch:
+  id: zillow-affordability-batch.dev.v0
+  metrics: [alpha_accuracy, full_accuracy]
+  description: >
+    Batch evaluation configuration for processing multiple Zillow affordability samples
+    with optimized performance settings.
+
+zillow-affordability-batch.dev.v0:
+  class: openaieval_zillow_judge:ZillowAffordabilityEval
+  args:
+    samples_jsonl: zillow_eval_batch_samples.jsonl
+    seed: 42
+    judge_model: gpt-4
+    max_concurrent: 5
+    timeout: 120
