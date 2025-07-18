@@ -338,16 +338,73 @@ Calculate Alpha evaluation score (excluding Completeness and Structured Presenta
     
     def _parse_evaluation_response(self, llm_response: str) -> Dict[str, Any]:
         """Parse LLM evaluation response into structured data."""
+        import re
+        
         # Extract Alpha score if present
         alpha_score = None
         if "Alpha evaluation" in llm_response:
-            import re
             alpha_match = re.search(r"Alpha evaluation[:\s]*(\d+(?:\.\d+)?)", llm_response)
             if alpha_match:
                 alpha_score = float(alpha_match.group(1))
         
+        # Parse individual metric scores from the response
+        metrics = {}
+        
+        # Define scoring conversion
+        def convert_score(score_str, metric_type):
+            if metric_type == "boolean":
+                return 10 if score_str.lower() in ["true", "accurate", "present"] else 0
+            elif metric_type == "scale":
+                try:
+                    scale_value = int(score_str)
+                    return scale_value * 2  # Convert 1-5 to 2,4,6,8,10
+                except:
+                    return 0
+            return 0
+        
+        # Extract scores from table format
+        table_pattern = r'\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|'
+        matches = re.findall(table_pattern, llm_response)
+        
+        for match in matches:
+            if len(match) >= 2 and "Metric" not in match[0]:
+                metric_name = match[0].strip()
+                score_value = match[1].strip()
+                
+                # Map metrics to their types
+                boolean_metrics = ["Personalization Accuracy", "Next Step Identification", 
+                                 "Assumption Listing", "Calculation Accuracy", 
+                                 "Faithfulness to Ground Truth", "Overall Accuracy", 
+                                 "Coherence", "Fair Housing Classifier"]
+                
+                scale_metrics = ["Context-based Personalization", "Assumption Trust",
+                               "Structured Presentation", "Completeness"]
+                
+                if metric_name in boolean_metrics:
+                    metrics[metric_name] = convert_score(score_value, "boolean")
+                elif metric_name in scale_metrics:
+                    metrics[metric_name] = convert_score(score_value, "scale")
+        
+        # Calculate totals
+        alpha_metrics = [m for m in metrics.keys() 
+                        if m not in ["Structured Presentation", "Completeness"]]
+        
+        alpha_total = sum(metrics.get(m, 0) for m in alpha_metrics)
+        full_total = sum(metrics.values())
+        
+        # If Alpha score wasn't extracted from text, calculate it
+        if alpha_score is None and alpha_metrics:
+            alpha_score = alpha_total
+        
         return {
             "alpha_score": alpha_score,
+            "alpha_total": alpha_total,
+            "alpha_max": len(alpha_metrics) * 10,
+            "full_total": full_total,
+            "full_max": len(metrics) * 10,
+            "individual_scores": metrics,
+            "alpha_percentage": round((alpha_total / (len(alpha_metrics) * 10)) * 100, 1) if alpha_metrics else 0,
+            "full_percentage": round((full_total / (len(metrics) * 10)) * 100, 1) if metrics else 0,
             "response_length": len(llm_response),
             "contains_table": "|" in llm_response,
             "parsed_successfully": True
@@ -471,11 +528,21 @@ def main():
     result = judge.evaluate(test_answer, test_question, test_profile)
     
     if 'error' not in result:
+        scores = result['structured_scores']
         print(f"\n📊 EVALUATION COMPLETED")
         print(f"⏱️  Time: {result['metadata']['evaluation_time_seconds']}s")
         print(f"🔢 Tokens: {result['metadata']['tokens_used']}")
-        print(f"🎯 Alpha Score: {result['structured_scores']['alpha_score']}")
-        print(f"\n📋 EVALUATION RESULTS:")
+        print(f"\n🎯 SCORING SUMMARY:")
+        print("=" * 50)
+        print(f"📊 Alpha Score: {scores['alpha_total']}/{scores['alpha_max']} ({scores['alpha_percentage']}%)")
+        print(f"📈 Full Score: {scores['full_total']}/{scores['full_max']} ({scores['full_percentage']}%)")
+        
+        print(f"\n📋 INDIVIDUAL METRIC SCORES:")
+        print("=" * 50)
+        for metric, score in scores['individual_scores'].items():
+            print(f"• {metric}: {score}/10")
+        
+        print(f"\n📋 DETAILED EVALUATION RESULTS:")
         print("=" * 70)
         print(result['evaluation_results'])
     else:
