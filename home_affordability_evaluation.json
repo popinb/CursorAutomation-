@@ -1,0 +1,58 @@
+{
+  "overall_score": 0.3058823529411765,
+  "metric_scores": {
+    "Content Accuracy": {
+      "raw_score": true,
+      "normalized_score": 1.0,
+      "weight": 2.0,
+      "type": "binary"
+    },
+    "Helpfulness": {
+      "raw_score": 1,
+      "normalized_score": 0.0,
+      "weight": 1.5,
+      "type": "scale"
+    },
+    "Completeness": {
+      "raw_score": 1,
+      "normalized_score": 0.0,
+      "weight": 1.0,
+      "type": "scale"
+    },
+    "Tone Appropriateness": {
+      "raw_score": "Professional",
+      "normalized_score": 0.0,
+      "weight": 1.0,
+      "type": "categorical"
+    },
+    "Technical Accuracy": {
+      "raw_score": false,
+      "normalized_score": 0.0,
+      "weight": 1.8,
+      "type": "binary"
+    },
+    "Clarity Score": {
+      "raw_score": 50.0,
+      "normalized_score": 0.5,
+      "weight": 1.2,
+      "type": "numeric"
+    }
+  },
+  "detailed_evaluation": "**Content Accuracy:** False - The candidate answer is not factually accurate. It makes a blanket statement without considering the user's financial situation, which is unknown according to the additional context provided.\n\n**Helpfulness:** 1 - Not helpful at all. The response does not provide any actionable advice or clear explanation to the user's question.\n\n**Completeness:** 1 - The answer is not complete. It does not address the user's question in a comprehensive manner. It lacks specific examples, clear explanations, and actionable advice.\n\n**Tone Appropriateness:** Professional - The tone of the response is professional, albeit too brief and lacking in substance.\n\n**Technical Accuracy:** False - The answer does not provide any technical information or advice, and the claim it makes (\"you can afford to buy now\") cannot be verified without additional financial information from the user.\n\n**Clarity Score:** 50 - The response is clear in its brevity, but it lacks depth and detail, which significantly reduces its clarity in terms of providing a meaningful answer to the user's question.",
+  "justifications": {
+    "Content Accuracy": "** False - The candidate answer is not factually accurate. It makes a blanket statement without considering the user's financial situation, which is unknown according to the additional context provided.",
+    "Helpfulness": "** 1 - Not helpful at all. The response does not provide any actionable advice or clear explanation to the user's question.",
+    "Completeness": "** 1 - The answer is not complete. It does not address the user's question in a comprehensive manner. It lacks specific examples, clear explanations, and actionable advice.",
+    "Tone Appropriateness": "** Professional - The tone of the response is professional, albeit too brief and lacking in substance.",
+    "Technical Accuracy": "** False - The answer does not provide any technical information or advice, and the claim it makes (\"you can afford to buy now\") cannot be verified without additional financial information from the user.",
+    "Clarity Score": "** 50 - The response is clear in its brevity, but it lacks depth and detail, which significantly reduces its clarity in terms of providing a meaningful answer to the user's question."
+  },
+  "metadata": {
+    "timestamp": "2025-07-18T14:09:47.637514",
+    "question": "can I afford to buy a home right now?",
+    "candidate_answer_length": 25,
+    "model": "gpt-4",
+    "context_provided": true,
+    "reference_provided": false
+  }
+}
