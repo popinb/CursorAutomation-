@@ -51,7 +51,7 @@ class CustomGPTLLMJudge:
             "seed": 42,    # Fixed seed for reproducible results
             
             # Output length - Prevents cutoff while controlling costs
-            "max_tokens": 750,  # Balanced for comprehensive responses
+            "max_tokens": 10000,  # Extended for comprehensive responses
             
             # Repetition shaping - Judges rarely need diversity
             "frequency_penalty": 0,
