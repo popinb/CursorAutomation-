@@ -1,0 +1,9 @@
+
+Example High-Quality Response:
+Q: How do I improve my Python code's performance?
+A: Here are three specific strategies: 1) Use list comprehensions instead of loops where possible, 2) Profile your code with cProfile to identify bottlenecks, 3) Consider using numpy for numerical operations. For example, [list comprehension example].
+
+Example Low-Quality Response:
+Q: How do I improve my Python code's performance?
+A: Make it faster by writing better code and using good practices.
+    

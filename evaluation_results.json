@@ -1,0 +1,176 @@
+[
+  {
+    "overall_score": 0.6617647058823529,
+    "metric_scores": {
+      "Content Accuracy": {
+        "raw_score": true,
+        "normalized_score": 1.0,
+        "weight": 2.0,
+        "type": "binary"
+      },
+      "Helpfulness": {
+        "raw_score": 2,
+        "normalized_score": 0.25,
+        "weight": 1.5,
+        "type": "scale"
+      },
+      "Completeness": {
+        "raw_score": 2,
+        "normalized_score": 0.25,
+        "weight": 1.0,
+        "type": "scale"
+      },
+      "Tone Appropriateness": {
+        "raw_score": "Professional",
+        "normalized_score": 0.0,
+        "weight": 1.0,
+        "type": "categorical"
+      },
+      "Technical Accuracy": {
+        "raw_score": true,
+        "normalized_score": 1.0,
+        "weight": 1.8,
+        "type": "binary"
+      },
+      "Clarity Score": {
+        "raw_score": 100.0,
+        "normalized_score": 1.0,
+        "weight": 1.2,
+        "type": "numeric"
+      }
+    },
+    "detailed_evaluation": "**Content Accuracy:** True - The statement \"Python is a programming language\" is factually accurate and verifiable.\n\n**Helpfulness:** 2 - Slightly helpful. While the answer is technically correct, it does not provide any additional information that would be helpful to someone asking \"What is Python?\".\n\n**Completeness:** 2 - The answer is not complete. It does not address the full scope of what Python is, such as its features, uses, or why someone might choose to use it.\n\n**Tone Appropriateness:** Professional - The tone of the answer is professional, albeit brief.\n\n**Technical Accuracy:** True - The technical information provided, that Python is a programming language, is correct.\n\n**Clarity Score:** 100 - The answer is very clear and concise, there is no ambiguity in the statement \"Python is a programming language\". However, the brevity of the answer also contributes to its lack of helpfulness and completeness.",
+    "justifications": {
+      "Content Accuracy": "** True - The statement \"Python is a programming language\" is factually accurate and verifiable.",
+      "Helpfulness": "** 2 - Slightly helpful. While the answer is technically correct, it does not provide any additional information that would be helpful to someone asking \"What is Python?\".",
+      "Completeness": "** 2 - The answer is not complete. It does not address the full scope of what Python is, such as its features, uses, or why someone might choose to use it.",
+      "Tone Appropriateness": "** Professional - The tone of the answer is professional, albeit brief.",
+      "Technical Accuracy": "** True - The technical information provided, that Python is a programming language, is correct.",
+      "Clarity Score": "** 100 - The answer is very clear and concise, there is no ambiguity in the statement \"Python is a programming language\". However, the brevity of the answer also contributes to its lack of helpfulness and completeness."
+    },
+    "metadata": {
+      "timestamp": "2025-07-18T14:05:23.453953",
+      "question": "What is Python?",
+      "candidate_answer_length": 33,
+      "model": "gpt-4",
+      "context_provided": true,
+      "reference_provided": false
+    }
+  },
+  {
+    "overall_score": 0.7652941176470588,
+    "metric_scores": {
+      "Content Accuracy": {
+        "raw_score": true,
+        "normalized_score": 1.0,
+        "weight": 2.0,
+        "type": "binary"
+      },
+      "Helpfulness": {
+        "raw_score": 4,
+        "normalized_score": 0.75,
+        "weight": 1.5,
+        "type": "scale"
+      },
+      "Completeness": {
+        "raw_score": 3,
+        "normalized_score": 0.5,
+        "weight": 1.0,
+        "type": "scale"
+      },
+      "Tone Appropriateness": {
+        "raw_score": "Professional",
+        "normalized_score": 0.0,
+        "weight": 1.0,
+        "type": "categorical"
+      },
+      "Technical Accuracy": {
+        "raw_score": true,
+        "normalized_score": 1.0,
+        "weight": 1.8,
+        "type": "binary"
+      },
+      "Clarity Score": {
+        "raw_score": 90.0,
+        "normalized_score": 0.9,
+        "weight": 1.2,
+        "type": "numeric"
+      }
+    },
+    "detailed_evaluation": "**Content Accuracy:** True - The candidate answer correctly identifies Python as a high-level programming language known for its readability and extensive library ecosystem. This is a factually accurate statement.\n\n**Helpfulness:** 4 - The response is very helpful for someone who has no idea what Python is. It provides a brief but informative overview. However, it could be more helpful if it included a bit more detail or context, such as mentioning that Python is used in various fields like web development, data analysis, AI, etc.\n\n**Completeness:** 3 - The answer addresses the question but lacks depth. It provides a basic definition of Python but does not delve into its uses, features, or why it's popular, which would have made the answer more complete.\n\n**Tone Appropriateness:** Professional - The tone of the answer is professional and suitable for the context of the question. It is straightforward and informative.\n\n**Technical Accuracy:** True - The technical information provided in the answer is correct. Python is indeed a high-level programming language known for its readability and extensive library ecosystem.\n\n**Clarity Score:** 90 - The answer is clear and concise, making it easy to understand. However, it could benefit from a bit more detail to provide a fuller understanding of Python.",
+    "justifications": {
+      "Content Accuracy": "** True - The candidate answer correctly identifies Python as a high-level programming language known for its readability and extensive library ecosystem. This is a factually accurate statement.",
+      "Helpfulness": "** 4 - The response is very helpful for someone who has no idea what Python is. It provides a brief but informative overview. However, it could be more helpful if it included a bit more detail or context, such as mentioning that Python is used in various fields like web development, data analysis, AI, etc.",
+      "Completeness": "** 3 - The answer addresses the question but lacks depth. It provides a basic definition of Python but does not delve into its uses, features, or why it's popular, which would have made the answer more complete.",
+      "Tone Appropriateness": "** Professional - The tone of the answer is professional and suitable for the context of the question. It is straightforward and informative.",
+      "Technical Accuracy": "** True - The technical information provided in the answer is correct. Python is indeed a high-level programming language known for its readability and extensive library ecosystem.",
+      "Clarity Score": "** 90 - The answer is clear and concise, making it easy to understand. However, it could benefit from a bit more detail to provide a fuller understanding of Python."
+    },
+    "metadata": {
+      "timestamp": "2025-07-18T14:05:35.575661",
+      "question": "What is Python?",
+      "candidate_answer_length": 113,
+      "model": "gpt-4",
+      "context_provided": true,
+      "reference_provided": false
+    }
+  },
+  {
+    "overall_score": 0.7070588235294117,
+    "metric_scores": {
+      "Content Accuracy": {
+        "raw_score": true,
+        "normalized_score": 1.0,
+        "weight": 2.0,
+        "type": "binary"
+      },
+      "Helpfulness": {
+        "raw_score": 3,
+        "normalized_score": 0.5,
+        "weight": 1.5,
+        "type": "scale"
+      },
+      "Completeness": {
+        "raw_score": 3,
+        "normalized_score": 0.5,
+        "weight": 1.0,
+        "type": "scale"
+      },
+      "Tone Appropriateness": {
+        "raw_score": "Professional",
+        "normalized_score": 0.0,
+        "weight": 1.0,
+        "type": "categorical"
+      },
+      "Technical Accuracy": {
+        "raw_score": true,
+        "normalized_score": 1.0,
+        "weight": 1.8,
+        "type": "binary"
+      },
+      "Clarity Score": {
+        "raw_score": 80.0,
+        "normalized_score": 0.8,
+        "weight": 1.2,
+        "type": "numeric"
+      }
+    },
+    "detailed_evaluation": "**Content Accuracy:** True - The candidate answer accurately describes Python as an interpreted, object-oriented programming language with dynamic semantics and strong typing. This aligns with widely accepted definitions of Python.\n\n**Helpfulness:** 3 - Moderately helpful. The answer provides a correct definition of Python, but it does not provide any additional context or examples that might help a beginner understand what these terms mean.\n\n**Completeness:** 3 - The answer addresses the question but does not provide any additional information or context that might help the user understand Python better. For example, it could mention that Python is widely used for web development, data analysis, machine learning, etc.\n\n**Tone Appropriateness:** Professional - The answer is written in a professional tone, which is appropriate for the context.\n\n**Technical Accuracy:** True - The technical information provided in the answer is correct. Python is indeed an interpreted, object-oriented programming language with dynamic semantics and strong typing.\n\n**Clarity Score:** 80 - The answer is clear and concise, but it uses technical terms (interpreted, object-oriented, dynamic semantics, strong typing) that might not be understood by beginners. A more detailed explanation or simpler language could improve the clarity score.",
+    "justifications": {
+      "Content Accuracy": "** True - The candidate answer accurately describes Python as an interpreted, object-oriented programming language with dynamic semantics and strong typing. This aligns with widely accepted definitions of Python.",
+      "Helpfulness": "** 3 - Moderately helpful. The answer provides a correct definition of Python, but it does not provide any additional context or examples that might help a beginner understand what these terms mean.",
+      "Completeness": "** 3 - The answer addresses the question but does not provide any additional information or context that might help the user understand Python better. For example, it could mention that Python is widely used for web development, data analysis, machine learning, etc.",
+      "Tone Appropriateness": "** Professional - The answer is written in a professional tone, which is appropriate for the context.",
+      "Technical Accuracy": "** True - The technical information provided in the answer is correct. Python is indeed an interpreted, object-oriented programming language with dynamic semantics and strong typing.",
+      "Clarity Score": "** 80 - The answer is clear and concise, but it uses technical terms (interpreted, object-oriented, dynamic semantics, strong typing) that might not be understood by beginners. A more detailed explanation or simpler language could improve the clarity score."
+    },
+    "metadata": {
+      "timestamp": "2025-07-18T14:05:48.102005",
+      "question": "What is Python?",
+      "candidate_answer_length": 104,
+      "model": "gpt-4",
+      "context_provided": true,
+      "reference_provided": false
+    }
+  }
+]

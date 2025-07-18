@@ -1,0 +1,20 @@
+{
+  "content_guidelines": {
+    "accuracy": "All factual claims must be verifiable and current",
+    "completeness": "Answers should address all parts of the question",
+    "tone": "Professional but accessible tone is preferred",
+    "technical_depth": "Adjust technical complexity to user's apparent expertise level"
+  },
+  "quality_indicators": {
+    "good": [
+      "specific examples",
+      "clear explanations",
+      "actionable advice"
+    ],
+    "bad": [
+      "vague statements",
+      "unsupported claims",
+      "irrelevant information"
+    ]
+  }
+}
