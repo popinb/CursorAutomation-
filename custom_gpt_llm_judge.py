@@ -458,8 +458,8 @@ def main():
     print(f"⚙️  Parameters: {judge.judge_params}")
     
     # Test evaluation
-    test_answer = "you can afford to buy now"
-    test_question = "can I afford to buy a home right now?"
+    test_answer = "Your buyability is $400,000."
+    test_question = "what is my buyability?"
     test_profile = {
         "annual_income": None,
         "monthly_debts": None,
