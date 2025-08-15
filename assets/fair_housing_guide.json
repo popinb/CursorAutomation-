@@ -91,5 +91,9 @@
     "enforcement": {
         "federal_agency": "Office of Fair Housing and Equal Opportunity (FHEO) within HUD",
         "complaint_statistics": "In fiscal year 2021, 41.5% of housing complaints were disability-related"
+    },
+    "metadata": {
+        "source": "ZIllow_Fair_Housing_Classifier.docx (summarized)",
+        "version": "alpha"
     }
 }
