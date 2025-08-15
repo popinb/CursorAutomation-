@@ -22,6 +22,7 @@ import os
 from decimal import Decimal
 from typing import Dict, Any, List, Tuple, Optional, Union
 from pathlib import Path
+from typing_extensions import deprecated
 import mlflow
 import mlflow.pyfunc
 import pandas as pd
