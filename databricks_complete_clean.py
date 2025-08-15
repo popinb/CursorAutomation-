@@ -423,7 +423,7 @@ def _evaluate_calculation_accuracy(self, candidate_answer: str, user_profile: Di
         justification="All mathematical calculations in the response have been verified against the user profile data. The calculations are accurate and consistent with the provided financial information, ensuring users receive reliable numerical guidance for their home buying decisions."
     )
 
-def _extract_calculations(self, text: str) -> List[str]:
+def _extract_calculations(self, text: str) -> list[str]:
     """Extract mathematical calculations from text."""
     calculations = []
     
@@ -572,7 +572,7 @@ def _evaluate_fair_housing_compliance(self, candidate_answer: str, scratchpad: s
         justification="The response demonstrates full compliance with fair housing regulations. It avoids any discriminatory language or practices that could violate fair housing laws. The response maintains professional standards while providing helpful guidance to all users regardless of protected characteristics."
     )
 
-def _check_fair_housing_violations(self, text: str) -> List[str]:
+def _check_fair_housing_violations(self, text: str) -> list[str]:
     """Check for potential fair housing violations."""
     violations = []
     
@@ -591,7 +591,7 @@ def _check_fair_housing_violations(self, text: str) -> List[str]:
 
 # COMMAND ----------
 
-def _calculate_final_score(self, results: List[EvaluationResult]) -> float:
+def _calculate_final_score(self, results: list[EvaluationResult]) -> float:
     """Calculate final score out of 100, excluding completeness and structured presentation."""
     # Filter out completeness and structured presentation
     scoring_metrics = [r for r in results if r.metric not in ["Completeness", "Structured Presentation"]]
