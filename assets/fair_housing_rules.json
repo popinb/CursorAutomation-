@@ -1,0 +1,101 @@
+{
+  "protected_classes": [
+    "race",
+    "color", 
+    "national_origin",
+    "religion",
+    "sex",
+    "familial_status",
+    "disability"
+  ],
+  "prohibited_actions": [
+    "steering",
+    "redlining", 
+    "discriminatory_pricing",
+    "discriminatory_terms",
+    "discriminatory_conditions",
+    "discriminatory_privileges",
+    "discriminatory_services",
+    "discriminatory_facilities"
+  ],
+  "prohibited_language": [
+    "family with children",
+    "single person",
+    "married couple",
+    "retired person",
+    "student",
+    "professional only",
+    "quiet neighborhood",
+    "family neighborhood",
+    "adults only",
+    "no children",
+    "mature community",
+    "young professionals",
+    "working families",
+    "empty nesters"
+  ],
+  "prohibited_questions": [
+    "Are you married?",
+    "Do you have children?",
+    "What is your religion?",
+    "Where were you born?",
+    "What is your race?",
+    "Do you have any disabilities?",
+    "Are you planning to have children?",
+    "What is your sexual orientation?",
+    "Are you a veteran?",
+    "What is your immigration status?"
+  ],
+  "red_flags": [
+    "discriminatory_advertising",
+    "unequal_service",
+    "different_terms",
+    "different_conditions",
+    "different_privileges",
+    "different_services",
+    "different_facilities",
+    "refusal_to_negotiate",
+    "false_unavailability",
+    "blockbusting",
+    "steering_to_certain_areas",
+    "discouraging_certain_neighborhoods"
+  ],
+  "safe_language": [
+    "credit score requirements",
+    "income requirements",
+    "employment verification",
+    "down payment requirements",
+    "debt-to-income ratio",
+    "property condition",
+    "location preferences",
+    "school district information",
+    "crime statistics",
+    "property taxes",
+    "homeowners association",
+    "property features",
+    "neighborhood amenities"
+  ],
+  "compliance_guidelines": {
+    "advertising": "Focus on property features, not demographic characteristics",
+    "screening": "Apply consistent criteria to all applicants",
+    "services": "Provide equal service to all potential buyers",
+    "information": "Share the same information with all interested parties",
+    "pricing": "Offer the same terms and conditions to all qualified buyers"
+  },
+  "examples": {
+    "compliant": [
+      "This 3-bedroom home features a large backyard perfect for outdoor activities",
+      "Property located in a quiet residential area with easy access to major highways",
+      "Home features single-level living with wide doorways and accessible design",
+      "Neighborhood offers excellent schools and family-friendly amenities"
+    ],
+    "non_compliant": [
+      "Perfect for families with children",
+      "Great for young professionals",
+      "Ideal for retirees",
+      "No children allowed",
+      "Family-oriented community",
+      "Professional environment"
+    ]
+  }
+}
