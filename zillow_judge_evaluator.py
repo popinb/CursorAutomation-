@@ -12,6 +12,18 @@ from decimal import Decimal
 from typing import Dict, Any, List, Tuple, Optional
 from pathlib import Path
 
+# Optional imports for DOCX/RTF support (used for Fair Housing doc ingestion)
+try:
+    from docx import Document  # type: ignore
+except Exception:  # pragma: no cover - optional
+    Document = None  # type: ignore
+
+try:
+    from striprtf.striprtf import rtf_to_text  # type: ignore
+except Exception:  # pragma: no cover - optional
+    def rtf_to_text(x: str) -> str:  # fallback no-op
+        return x
+
 
 class ZillowJudgeEvaluator:
     """
@@ -28,6 +40,9 @@ class ZillowJudgeEvaluator:
         self.golden_responses = self._load_json(script_dir / "assets" / "golden_responses.json")
         self.buyability_profiles = self._load_json(script_dir / "assets" / "buyability_profiles.json")
         self.fair_housing_guide = self._load_json(script_dir / "assets" / "fair_housing_guide.json")
+
+        # Initialize Fair Housing rules from uploaded doc (if provided) or bundled guide
+        self.fair_housing_rules = self._init_fair_housing_rules(script_dir)
         
     def _load_json(self, filepath: Path) -> Dict[str, Any]:
         """Load JSON data from file."""
@@ -94,6 +109,164 @@ class ZillowJudgeEvaluator:
         scratchpad += f"Math verification: {math_checks}\n\n"
         
         return scratchpad
+
+    # === Fair Housing: load + derive rules from uploaded document or bundled JSON ===
+    def _init_fair_housing_rules(self, script_dir: Path) -> Dict[str, Any]:
+        """Load Fair Housing rules, preferring an uploaded document if provided.
+
+        Supported formats: .json, .docx, .rtf, .txt. Falls back to bundled JSON.
+        Returns a dict with keys: protected_terms, prohibited_regex, positive_regex, occupancy_regex, source.
+        """
+        # Detect uploaded doc via environment variable
+        uploaded_path = os.getenv("FAIR_HOUSING_DOC_PATH")
+        text_content: Optional[str] = None
+        json_rules: Optional[Dict[str, Any]] = None
+        source = "assets/fair_housing_guide.json"
+
+        if uploaded_path:
+            p = Path(uploaded_path)
+            try:
+                if p.suffix.lower() == ".json" and p.exists():
+                    with open(p, "r") as f:
+                        json_rules = json.load(f)
+                    source = str(p)
+                elif p.suffix.lower() == ".docx" and p.exists() and Document is not None:
+                    doc = Document(p)  # type: ignore
+                    text_content = "\n".join(par.text for par in doc.paragraphs if (par.text or "").strip())
+                    source = str(p)
+                elif p.suffix.lower() == ".rtf" and p.exists():
+                    with open(p, "rb") as f:
+                        raw = f.read()
+                    try:
+                        text_content = rtf_to_text(raw.decode("utf-8", errors="ignore"))
+                    except Exception:
+                        text_content = raw.decode("utf-8", errors="ignore")
+                    source = str(p)
+                elif p.suffix.lower() in {".txt", ".md"} and p.exists():
+                    text_content = p.read_text(encoding="utf-8", errors="ignore")
+                    source = str(p)
+            except Exception:
+                # Fall back silently if upload processing fails
+                text_content = None
+                json_rules = None
+
+        # If no upload or failed, use bundled JSON
+        if json_rules is None and text_content is None:
+            json_rules = self.fair_housing_guide
+
+        # Derive rules
+        if json_rules is not None:
+            rules = self._derive_fair_housing_rules_from_json(json_rules)
+            rules["source"] = source
+            return rules
+        else:
+            rules = self._derive_fair_housing_rules_from_text(text_content or "")
+            rules["source"] = source
+            # Merge with bundled JSON to strengthen protected terms if sparse
+            if len(rules.get("protected_terms", [])) < 6:
+                fallback_rules = self._derive_fair_housing_rules_from_json(self.fair_housing_guide)
+                rules["protected_terms"] = sorted(set(list(rules.get("protected_terms", [])) + list(fallback_rules.get("protected_terms", []))))
+            return rules
+
+    def _derive_fair_housing_rules_from_json(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Build regex rule sets from the structured JSON guide."""
+        protected_terms: List[str] = []
+        pc = data.get("protected_classes", {})
+        for group in (pc.get("federal", []), pc.get("state_and_local", [])):
+            for item in group:
+                # Extract parenthetical details as separate terms when present
+                item_l = str(item).lower()
+                item_l = item_l.replace("(including", ",").replace(")", "")
+                for part in re.split(r",|/|;", item_l):
+                    t = part.strip()
+                    if not t:
+                        continue
+                    # Normalize synonyms
+                    t = t.replace("familial status", "familial status").replace("gender identity or expression", "gender identity")
+                    protected_terms.append(t)
+        protected_terms = sorted(set(protected_terms))
+
+        # Prohibited practices and indicative phrases
+        raw_practices = [str(x).lower() for x in data.get("prohibited_practices", [])]
+        # Seed pattern list with a few well-known constructs that map to practices
+        prohibited_regex: List[str] = []
+        # Generic discrimination directives against protected classes (dynamic)
+        for term in protected_terms:
+            # e.g., "no children", "prefer professionals", "refuse families"
+            prohibited_regex.append(rf"\b(?:no|avoid|prefer|refuse|deny).{{0,30}}\b{re.escape(term)}\b")
+        # Source of income / vouchers
+        if any("source of income" in p or "voucher" in p or "section 8" in p for p in raw_practices):
+            prohibited_regex += [
+                r"\b(?:no|avoid|refuse|deny).{0,15}(?:voucher|vouchers|section\s*8|assistance)\b",
+                r"\bwe (?:don\'t|do not) accept.{0,10}(?:voucher|section\s*8)\b",
+            ]
+        # ESA / service animal restrictions
+        if "emotional_support_animals" in data:
+            prohibited_regex.append(r"\bno\s+(?:pets|animals).{0,20}(?:allowed|permitted)\b")
+
+        # Positive indicators
+        positive_regex: List[str] = [
+            r"\bequal\s+(?:housing\s+)?opportunity\b",
+            r"\bfair\s+housing\b",
+            r"\breasonable\s+(?:accommodation|modification)\b",
+            r"\bassistance\s+animal|emotional\s+support\s+animal|service\s+animal",
+            r"\bprotected\s+class\b",
+            r"\bhud\b|\bfheo\b|\bcomply\b.{0,20}(?:laws|fair\s+housing)\b",
+        ]
+
+        # Occupancy (flag risky rigid rules)
+        occupancy_regex: List[str] = [
+            r"\b(?:adults\s+only|no\s+minors)\b",
+            r"\bmaximum.{0,20}(?:people|persons).{0,20}(?:per|/).{0,10}bedroom\b",
+            r"\b(?:one|1).{0,10}child.{0,10}(?:maximum|limit|only)\b",
+        ]
+
+        return {
+            "protected_terms": protected_terms,
+            "prohibited_regex": prohibited_regex,
+            "positive_regex": positive_regex,
+            "occupancy_regex": occupancy_regex,
+        }
+
+    def _derive_fair_housing_rules_from_text(self, text: str) -> Dict[str, Any]:
+        """Heuristically extract rules from raw text documents."""
+        t = (text or "").lower()
+        protected_seed = [
+            "race", "color", "religion", "sex", "gender", "sexual orientation", "gender identity",
+            "national origin", "familial status", "disability", "age", "source of income", "veteran",
+        ]
+        protected_terms = [w for w in protected_seed if w in t]
+
+        prohibited_regex: List[str] = []
+        for term in protected_terms:
+            prohibited_regex.append(rf"\b(?:no|avoid|prefer|refuse|deny).{{0,30}}\b{re.escape(term)}\b")
+        if "section 8" in t or "voucher" in t:
+            prohibited_regex += [
+                r"\b(?:no|avoid|refuse|deny).{0,15}(?:voucher|vouchers|section\s*8|assistance)\b",
+                r"\bwe (?:don\'t|do not) accept.{0,10}(?:voucher|section\s*8)\b",
+            ]
+        if "assistance animal" in t or "emotional support" in t:
+            prohibited_regex.append(r"\bno\s+(?:pets|animals).{0,20}(?:allowed|permitted)\b")
+
+        positive_regex: List[str] = [
+            r"\bequal\s+(?:housing\s+)?opportunity\b",
+            r"\bfair\s+housing\b",
+            r"\breasonable\s+(?:accommodation|modification)\b",
+            r"\bassistance\s+animal|emotional\s+support\s+animal|service\s+animal",
+        ]
+
+        occupancy_regex: List[str] = [
+            r"\b(?:adults\s+only|no\s+minors)\b",
+            r"\bmaximum.{0,20}(?:people|persons).{0,20}(?:per|/).{0,10}bedroom\b",
+            r"\b(?:one|1).{0,10}child.{0,10}(?:maximum|limit|only)\b",
+        ]
+
+        return {
+            "protected_terms": sorted(set(protected_terms)),
+            "prohibited_regex": prohibited_regex,
+            "positive_regex": positive_regex,
+            "occupancy_regex": occupancy_regex,
+        }
     
     def _extract_variables(self, text: str) -> Dict[str, str]:
         """Extract numeric and variable values from candidate text."""
@@ -567,76 +740,67 @@ class ZillowJudgeEvaluator:
         return {"score": faithfulness, "justification": justification}
     
     def _evaluate_fair_housing_compliance(self, answer: str, scratchpad: str) -> Dict[str, str]:
-        """Evaluate fair housing compliance (True/False)."""
+        """Evaluate fair housing compliance (True/False) using the uploaded/bundled guide."""
         answer_lower = answer.lower()
-        
-        compliance_issues = []
-        compliance_strengths = []
-        
-        # Check for discriminatory language patterns
-        discriminatory_patterns = [
-            (r'\b(?:no|avoid|prefer).{0,30}(?:children|kids|families)', "Familial status discrimination"),
-            (r'\b(?:perfect|ideal).{0,30}(?:for|young|senior|couple)', "Age/familial status steering"),
-            (r'\b(?:no|avoid).{0,30}(?:section\s*8|voucher|assistance)', "Source of income discrimination"),
-            (r'\bsteer.{0,30}(?:to|away|from)', "Unlawful steering"),
-            (r'\b(?:different|special).{0,30}(?:rules|requirements).{0,30}(?:for|families|children)', "Inconsistent qualification criteria"),
-            (r'\bcharge.{0,20}extra.{0,20}(?:for|children|families)', "Discriminatory fees"),
-            (r'\brefuse.{0,20}rent.{0,20}(?:to|families|children)', "Refusal to rent based on protected class"),
-            (r'\b(?:must|should|need).{0,20}(?:speak|understand).{0,20}english', "National origin discrimination"),
-            (r'\bno.{0,20}(?:pets|animals).{0,20}(?:allowed|permitted)', "Potential ESA/service animal violation")
-        ]
-        
-        for pattern, violation_type in discriminatory_patterns:
-            if re.search(pattern, answer_lower):
-                compliance_issues.append(violation_type)
-        
-        # Check for positive fair housing practices
-        positive_indicators = [
-            (r'\bequal\s+(?:housing\s+)?opportunity', "Equal housing opportunity awareness"),
-            (r'\bfair\s+housing', "Fair housing awareness"),
-            (r'\breasonable\s+(?:accommodation|modification)', "Disability accommodation awareness"),
-            (r'\bassistance\s+animal|emotional\s+support\s+animal|service\s+animal', "ESA/service animal awareness"),
-            (r'\bprotected\s+class', "Protected class awareness"),
-            (r'\bconsult.{0,20}(?:attorney|lawyer|legal)', "Legal consultation recommendation"),
-            (r'\bcomply.{0,20}(?:with|fair\s+housing|laws)', "Compliance awareness")
-        ]
-        
-        for pattern, strength_type in positive_indicators:
-            if re.search(pattern, answer_lower):
-                compliance_strengths.append(strength_type)
-        
-        # Check for occupancy-related issues
-        occupancy_patterns = [
-            (r'\bno.{0,20}(?:children|kids).{0,20}(?:allowed|permitted)', "Children exclusion"),
-            (r'\b(?:adults\s+only|no\s+minors)', "Age discrimination"),
-            (r'\bmaximum.{0,20}(?:2|two).{0,20}(?:people|persons).{0,20}(?:per|bedroom)', "Potentially discriminatory occupancy"),
-            (r'\b(?:one|1).{0,20}child.{0,20}(?:maximum|limit|only)', "Child limitation")
-        ]
-        
-        for pattern, violation_type in occupancy_patterns:
-            if re.search(pattern, answer_lower):
-                compliance_issues.append(violation_type)
-        
-        # Check for advertising/marketing compliance
+
+        rules = self.fair_housing_rules or {}
+        compliance_issues: List[str] = []
+        compliance_strengths: List[str] = []
+
+        # 1) Discriminatory language tied to protected terms & practices
+        for pat in rules.get("prohibited_regex", []):
+            if re.search(pat, answer_lower, flags=re.I):
+                # Try to name the violation using a heuristic label from the pattern
+                if "voucher" in pat or "section" in pat:
+                    compliance_issues.append("Source of income discrimination (vouchers)")
+                elif "pets|animals" in pat or "animals" in pat:
+                    compliance_issues.append("Assistance animal restriction")
+                else:
+                    compliance_issues.append("Protected class discrimination")
+
+        # 2) Positive indicators derived from the guide
+        for pat in rules.get("positive_regex", []):
+            if re.search(pat, answer_lower, flags=re.I):
+                compliance_strengths.append("guide-aligned positive practice")
+
+        # 3) Occupancy red flags (rigid rules)
+        for pat in rules.get("occupancy_regex", []):
+            if re.search(pat, answer_lower, flags=re.I):
+                compliance_issues.append("Potentially discriminatory occupancy restriction")
+
+        # 4) Advertising/marketing terms (keep heuristics; doc-agnostic)
         if any(term in answer_lower for term in ["marketing", "advertising", "listing", "description"]):
             marketing_violations = [
-                (r'\b(?:great|perfect|ideal).{0,30}(?:for|young|senior|professional|couple)', "Discriminatory advertising"),
-                (r'\b(?:family|adult|mature|quiet).{0,20}(?:oriented|friendly|community)', "Potentially discriminatory marketing"),
-                (r'\b(?:no|avoid).{0,20}(?:college|student|youth)', "Age discrimination in advertising")
+                (r"\b(?:great|perfect|ideal).{0,30}(?:for|young|senior|professional|couple)", "Discriminatory advertising"),
+                (r"\b(?:family|adult|mature|quiet).{0,20}(?:oriented|friendly|community)", "Potentially discriminatory marketing"),
+                (r"\b(?:no|avoid).{0,20}(?:college|student|youth)", "Age discrimination in advertising"),
             ]
-            
-            for pattern, violation_type in marketing_violations:
-                if re.search(pattern, answer_lower):
-                    compliance_issues.append(violation_type)
-        
+            for pat, label in marketing_violations:
+                if re.search(pat, answer_lower, flags=re.I):
+                    compliance_issues.append(label)
+
+        # 5) ESA exception nuance: if text explicitly allows assistance/service animals, downgrade that issue
+        if any("assistance animal" in s or "service animal" in s or "emotional support" in s for s in [answer_lower]):
+            compliance_issues = [iss for iss in compliance_issues if "Assistance animal restriction" not in iss]
+
         if compliance_issues:
             compliance = "False"
-            justification = f"The response contains potential fair housing compliance violations. Identified issues: {'; '.join(set(compliance_issues))}. Fair housing compliance is legally mandated and essential for protecting equal housing opportunities. Violations can result in serious legal consequences including lawsuits, fines, and regulatory action. All housing-related communications must comply with federal, state, and local fair housing laws to ensure equal treatment regardless of protected class status."
+            src = rules.get("source", "fair_housing_guide")
+            justification = (
+                f"The response contains potential fair housing compliance violations based on '{src}'. "
+                f"Issues detected: {', '.join(sorted(set(compliance_issues)))}. "
+                "All housing communications must align with the Fair Housing Act and related guidance to avoid discrimination "
+                "based on protected classes and to honor reasonable accommodations."
+            )
         else:
             compliance = "True"
-            compliance_note = f" Positive compliance indicators: {', '.join(set(compliance_strengths))}" if compliance_strengths else ""
-            justification = f"The response demonstrates fair housing compliance with no detected discriminatory language or practices.{compliance_note} Fair housing compliance evaluation ensures that communications align with federal Fair Housing Act requirements and related laws protecting against discrimination based on race, color, religion, sex, national origin, familial status, and disability. Compliant responses promote equal housing opportunity and protect against legal liability."
-        
+            src = rules.get("source", "fair_housing_guide")
+            strength_note = f" Positive indicators: {', '.join(sorted(set(compliance_strengths)))}" if compliance_strengths else ""
+            justification = (
+                f"The response shows no doc-based fair housing violations under '{src}'.{strength_note} "
+                "This aligns with guidance on equal housing opportunity, protected classes, and reasonable accommodation."
+            )
+
         return {"score": compliance, "justification": justification}
     
     def _evaluate_overall_accuracy(self, answer: str, question: str, scratchpad: str) -> Dict[str, str]:
