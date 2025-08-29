@@ -504,6 +504,112 @@ class EvaluationResult:
     deterministic: bool
 
 
+# ===== LLM-driven scoring (optional) =====
+_METRIC_SCORE_SPEC: Dict[str, Dict[str, Any]] = {
+    "Personalization Accuracy": {"type": "enum", "values": ["Accurate", "Inaccurate"]},
+    "Context based Personalization": {"type": "int", "min": 1, "max": 5},
+    "Next Step Identification": {"type": "enum", "values": ["Present", "Not Present"]},
+    "Assumption Listing": {"type": "enum", "values": ["True", "False"]},
+    "Assumption Trust": {"type": "int", "min": 1, "max": 5},
+    "Calculation Accuracy": {"type": "enum", "values": ["True", "False"]},
+    "Faithfulness to Ground Truth": {"type": "enum", "values": ["True", "False"]},
+    "Overall Accuracy": {"type": "enum", "values": ["True", "False"]},
+    "Structured Presentation": {"type": "int", "min": 1, "max": 5},
+    "Coherence": {"type": "enum", "values": ["True", "False"]},
+    "Completeness": {"type": "int", "min": 1, "max": 5},
+    "Fair Housing Classifier": {"type": "enum", "values": ["True", "False"]},
+}
+
+def _score_is_valid(metric: str, score: Any) -> bool:
+    spec = _METRIC_SCORE_SPEC.get(metric)
+    if not spec:
+        return True
+    s = str(score).strip()
+    if spec["type"] == "enum":
+        return s in spec["values"]
+    if spec["type"] == "int":
+        try:
+            v = int(float(s))
+            return spec["min"] <= v <= spec["max"]
+        except Exception:
+            return False
+    return True
+
+def llm_score_metrics(candidate: str,
+                      question: str,
+                      user_profile: Dict[str, Any],
+                      golden_dict: Dict[str, Any],
+                      fair_doc: Dict[str, Any],
+                      *,
+                      min_w: int = 50,
+                      max_w: int = 90,
+                      max_tokens: int = 1200,
+                      seed: int = 42) -> Tuple[Dict[str, str], Dict[str, str]]:
+    """Ask the LLM to generate both scores and justifications (strict JSON).
+    Returns (scores_map, justifications_map). May return empty dicts if API unavailable.
+    """
+    model = os.getenv("OPENAI_DEPLOYMENT") or _choose_chat_capable_model()
+    key   = os.getenv("OPENAI_API_KEY")
+    base  = os.getenv("OPENAI_BASE_URL")
+    if not (OpenAI and model and key):
+        return {}, {}
+
+    client = OpenAI(base_url=base, api_key=key)
+    allowed = {
+        "Personalization Accuracy": "Accurate/Inaccurate",
+        "Context based Personalization": "integer 1–5",
+        "Next Step Identification": "Present/Not Present",
+        "Assumption Listing": "True/False",
+        "Assumption Trust": "integer 1–5",
+        "Calculation Accuracy": "True/False",
+        "Faithfulness to Ground Truth": "True/False",
+        "Overall Accuracy": "True/False",
+        "Structured Presentation": "integer 1–5",
+        "Coherence": "True/False",
+        "Completeness": "integer 1–5",
+        "Fair Housing Classifier": "True/False",
+    }
+    system = (
+        "You are an expert evaluator. Return STRICT JSON with two top-level keys: "
+        "'scores' (mapping metric→score) and 'justifications' (mapping metric→one paragraph). "
+        f"Justifications must be {min_w}–{max_w} words, polished prose (no lists). "
+        "Scores must follow allowed values exactly. Metrics must be these 12, exactly and in this order: "
+        f"{STRICT_EXPECTED_ORDER}. Allowed values: " + json.dumps(allowed)
+    )
+    user = (
+        "CONTEXT:\n"
+        f"Question: {question}\n"
+        f"User profile: {json.dumps(user_profile or {})}\n"
+        f"Candidate answer:\n{candidate}\n\n"
+        f"GOLDEN_JSON:\n{json.dumps(golden_dict or {})}\n\n"
+        f"FAIR_HOUSING_DOC:\n{json.dumps(fair_doc or {})}"
+    )
+    resp = client.chat.completions.create(
+        model=model,
+        messages=[{"role":"system","content":system},{"role":"user","content":user}],
+        max_completion_tokens=max_tokens,
+        temperature=0,
+        top_p=0.1,
+        seed=seed,
+    )
+    txt = (resp.choices[0].message.content or "").strip()
+    try:
+        data = json.loads(txt)
+    except Exception:
+        m = re.search(r"\{[\s\S]*\}", txt)
+        data = json.loads(m.group(0)) if m else {}
+    scores = data.get("scores") or {}
+    justs  = data.get("justifications") or {}
+
+    # Validate and lightly repair types; if invalid, drop to deterministic later
+    fixed_scores: Dict[str, str] = {}
+    for m in STRICT_EXPECTED_ORDER:
+        val = scores.get(m)
+        if _score_is_valid(m, val):
+            fixed_scores[m] = str(val)
+    return fixed_scores, {k: (v or "").strip() for k, v in justs.items() if isinstance(v, str)}
+
+
 def evaluate_llm_with_files_STRICT(
     question: str,
     candidate_answer: str,
@@ -514,18 +620,46 @@ def evaluate_llm_with_files_STRICT(
     model: Optional[str] = None,
     seed: int = 42,
     generate_justifications: bool = True,
+    scores_via_llm: bool = False,
+    enforce_fair_from_doc: bool = True,
 ) -> EvaluationResult:
     chosen_model = model or os.getenv("OPENAI_DEPLOYMENT") or _choose_chat_capable_model()
+    user_profile = user_profile or {}
+    golden_dict = golden_dict or {}
+    fair_doc = fair_doc or {}
 
-    # 1) Deterministic frozen scores
-    frozen = compute_scores(candidate_answer, user_profile or {}, question or "", golden_dict or {}, fair_doc or {})
+    # 1) Choose scoring path
+    if scores_via_llm:
+        llm_scores, llm_justs = llm_score_metrics(
+            candidate=candidate_answer,
+            question=question or "",
+            user_profile=user_profile,
+            golden_dict=golden_dict,
+            fair_doc=fair_doc,
+            seed=seed,
+        )
+        # Backfill any missing/invalid metrics with deterministic scores
+        det_scores = compute_scores(candidate_answer, user_profile, question or "", golden_dict, fair_doc)
+        frozen: Dict[str, str] = {}
+        for m in STRICT_EXPECTED_ORDER:
+            v = llm_scores.get(m)
+            frozen[m] = v if _score_is_valid(m, v or "") else det_scores[m]
+        # Optionally enforce Fair Housing strictly from doc
+        if enforce_fair_from_doc:
+            frozen["Fair Housing Classifier"] = compute_fair_housing(candidate_answer, fair_doc)
+        # Justifications: prefer LLM’s; otherwise optionally backfill
+        just_map = {m: llm_justs.get(m, "") for m in STRICT_EXPECTED_ORDER}
+        if generate_justifications and not any(just_map.values()):
+            just_map = backfill_justifications(candidate_answer, question, user_profile, frozen)
+    else:
+        # Deterministic frozen scores
+        frozen = compute_scores(candidate_answer, user_profile, question or "", golden_dict, fair_doc)
+        # Optional narratives aligned to frozen scores
+        just_map: Dict[str, str] = {}
+        if generate_justifications:
+            just_map = backfill_justifications(candidate_answer, question, user_profile, frozen)
 
-    # 2) Optional narratives aligned to frozen scores
-    just_map: Dict[str, str] = {}
-    if generate_justifications:
-        just_map = backfill_justifications(candidate_answer, question, user_profile or {}, frozen)
-
-    # 3) Table + alpha
+    # 2) Table + alpha
     table = build_table(frozen, just_map)
     alpha = _alpha_from_table_strict(table)
 
@@ -534,7 +668,7 @@ def evaluate_llm_with_files_STRICT(
         alpha=int(round(alpha)),
         model=chosen_model,
         seed=seed,
-        deterministic=True,
+        deterministic=not scores_via_llm,
     )
 
 
