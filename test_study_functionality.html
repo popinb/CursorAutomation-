@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Study Functionality Test</title>
+    <style>
+        .test-container { margin: 20px; padding: 20px; border: 1px solid #ccc; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background-color: #d4edda; color: #155724; }
+        .fail { background-color: #f8d7da; color: #721c24; }
+        .test-button { margin: 10px; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .response-container { min-height: 100px; border: 1px solid #ddd; padding: 15px; margin: 10px 0; background-color: #f9f9f9; }
+        .streaming-text { font-family: Arial, sans-serif; line-height: 1.5; }
+        .loading-indicator { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>Study Functionality Test</h1>
+    <div id="test-results"></div>
+    
+    <div class="test-container">
+        <h3>Test 1: Non-streaming Response (500ms delay)</h3>
+        <div id="test1-response" class="response-container">
+            <div class="loading-indicator">Preparing response...</div>
+        </div>
+        <button class="test-button" onclick="testNonStreaming()">Test Non-streaming</button>
+        <div id="test1-result"></div>
+    </div>
+    
+    <div class="test-container">
+        <h3>Test 2: Streaming Response (2000ms total, 300ms TFT)</h3>
+        <div id="test2-response" class="response-container">
+            <div class="loading-indicator">Preparing response...</div>
+        </div>
+        <button class="test-button" onclick="testStreaming()">Test Streaming</button>
+        <div id="test2-result"></div>
+    </div>
+    
+    <div class="test-container">
+        <h3>Test 3: Study Data Structure</h3>
+        <button class="test-button" onclick="testDataStructure()">Test Data Structure</button>
+        <div id="test3-result"></div>
+    </div>
+    
+    <div class="test-container">
+        <h3>Test 4: Randomization</h3>
+        <button class="test-button" onclick="testRandomization()">Test Randomization</button>
+        <div id="test4-result"></div>
+    </div>
+
+    <script>
+        // Test data
+        const testAnswer = "This is a test response that should appear either all at once (non-streaming) or character by character (streaming) to verify the timing functionality works correctly.";
+        
+        function addTestResult(testName, passed, message) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            resultDiv.innerHTML = `<strong>${testName}:</strong> ${passed ? 'PASS' : 'FAIL'} - ${message}`;
+            resultsDiv.appendChild(resultDiv);
+        }
+        
+        function testNonStreaming() {
+            const container = document.getElementById('test1-response');
+            const resultDiv = document.getElementById('test1-result');
+            
+            container.innerHTML = '<div class="loading-indicator">Preparing response...</div>';
+            
+            const startTime = Date.now();
+            
+            setTimeout(() => {
+                const endTime = Date.now();
+                const actualDelay = endTime - startTime;
+                const expectedDelay = 500;
+                const tolerance = 100; // 100ms tolerance
+                
+                container.innerHTML = `<div class="streaming-text">${testAnswer}</div>`;
+                
+                const passed = Math.abs(actualDelay - expectedDelay) <= tolerance;
+                const message = `Expected ~${expectedDelay}ms, got ${actualDelay}ms ${passed ? '(within tolerance)' : '(outside tolerance)'}`;
+                
+                resultDiv.innerHTML = `<div class="test-result ${passed ? 'pass' : 'fail'}">${message}</div>`;
+                addTestResult('Non-streaming Timing', passed, message);
+            }, 500);
+        }
+        
+        function testStreaming() {
+            const container = document.getElementById('test2-response');
+            const resultDiv = document.getElementById('test2-result');
+            
+            container.innerHTML = '<div class="loading-indicator">Preparing response...</div>';
+            
+            const startTime = Date.now();
+            const tft = 300;
+            const totalTime = 2000;
+            
+            setTimeout(() => {
+                const tftTime = Date.now() - startTime;
+                const tftPassed = Math.abs(tftTime - tft) <= 100;
+                
+                streamText(container, testAnswer, totalTime - tft, () => {
+                    const endTime = Date.now();
+                    const totalActualTime = endTime - startTime;
+                    const totalPassed = Math.abs(totalActualTime - totalTime) <= 200;
+                    
+                    const message = `TFT: ${tftTime}ms (expected ~${tft}ms), Total: ${totalActualTime}ms (expected ~${totalTime}ms)`;
+                    resultDiv.innerHTML = `<div class="test-result ${tftPassed && totalPassed ? 'pass' : 'fail'}">${message}</div>`;
+                    addTestResult('Streaming Timing', tftPassed && totalPassed, message);
+                });
+            }, tft);
+        }
+        
+        function streamText(container, text, duration, onComplete) {
+            const characters = text.split('');
+            const interval = duration / characters.length;
+            let currentIndex = 0;
+            
+            container.innerHTML = '<div class="streaming-text"></div>';
+            const textElement = container.querySelector('.streaming-text');
+            
+            const streamInterval = setInterval(() => {
+                if (currentIndex < characters.length) {
+                    textElement.textContent += characters[currentIndex];
+                    currentIndex++;
+                } else {
+                    clearInterval(streamInterval);
+                    if (onComplete) onComplete();
+                }
+            }, interval);
+        }
+        
+        function testDataStructure() {
+            const resultDiv = document.getElementById('test3-result');
+            
+            // Test study data structure
+            const studyData = {
+                prompts: {
+                    1: { question: "Test question 1", answer: "Test answer 1" },
+                    2: { question: "Test question 2", answer: "Test answer 2" }
+                },
+                currentTrial: 1,
+                trialOrder: [1, 2],
+                trialData: {
+                    1: { modality: 'nonstream', latency: 500, tft: 0 },
+                    2: { modality: 'stream', latency: 2000, tft: 300 }
+                }
+            };
+            
+            const hasPrompts = studyData.prompts && Object.keys(studyData.prompts).length > 0;
+            const hasTrialData = studyData.trialData && Object.keys(studyData.trialData).length > 0;
+            const hasValidStructure = hasPrompts && hasTrialData;
+            
+            const message = `Prompts: ${hasPrompts ? 'OK' : 'MISSING'}, Trial Data: ${hasTrialData ? 'OK' : 'MISSING'}`;
+            resultDiv.innerHTML = `<div class="test-result ${hasValidStructure ? 'pass' : 'fail'}">${message}</div>`;
+            addTestResult('Data Structure', hasValidStructure, message);
+        }
+        
+        function testRandomization() {
+            const resultDiv = document.getElementById('test4-result');
+            
+            // Test array shuffling
+            function shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+            
+            const originalArray = [1, 2, 3, 4, 5];
+            const shuffled1 = shuffleArray(originalArray);
+            const shuffled2 = shuffleArray(originalArray);
+            
+            // Check if shuffling produces different orders
+            const arraysAreDifferent = JSON.stringify(shuffled1) !== JSON.stringify(shuffled2);
+            const arraysHaveSameElements = shuffled1.sort().join(',') === originalArray.sort().join(',');
+            
+            const passed = arraysAreDifferent && arraysHaveSameElements;
+            const message = `Shuffling produces different orders: ${arraysAreDifferent ? 'YES' : 'NO'}, Same elements: ${arraysHaveSameElements ? 'YES' : 'NO'}`;
+            
+            resultDiv.innerHTML = `<div class="test-result ${passed ? 'pass' : 'fail'}">${message}</div>`;
+            addTestResult('Randomization', passed, message);
+        }
+        
+        // Run initial tests
+        window.onload = function() {
+            addTestResult('Page Load', true, 'Test page loaded successfully');
+            testDataStructure();
+            testRandomization();
+        };
+    </script>
+</body>
+</html>

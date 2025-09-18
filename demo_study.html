@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Latency Study Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .demo-section { margin: 30px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .response-container { min-height: 100px; border: 1px solid #ddd; padding: 15px; margin: 10px 0; background-color: #f9f9f9; }
+        .streaming-text { font-family: Arial, sans-serif; line-height: 1.5; }
+        .loading-indicator { color: #666; font-style: italic; }
+        .demo-button { padding: 10px 20px; margin: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .demo-button:hover { background-color: #0056b3; }
+        .trial-info { background-color: #e8f4f8; padding: 10px; margin: 10px 0; border-radius: 3px; font-size: 12px; }
+        .matrix-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .matrix-table td { padding: 8px; border-bottom: 1px solid #ddd; }
+        .matrix-table select { width: 100%; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Latency Study Demo</h1>
+    <p>This demo shows how the study works. Click the buttons below to see different conditions in action.</p>
+
+    <div class="demo-section">
+        <h3>Demo 1: Non-streaming Response (500ms delay)</h3>
+        <div class="trial-info">
+            <strong>Condition:</strong> Non-streaming | <strong>Latency:</strong> 500ms | <strong>TFT:</strong> 0ms
+        </div>
+        <p><strong>Question:</strong> Define 'compound interest' in one sentence.</p>
+        <div id="demo1-response" class="response-container">
+            <div class="loading-indicator">Preparing response...</div>
+        </div>
+        <button class="demo-button" onclick="demoNonStreaming()">Start Non-streaming Demo</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>Demo 2: Streaming Response (2000ms total, 300ms TFT)</h3>
+        <div class="trial-info">
+            <strong>Condition:</strong> Streaming | <strong>Latency:</strong> 2000ms | <strong>TFT:</strong> 300ms
+        </div>
+        <p><strong>Question:</strong> Give 3 dinner ideas using only rice, eggs, and spinach.</p>
+        <div id="demo2-response" class="response-container">
+            <div class="loading-indicator">Preparing response...</div>
+        </div>
+        <button class="demo-button" onclick="demoStreaming()">Start Streaming Demo</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>Demo 3: Slow Non-streaming (6000ms delay)</h3>
+        <div class="trial-info">
+            <strong>Condition:</strong> Non-streaming | <strong>Latency:</strong> 6000ms | <strong>TFT:</strong> 0ms
+        </div>
+        <p><strong>Question:</strong> Fix this one-line Python bug: `print('hi')` (the original had 'pritn').</p>
+        <div id="demo3-response" class="response-container">
+            <div class="loading-indicator">Preparing response...</div>
+        </div>
+        <button class="demo-button" onclick="demoSlowNonStreaming()">Start Slow Non-streaming Demo</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>Demo 4: Slow Streaming (6000ms total, 300ms TFT)</h3>
+        <div class="trial-info">
+            <strong>Condition:</strong> Streaming | <strong>Latency:</strong> 6000ms | <strong>TFT:</strong> 300ms
+        </div>
+        <p><strong>Question:</strong> Recommend a weekend activity for a rainy day.</p>
+        <div id="demo4-response" class="response-container">
+            <div class="loading-indicator">Preparing response...</div>
+        </div>
+        <button class="demo-button" onclick="demoSlowStreaming()">Start Slow Streaming Demo</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>Rating Matrix (appears after response)</h3>
+        <p>After each response, participants see this rating matrix:</p>
+        <table class="matrix-table">
+            <tr>
+                <td>Overall quality of the response</td>
+                <td>
+                    <select>
+                        <option value="">Select...</option>
+                        <option value="1">1 - Very Poor</option>
+                        <option value="2">2 - Poor</option>
+                        <option value="3">3 - Below Average</option>
+                        <option value="4">4 - Average</option>
+                        <option value="5">5 - Above Average</option>
+                        <option value="6">6 - Good</option>
+                        <option value="7">7 - Excellent</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>The wait felt...</td>
+                <td>
+                    <select>
+                        <option value="">Select...</option>
+                        <option value="1">1 - Very Short</option>
+                        <option value="2">2 - Short</option>
+                        <option value="3">3 - Somewhat Short</option>
+                        <option value="4">4 - Neither Short nor Long</option>
+                        <option value="5">5 - Somewhat Long</option>
+                        <option value="6">6 - Long</option>
+                        <option value="7">7 - Very Long</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>The wait negatively affected my quality judgment</td>
+                <td>
+                    <select>
+                        <option value="">Select...</option>
+                        <option value="1">1 - Strongly Disagree</option>
+                        <option value="2">2 - Disagree</option>
+                        <option value="3">3 - Somewhat Disagree</option>
+                        <option value="4">4 - Neither Agree nor Disagree</option>
+                        <option value="5">5 - Somewhat Agree</option>
+                        <option value="6">6 - Agree</option>
+                        <option value="7">7 - Strongly Agree</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>I would accept this wait time regularly</td>
+                <td>
+                    <select>
+                        <option value="">Select...</option>
+                        <option value="1">1 - Strongly Disagree</option>
+                        <option value="2">2 - Disagree</option>
+                        <option value="3">3 - Somewhat Disagree</option>
+                        <option value="4">4 - Neither Agree nor Disagree</option>
+                        <option value="5">5 - Somewhat Agree</option>
+                        <option value="6">6 - Agree</option>
+                        <option value="7">7 - Strongly Agree</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="demo-section">
+        <h3>Study Summary</h3>
+        <ul>
+            <li><strong>Total participants:</strong> 100</li>
+            <li><strong>Trials per participant:</strong> 5</li>
+            <li><strong>Questions per participant:</strong> 9</li>
+            <li><strong>Study duration:</strong> ~5-7 minutes</li>
+            <li><strong>Conditions:</strong> 2 modalities × 3 latency levels</li>
+            <li><strong>Data collected:</strong> Quality ratings, perceived wait times, acceptance, preferences</li>
+        </ul>
+    </div>
+
+    <script>
+        const answers = {
+            'compound_interest': "Compound interest is the interest calculated on the initial principal and the accumulated interest from previous periods, meaning you earn interest on your interest, causing your investment to grow exponentially over time.",
+            'dinner_ideas': "1) Fried rice with scrambled eggs and wilted spinach, 2) Spinach and egg rice bowl with a soft-boiled egg on top, 3) Rice and egg frittata with fresh spinach mixed in and baked until golden.",
+            'python_bug': "The corrected code is: `print('hi')` - the original had a typo 'pritn' instead of 'print', which is the proper Python function for displaying output to the console.",
+            'weekend_activity': "For a rainy weekend, I recommend indoor activities like reading a good book, cooking a new recipe, doing puzzles or board games, watching movies, or learning something new online through tutorials or courses."
+        };
+
+        function demoNonStreaming() {
+            const container = document.getElementById('demo1-response');
+            container.innerHTML = '<div class="loading-indicator">Preparing response...</div>';
+            
+            setTimeout(() => {
+                container.innerHTML = '<div class="streaming-text">' + answers.compound_interest + '</div>';
+            }, 500);
+        }
+
+        function demoStreaming() {
+            const container = document.getElementById('demo2-response');
+            container.innerHTML = '<div class="loading-indicator">Preparing response...</div>';
+            
+            setTimeout(() => {
+                streamText(container, answers.dinner_ideas, 1700); // 2000ms - 300ms TFT
+            }, 300);
+        }
+
+        function demoSlowNonStreaming() {
+            const container = document.getElementById('demo3-response');
+            container.innerHTML = '<div class="loading-indicator">Preparing response...</div>';
+            
+            setTimeout(() => {
+                container.innerHTML = '<div class="streaming-text">' + answers.python_bug + '</div>';
+            }, 6000);
+        }
+
+        function demoSlowStreaming() {
+            const container = document.getElementById('demo4-response');
+            container.innerHTML = '<div class="loading-indicator">Preparing response...</div>';
+            
+            setTimeout(() => {
+                streamText(container, answers.weekend_activity, 5700); // 6000ms - 300ms TFT
+            }, 300);
+        }
+
+        function streamText(container, text, duration) {
+            const characters = text.split('');
+            const interval = duration / characters.length;
+            let currentIndex = 0;
+            
+            container.innerHTML = '<div class="streaming-text"></div>';
+            const textElement = container.querySelector('.streaming-text');
+            
+            const streamInterval = setInterval(() => {
+                if (currentIndex < characters.length) {
+                    textElement.textContent += characters[currentIndex];
+                    currentIndex++;
+                } else {
+                    clearInterval(streamInterval);
+                }
+            }, interval);
+        }
+    </script>
+</body>
+</html>
