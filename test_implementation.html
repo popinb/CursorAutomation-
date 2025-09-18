@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qualtrics Latency Study - Test Implementation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .response-container {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            margin: 20px 0;
+            min-height: 100px;
+            display: none;
+        }
+        
+        .prompt-container {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .loading-indicator {
+            color: #666;
+            font-style: italic;
+            padding: 15px;
+        }
+        
+        .matrix-question {
+            margin-top: 30px;
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .matrix-row {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .matrix-statement {
+            flex: 1;
+            padding-right: 20px;
+        }
+        
+        .matrix-options {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .matrix-options label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .control-panel {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .control-panel h3 {
+            margin-top: 0;
+        }
+        
+        .control-group {
+            margin: 10px 0;
+        }
+        
+        .control-group label {
+            display: inline-block;
+            width: 150px;
+            font-weight: bold;
+        }
+        
+        .control-group select, .control-group input {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .test-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        
+        .test-button:hover {
+            background: #2980b9;
+        }
+        
+        .timer-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        
+        .status-waiting { background: orange; }
+        .status-streaming { background: #3498db; }
+        .status-complete { background: #27ae60; }
+        
+        .debug-log {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .debug-entry {
+            margin: 2px 0;
+        }
+        
+        .debug-entry.error { color: #e74c3c; }
+        .debug-entry.success { color: #27ae60; }
+        .debug-entry.info { color: #3498db; }
+    </style>
+</head>
+<body>
+    <h1>Qualtrics Latency Study - Test Implementation</h1>
+    
+    <div class="timer-display">
+        Elapsed: <span id="elapsed-time">0.00</span>s
+        <span id="status-dot" class="status-indicator status-waiting"></span>
+    </div>
+    
+    <!-- Control Panel -->
+    <div class="test-container control-panel">
+        <h3>Test Controls</h3>
+        
+        <div class="control-group">
+            <label>Prompt:</label>
+            <select id="prompt-select">
+                <option value="1">1 - Compound Interest</option>
+                <option value="2">2 - Dinner Ideas</option>
+                <option value="3">3 - Python Bug Fix</option>
+                <option value="4">4 - Summarize Text</option>
+                <option value="5">5 - Rainy Day Activity</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label>Modality:</label>
+            <select id="modality-select">
+                <option value="nonstream">Non-streaming</option>
+                <option value="stream">Streaming</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label>Latency:</label>
+            <select id="latency-select">
+                <option value="500">Fast (0.5s)</option>
+                <option value="2000" selected>Medium (2.0s)</option>
+                <option value="6000">Slow (6.0s)</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label>TFT (streaming):</label>
+            <input type="number" id="tft-input" value="300" min="100" max="1000" step="50"> ms
+        </div>
+        
+        <button class="test-button" onclick="runTest()">Run Test</button>
+        <button class="test-button" onclick="runAllTests()" style="background: #e74c3c;">Run All Conditions</button>
+        <button class="test-button" onclick="clearLog()" style="background: #95a5a6;">Clear Log</button>
+        
+        <div class="debug-log" id="debug-log"></div>
+    </div>
+    
+    <!-- Main Test Area -->
+    <div class="test-container">
+        <div class="prompt-container" id="prompt-text">
+            Click "Run Test" to begin...
+        </div>
+        
+        <div id="loading-message" class="loading-indicator" style="display: none;">
+            Generating response...
+        </div>
+        
+        <div class="response-container" id="response-container">
+            <div id="response-text"></div>
+        </div>
+        
+        <!-- Matrix Question -->
+        <div class="matrix-question" id="matrix-question" style="display: none;">
+            <h4>Please rate your experience:</h4>
+            
+            <div class="matrix-row">
+                <div class="matrix-statement">Overall quality of the response</div>
+                <div class="matrix-options">
+                    <label><input type="radio" name="q1" value="1">1<br>Poor</label>
+                    <label><input type="radio" name="q1" value="2">2</label>
+                    <label><input type="radio" name="q1" value="3">3</label>
+                    <label><input type="radio" name="q1" value="4">4</label>
+                    <label><input type="radio" name="q1" value="5">5</label>
+                    <label><input type="radio" name="q1" value="6">6</label>
+                    <label><input type="radio" name="q1" value="7">7<br>Excellent</label>
+                </div>
+            </div>
+            
+            <div class="matrix-row">
+                <div class="matrix-statement">The wait felt...</div>
+                <div class="matrix-options">
+                    <label><input type="radio" name="q2" value="1">1<br>Very Short</label>
+                    <label><input type="radio" name="q2" value="2">2</label>
+                    <label><input type="radio" name="q2" value="3">3</label>
+                    <label><input type="radio" name="q2" value="4">4</label>
+                    <label><input type="radio" name="q2" value="5">5</label>
+                    <label><input type="radio" name="q2" value="6">6</label>
+                    <label><input type="radio" name="q2" value="7">7<br>Very Long</label>
+                </div>
+            </div>
+            
+            <div class="matrix-row">
+                <div class="matrix-statement">The wait negatively affected my quality judgment</div>
+                <div class="matrix-options">
+                    <label><input type="radio" name="q3" value="1">1<br>Strongly Disagree</label>
+                    <label><input type="radio" name="q3" value="2">2</label>
+                    <label><input type="radio" name="q3" value="3">3</label>
+                    <label><input type="radio" name="q3" value="4">4</label>
+                    <label><input type="radio" name="q3" value="5">5</label>
+                    <label><input type="radio" name="q3" value="6">6</label>
+                    <label><input type="radio" name="q3" value="7">7<br>Strongly Agree</label>
+                </div>
+            </div>
+            
+            <div class="matrix-row">
+                <div class="matrix-statement">I would accept this wait time regularly</div>
+                <div class="matrix-options">
+                    <label><input type="radio" name="q4" value="1">1<br>Strongly Disagree</label>
+                    <label><input type="radio" name="q4" value="2">2</label>
+                    <label><input type="radio" name="q4" value="3">3</label>
+                    <label><input type="radio" name="q4" value="4">4</label>
+                    <label><input type="radio" name="q4" value="5">5</label>
+                    <label><input type="radio" name="q4" value="6">6</label>
+                    <label><input type="radio" name="q4" value="7">7<br>Strongly Agree</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Stimulus content
+        const prompts = {
+            "1": {
+                question: "Define 'compound interest' in one sentence.",
+                answer: "Compound interest is the interest calculated on both the initial principal and the accumulated interest from previous periods, causing wealth to grow exponentially over time rather than linearly."
+            },
+            "2": {
+                question: "Give 3 dinner ideas using only rice, eggs, and spinach.",
+                answer: "You could make spinach fried rice with scrambled eggs mixed throughout, a savory rice bowl topped with a poached egg and wilted garlic spinach, or egg-fried rice cakes pan-seared and served over a bed of sautéed spinach with soy sauce."
+            },
+            "3": {
+                question: "Fix this one-line Python bug: pritn('hi')",
+                answer: "The bug is a typo in the function name. The corrected code should be: print('hi'). The function 'pritn' doesn't exist in Python, while 'print' is the built-in function for displaying output to the console."
+            },
+            "4": {
+                question: "Summarize this in one sentence: 'The new museum opened last Tuesday after three years of construction. It features interactive exhibits about local history and has already attracted over 5,000 visitors.'",
+                answer: "A new local history museum with interactive exhibits opened last Tuesday after three years of construction and has already drawn over 5,000 visitors."
+            },
+            "5": {
+                question: "Recommend a weekend activity for a rainy day.",
+                answer: "Visit a local bookstore café where you can browse new releases while enjoying coffee, then settle into a cozy corner to read your finds while listening to the rain—it's the perfect blend of exploration and relaxation for a wet weekend."
+            }
+        };
+        
+        let startTime;
+        let timerInterval;
+        let streamInterval;
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('debug-log');
+            const entry = document.createElement('div');
+            entry.className = `debug-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('debug-log').innerHTML = '';
+            log('Log cleared', 'info');
+        }
+        
+        function updateTimer() {
+            if (startTime) {
+                const elapsed = (Date.now() - startTime) / 1000;
+                document.getElementById('elapsed-time').textContent = elapsed.toFixed(2);
+            }
+        }
+        
+        function setStatus(status) {
+            const dot = document.getElementById('status-dot');
+            dot.className = `status-indicator status-${status}`;
+        }
+        
+        function resetTest() {
+            // Clear any existing intervals
+            if (timerInterval) clearInterval(timerInterval);
+            if (streamInterval) clearInterval(streamInterval);
+            
+            // Reset UI
+            document.getElementById('loading-message').style.display = 'none';
+            document.getElementById('response-container').style.display = 'none';
+            document.getElementById('response-text').textContent = '';
+            document.getElementById('matrix-question').style.display = 'none';
+            
+            // Clear radio buttons
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.checked = false;
+            });
+            
+            // Reset timer
+            document.getElementById('elapsed-time').textContent = '0.00';
+            setStatus('waiting');
+        }
+        
+        function runTest() {
+            resetTest();
+            
+            // Get test parameters
+            const promptId = document.getElementById('prompt-select').value;
+            const modality = document.getElementById('modality-select').value;
+            const latencyMs = parseInt(document.getElementById('latency-select').value);
+            const tftMs = parseInt(document.getElementById('tft-input').value);
+            
+            const currentPrompt = prompts[promptId];
+            
+            log(`Starting test: Prompt ${promptId}, ${modality}, ${latencyMs}ms latency`, 'info');
+            
+            // Display prompt
+            document.getElementById('prompt-text').textContent = currentPrompt.question;
+            
+            // Start timer
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 10);
+            
+            // Show loading message
+            setTimeout(() => {
+                document.getElementById('loading-message').style.display = 'block';
+                log('Loading message displayed', 'info');
+            }, 100);
+            
+            // Response display logic
+            if (modality === 'stream') {
+                // Streaming mode
+                setTimeout(() => {
+                    setStatus('streaming');
+                    document.getElementById('loading-message').style.display = 'none';
+                    document.getElementById('response-container').style.display = 'block';
+                    
+                    const fullText = currentPrompt.answer;
+                    let charIndex = 0;
+                    const responseDiv = document.getElementById('response-text');
+                    responseDiv.textContent = '';
+                    
+                    // Calculate interval for streaming
+                    const totalStreamTime = latencyMs - tftMs;
+                    const interval = totalStreamTime / fullText.length;
+                    
+                    log(`Starting stream: ${fullText.length} chars over ${totalStreamTime}ms (${interval.toFixed(2)}ms/char)`, 'info');
+                    
+                    streamInterval = setInterval(() => {
+                        if (charIndex < fullText.length) {
+                            responseDiv.textContent += fullText[charIndex];
+                            charIndex++;
+                        } else {
+                            clearInterval(streamInterval);
+                            clearInterval(timerInterval);
+                            setStatus('complete');
+                            document.getElementById('matrix-question').style.display = 'block';
+                            log(`Stream complete at ${document.getElementById('elapsed-time').textContent}s`, 'success');
+                        }
+                    }, interval);
+                }, tftMs);
+            } else {
+                // Non-streaming mode
+                setTimeout(() => {
+                    document.getElementById('loading-message').style.display = 'none';
+                    document.getElementById('response-container').style.display = 'block';
+                    document.getElementById('response-text').textContent = currentPrompt.answer;
+                    clearInterval(timerInterval);
+                    setStatus('complete');
+                    document.getElementById('matrix-question').style.display = 'block';
+                    log(`Non-stream complete at ${document.getElementById('elapsed-time').textContent}s`, 'success');
+                }, latencyMs);
+            }
+        }
+        
+        async function runAllTests() {
+            log('Starting comprehensive test suite...', 'info');
+            
+            const testConfigs = [
+                {prompt: '1', modality: 'nonstream', latency: 500, name: 'Fast Non-stream'},
+                {prompt: '2', modality: 'nonstream', latency: 2000, name: 'Medium Non-stream'},
+                {prompt: '3', modality: 'nonstream', latency: 6000, name: 'Slow Non-stream'},
+                {prompt: '4', modality: 'stream', latency: 2000, name: 'Medium Stream'},
+                {prompt: '5', modality: 'stream', latency: 6000, name: 'Slow Stream'}
+            ];
+            
+            for (const config of testConfigs) {
+                log(`\n=== Testing ${config.name} ===`, 'info');
+                
+                // Set controls
+                document.getElementById('prompt-select').value = config.prompt;
+                document.getElementById('modality-select').value = config.modality;
+                document.getElementById('latency-select').value = config.latency;
+                
+                // Run test
+                runTest();
+                
+                // Wait for completion plus buffer
+                await new Promise(resolve => setTimeout(resolve, config.latency + 1500));
+            }
+            
+            log('\nAll tests complete!', 'success');
+        }
+        
+        // Initialize
+        log('Test environment ready', 'success');
+        log('Click "Run Test" to test a single condition', 'info');
+        log('Click "Run All Conditions" to test all 5 trial types', 'info');
+    </script>
+</body>
+</html>

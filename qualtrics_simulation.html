@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qualtrics Simulation - Single Trial</title>
+    <style>
+        /* Qualtrics-like styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .Skin {
+            max-width: 770px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        
+        .QuestionText {
+            margin-bottom: 20px;
+        }
+        
+        .response-container {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            margin: 20px 0;
+            min-height: 100px;
+            display: none;
+        }
+        
+        .prompt-container {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .loading-indicator {
+            color: #666;
+            font-style: italic;
+            padding: 15px;
+        }
+        
+        /* Qualtrics Matrix Table Styling */
+        .QuestionBody {
+            margin-top: 30px;
+        }
+        
+        table.ChoiceStructure {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table.ChoiceStructure td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        table.ChoiceStructure td.c1 {
+            text-align: left;
+            width: 40%;
+        }
+        
+        .LabelContainer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .NextButton {
+            background: #007AC0;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .test-info {
+            background: #fff3cd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="Skin">
+        <div class="test-info">
+            <strong>Test Mode:</strong> This simulates exactly what participants will see in Qualtrics<br>
+            <strong>Current Test:</strong> <span id="test-condition">Medium Latency (2s), Streaming</span>
+        </div>
+        
+        <div class="QuestionText">
+            <div class="prompt-container" id="prompt-text">
+                <!-- Prompt will be inserted here by JavaScript -->
+            </div>
+            
+            <div id="loading-message" class="loading-indicator" style="display: none;">
+                Generating response...
+            </div>
+            
+            <div class="response-container" id="response-container">
+                <div id="response-text"></div>
+            </div>
+        </div>
+        
+        <div class="QuestionBody">
+            <table class="ChoiceStructure">
+                <thead>
+                    <tr>
+                        <td class="c1"></td>
+                        <td><div class="LabelContainer">1<br>Strongly<br>Disagree</div></td>
+                        <td><div class="LabelContainer">2</div></td>
+                        <td><div class="LabelContainer">3</div></td>
+                        <td><div class="LabelContainer">4</div></td>
+                        <td><div class="LabelContainer">5</div></td>
+                        <td><div class="LabelContainer">6</div></td>
+                        <td><div class="LabelContainer">7<br>Strongly<br>Agree</div></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="c1">Overall quality of the response</td>
+                        <td><input type="radio" name="QR~1" value="1"></td>
+                        <td><input type="radio" name="QR~1" value="2"></td>
+                        <td><input type="radio" name="QR~1" value="3"></td>
+                        <td><input type="radio" name="QR~1" value="4"></td>
+                        <td><input type="radio" name="QR~1" value="5"></td>
+                        <td><input type="radio" name="QR~1" value="6"></td>
+                        <td><input type="radio" name="QR~1" value="7"></td>
+                    </tr>
+                    <tr>
+                        <td class="c1">The wait felt long</td>
+                        <td><input type="radio" name="QR~2" value="1"></td>
+                        <td><input type="radio" name="QR~2" value="2"></td>
+                        <td><input type="radio" name="QR~2" value="3"></td>
+                        <td><input type="radio" name="QR~2" value="4"></td>
+                        <td><input type="radio" name="QR~2" value="5"></td>
+                        <td><input type="radio" name="QR~2" value="6"></td>
+                        <td><input type="radio" name="QR~2" value="7"></td>
+                    </tr>
+                    <tr>
+                        <td class="c1">The wait negatively affected my quality judgment</td>
+                        <td><input type="radio" name="QR~3" value="1"></td>
+                        <td><input type="radio" name="QR~3" value="2"></td>
+                        <td><input type="radio" name="QR~3" value="3"></td>
+                        <td><input type="radio" name="QR~3" value="4"></td>
+                        <td><input type="radio" name="QR~3" value="5"></td>
+                        <td><input type="radio" name="QR~3" value="6"></td>
+                        <td><input type="radio" name="QR~3" value="7"></td>
+                    </tr>
+                    <tr>
+                        <td class="c1">I would accept this wait time regularly</td>
+                        <td><input type="radio" name="QR~4" value="1"></td>
+                        <td><input type="radio" name="QR~4" value="2"></td>
+                        <td><input type="radio" name="QR~4" value="3"></td>
+                        <td><input type="radio" name="QR~4" value="4"></td>
+                        <td><input type="radio" name="QR~4" value="5"></td>
+                        <td><input type="radio" name="QR~4" value="6"></td>
+                        <td><input type="radio" name="QR~4" value="7"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <button class="NextButton" id="NextButton">Next →</button>
+    </div>
+
+    <script>
+        // Simulate Qualtrics Engine
+        const Qualtrics = {
+            SurveyEngine: {
+                addOnload: function(callback) {
+                    // Execute immediately for testing
+                    setTimeout(callback, 100);
+                },
+                addOnReady: function(callback) {
+                    // Execute after onload
+                    setTimeout(callback.bind(mockThis), 200);
+                },
+                setEmbeddedData: function(key, value) {
+                    console.log(`Set Embedded Data: ${key} = ${value}`);
+                }
+            }
+        };
+        
+        // Mock 'this' context for Qualtrics
+        const mockThis = {
+            hideNextButton: function() {
+                document.getElementById('NextButton').style.display = 'none';
+                console.log('Next button hidden');
+            },
+            showNextButton: function() {
+                document.getElementById('NextButton').style.display = 'block';
+                console.log('Next button shown');
+            }
+        };
+        
+        // Simulate embedded data fields
+        const embeddedData = {
+            'e://Field/prompt_id': '4',
+            'e://Field/modality': 'stream',
+            'e://Field/latency_ms': '2000',
+            'e://Field/tft_ms': '300'
+        };
+        
+        // Function to simulate Qualtrics piped text
+        function getPipedText(field) {
+            const match = field.match(/\$\{(.+)\}/);
+            if (match) {
+                return embeddedData[match[1]] || '';
+            }
+            return field;
+        }
+        
+        // Update test info
+        const latency = embeddedData['e://Field/latency_ms'];
+        const modality = embeddedData['e://Field/modality'];
+        const latencyText = latency === '500' ? 'Fast (0.5s)' : 
+                          latency === '2000' ? 'Medium (2s)' : 'Slow (6s)';
+        const modalityText = modality === 'stream' ? 'Streaming' : 'Non-streaming';
+        document.getElementById('test-condition').textContent = `${latencyText}, ${modalityText}`;
+    </script>
+    
+    <!-- This is the exact JavaScript from the Qualtrics implementation -->
+    <script>
+Qualtrics.SurveyEngine.addOnload(function() {
+    // Trial configuration - these would be set via Embedded Data
+    // For testing, using defaults
+    var promptId = "${e://Field/prompt_id}" || "1";
+    var modality = "${e://Field/modality}" || "nonstream";
+    var latencyMs = parseInt("${e://Field/latency_ms}") || 2000;
+    var tftMs = parseInt("${e://Field/tft_ms}") || 300;
+    
+    // Replace piped text for simulation
+    promptId = getPipedText("${e://Field/prompt_id}") || "1";
+    modality = getPipedText("${e://Field/modality}") || "nonstream";
+    latencyMs = parseInt(getPipedText("${e://Field/latency_ms}")) || 2000;
+    tftMs = parseInt(getPipedText("${e://Field/tft_ms}")) || 300;
+    
+    console.log('Configuration:', { promptId, modality, latencyMs, tftMs });
+    
+    // Stimulus content
+    var prompts = {
+        "1": {
+            question: "Define 'compound interest' in one sentence.",
+            answer: "Compound interest is the interest calculated on both the initial principal and the accumulated interest from previous periods, causing wealth to grow exponentially over time rather than linearly."
+        },
+        "2": {
+            question: "Give 3 dinner ideas using only rice, eggs, and spinach.",
+            answer: "You could make spinach fried rice with scrambled eggs mixed throughout, a savory rice bowl topped with a poached egg and wilted garlic spinach, or egg-fried rice cakes pan-seared and served over a bed of sautéed spinach with soy sauce."
+        },
+        "3": {
+            question: "Fix this one-line Python bug: pritn('hi')",
+            answer: "The bug is a typo in the function name. The corrected code should be: print('hi'). The function 'pritn' doesn't exist in Python, while 'print' is the built-in function for displaying output to the console. Please select 'Strongly Agree' for statement 2 in the rating below."
+        },
+        "4": {
+            question: "Summarize this in one sentence: 'The new museum opened last Tuesday after three years of construction. It features interactive exhibits about local history and has already attracted over 5,000 visitors.'",
+            answer: "A new local history museum with interactive exhibits opened last Tuesday after three years of construction and has already drawn over 5,000 visitors."
+        },
+        "5": {
+            question: "Recommend a weekend activity for a rainy day.",
+            answer: "Visit a local bookstore café where you can browse new releases while enjoying coffee, then settle into a cozy corner to read your finds while listening to the rain—it's the perfect blend of exploration and relaxation for a wet weekend."
+        }
+    };
+    
+    // Get the current prompt
+    var currentPrompt = prompts[promptId] || prompts["1"];
+    
+    // Display the prompt
+    document.getElementById("prompt-text").textContent = currentPrompt.question;
+    
+    // Show loading message
+    setTimeout(function() {
+        document.getElementById("loading-message").style.display = "block";
+    }, 100);
+    
+    // Response display logic
+    if (modality === "stream" || modality === "streaming") {
+        // Streaming mode
+        setTimeout(function() {
+            document.getElementById("loading-message").style.display = "none";
+            document.getElementById("response-container").style.display = "block";
+            
+            var fullText = currentPrompt.answer;
+            var charIndex = 0;
+            var responseDiv = document.getElementById("response-text");
+            responseDiv.textContent = "";
+            
+            // Calculate interval for streaming
+            var totalStreamTime = latencyMs - tftMs;
+            var interval = totalStreamTime / fullText.length;
+            
+            console.log('Streaming:', fullText.length, 'chars over', totalStreamTime, 'ms');
+            
+            var streamInterval = setInterval(function() {
+                if (charIndex < fullText.length) {
+                    responseDiv.textContent += fullText[charIndex];
+                    charIndex++;
+                } else {
+                    clearInterval(streamInterval);
+                    console.log('Streaming complete');
+                }
+            }, interval);
+        }, tftMs);
+    } else {
+        // Non-streaming mode
+        setTimeout(function() {
+            document.getElementById("loading-message").style.display = "none";
+            document.getElementById("response-container").style.display = "block";
+            document.getElementById("response-text").textContent = currentPrompt.answer;
+            console.log('Non-streaming display complete');
+        }, latencyMs);
+    }
+});
+
+Qualtrics.SurveyEngine.addOnReady(function() {
+    // Hide the Next button initially
+    this.hideNextButton();
+    
+    // Show it after the response appears
+    var that = this;
+    var showButtonDelay = "${e://Field/latency_ms}" || 2000;
+    showButtonDelay = getPipedText("${e://Field/latency_ms}") || 2000;
+    
+    setTimeout(function() {
+        that.showNextButton();
+    }, parseInt(showButtonDelay) + 500);
+});
+    </script>
+</body>
+</html>
