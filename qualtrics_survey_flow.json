@@ -1,0 +1,87 @@
+{
+  "survey_flow": {
+    "description": "Complete Survey Flow configuration for Qualtrics",
+    "elements": [
+      {
+        "type": "EmbeddedData",
+        "description": "Set up participant and trial data",
+        "fields": {
+          "participant_id": "${q://QID_SYSTEM/ResponseID}",
+          "trial_1_prompt_id": "${q://QID_RANDOMIZER/ChoiceGroup/SelectedChoices}",
+          "trial_1_modality": "${q://QID_RANDOMIZER/ChoiceGroup/SelectedChoices}",
+          "trial_1_latency_ms": "${q://QID_RANDOMIZER/ChoiceGroup/SelectedChoices}",
+          "trial_1_tft_ms": "300",
+          "trial_2_prompt_id": "",
+          "trial_2_modality": "",
+          "trial_2_latency_ms": "",
+          "trial_2_tft_ms": "300",
+          "trial_3_prompt_id": "",
+          "trial_3_modality": "",
+          "trial_3_latency_ms": "",
+          "trial_3_tft_ms": "300",
+          "trial_4_prompt_id": "",
+          "trial_4_modality": "",
+          "trial_4_latency_ms": "",
+          "trial_4_tft_ms": "300",
+          "trial_5_prompt_id": "",
+          "trial_5_modality": "",
+          "trial_5_latency_ms": "",
+          "trial_5_tft_ms": "300"
+        }
+      },
+      {
+        "type": "Randomizer",
+        "description": "Randomize trial conditions",
+        "elements": [
+          {
+            "type": "Group",
+            "weight": 1,
+            "embedded_data": {
+              "trial_1_prompt_id": "1",
+              "trial_1_modality": "nonstream",
+              "trial_1_latency_ms": "500",
+              "trial_2_prompt_id": "2",
+              "trial_2_modality": "nonstream",
+              "trial_2_latency_ms": "2000",
+              "trial_3_prompt_id": "3",
+              "trial_3_modality": "nonstream",
+              "trial_3_latency_ms": "6000",
+              "trial_4_prompt_id": "4",
+              "trial_4_modality": "stream",
+              "trial_4_latency_ms": "2000",
+              "trial_5_prompt_id": "5",
+              "trial_5_modality": "stream",
+              "trial_5_latency_ms": "6000"
+            }
+          }
+        ]
+      },
+      {
+        "type": "Block",
+        "id": "BL_consent",
+        "description": "Consent and Instructions"
+      },
+      {
+        "type": "Randomizer",
+        "description": "Randomize trial order",
+        "elements": [
+          {"type": "Block", "id": "BL_trial1"},
+          {"type": "Block", "id": "BL_trial2"},
+          {"type": "Block", "id": "BL_trial3"},
+          {"type": "Block", "id": "BL_trial4"},
+          {"type": "Block", "id": "BL_trial5"}
+        ]
+      },
+      {
+        "type": "Block",
+        "id": "BL_post_trials",
+        "description": "Post-trial perception sliders"
+      },
+      {
+        "type": "Block",
+        "id": "BL_wrap_up",
+        "description": "Wrap-up questions"
+      }
+    ]
+  }
+}

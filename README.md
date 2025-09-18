@@ -1,272 +1,134 @@
-# Zillow Judge Evaluator for OpenAI Evals
+# Complete Qualtrics Implementation: Response Latency Perception Study
 
-This project converts a Custom GPT–based "LLM as a Judge" evaluator into a Python implementation compatible with the OpenAI Evals framework. The evaluator assesses LLM responses across 10 metrics using ground truth documents and buyability profiles.
+This repository contains a complete, ready-to-deploy implementation of a response latency perception study for Qualtrics. The study measures how response timing affects perceived quality and whether streaming reduces perceived latency.
 
-## Overview
+## 📁 Files Overview
 
-The Zillow Judge Evaluator replicates the behavior of a Custom GPT that evaluates LLM responses about home-buying and financial guidance. It uses three knowledge sources:
-1. **Golden Responses** (`godenresponsealpha.docx`) - Reference answers for various buyability questions
-2. **Buyability Profiles** (`buyabilityprofile.rtf`) - User financial profiles for personalization
-3. **Fair Housing Guide** - Comprehensive guidelines for equal housing opportunity and compliance
+### Core Implementation Files
+- **`QUALTRICS_SETUP_GUIDE.md`** - Complete step-by-step setup instructions
+- **`enhanced_trial_javascript.js`** - Production-ready JavaScript for trial questions
+- **`trial_javascript.js`** - Basic JavaScript implementation
+- **`consent_instructions.html`** - Consent and instructions page content
+- **`trial_question_template.html`** - Template for trial questions
+- **`post_trial_sliders.html`** - Post-trial perception sliders
+- **`wrap_up_questions.html`** - Final wrap-up questions
 
-## Evaluation Metrics
+### Configuration Files
+- **`qualtrics_survey_flow.json`** - Survey Flow configuration
+- **`matrix_configuration.json`** - Matrix table setup details
+- **`randomization_groups.json`** - Balanced randomization scheme
 
-The evaluator assesses responses across 12 metrics:
+### Analysis
+- **`data_analysis_plan.R`** - Complete R analysis script
 
-1. **Personalization Accuracy** (Accurate/Inaccurate) - Matches user-specific figures
-2. **Context-Based Personalization** (1-5) - Percentage of relevant customizations included
-3. **Next-Step Identification** (Present/Not Present) - Actionable guidance provided
-4. **Assumption Listing** (True/False) - Explicit statement of assumptions
-5. **Assumption Trust** (1-5) - Transparency about limitations and gaps
-6. **Calculation Accuracy** (True/False) - Mathematical correctness verification
-7. **Faithfulness to Ground Truth** (True/False) - Alignment with all knowledge sources
-8. **Fair Housing Compliance** (True/False) - Adherence to fair housing laws
-9. **Overall Accuracy** (True/False) - Holistic correctness assessment
-10. **Structured Presentation** (1-5) - Quality of formatting and organization
-11. **Coherence** (True/False) - Logical consistency and flow
-12. **Completeness** (1-5) - Coverage of expected question elements
+## 🚀 Quick Start
 
-## File Structure
+1. **Read the Setup Guide**: Start with `QUALTRICS_SETUP_GUIDE.md` for detailed instructions
+2. **Create Survey**: Set up a new Qualtrics survey
+3. **Configure Survey Flow**: Use the randomization groups and embedded data structure
+4. **Add Questions**: Copy HTML content and JavaScript code for each question type
+5. **Test**: Preview and test all conditions before launching
+6. **Analyze**: Use the R script for comprehensive data analysis
 
-```
-├── zillow_judge_evaluator.py     # Core evaluator implementation
-├── evals_wrapper.py              # Standalone wrapper with examples
-├── oai_evals_zillow_judge.py     # OpenAI Evals compatible interface
-├── assets/
-│   ├── golden_responses.json     # Processed ground truth responses
-│   ├── buyability_profiles.json  # Processed user profiles
-│   └── fair_housing_guide.json   # Processed fair housing guidelines
-└── README.md                     # This documentation
-```
+## 📊 Study Design
 
-## Installation
+- **Participants**: N=100 (5-7 minutes each)
+- **Design**: Within-subjects 2×3 design
+  - **Modality**: Non-streaming vs Streaming
+  - **Latency**: Fast (0.5s), Medium (2s), Slow (6s)
+- **Questions**: 9 questions per participant total
+- **Trials**: 5 trials per participant (500 total observations)
 
-1. **Setup Python Environment**
-   ```bash
-   python3 -m venv eval_env
-   source eval_env/bin/activate  # On Windows: eval_env\Scripts\activate
-   pip install openai
-   ```
+## 🎯 Key Features
 
-2. **Clone/Download Files**
-   ```bash
-   # Place all .py files and assets/ directory in your working directory
-   ```
+### Technical Implementation
+- ✅ **JavaScript-powered timing control** - Precise latency manipulation
+- ✅ **Streaming simulation** - Realistic word-by-word text appearance
+- ✅ **Mobile-optimized** - Responsive design for all devices
+- ✅ **Balanced randomization** - Every prompt in every condition
+- ✅ **Attention checks** - Built-in data quality measures
+- ✅ **Error handling** - Robust fallbacks for technical issues
 
-## Usage
+### Data Collection
+- ✅ **Quality ratings** - 7-point Likert scales
+- ✅ **Wait perception** - Both Likert and slider measures
+- ✅ **Acceptance thresholds** - Binary acceptance decisions
+- ✅ **Individual differences** - Max acceptable wait, streaming preference
+- ✅ **Timing metadata** - Actual display times for validation
 
-### Standalone Usage
+### Analysis Ready
+- ✅ **Mixed-effects models** - Account for participant and item effects
+- ✅ **L50 calculations** - Latency thresholds for 50% acceptance
+- ✅ **Mediation analysis** - Test if perceived wait mediates latency→quality
+- ✅ **Effect size calculations** - Cohen's d and odds ratios
+- ✅ **Visualizations** - Publication-ready plots
 
-**Basic Evaluation:**
-```python
-from zillow_judge_evaluator import ZillowJudgeEvaluator
+## 📈 Expected Outcomes
 
-evaluator = ZillowJudgeEvaluator()
+The study will provide:
+1. **Latency tolerance curves** - How acceptance drops with increasing wait time
+2. **Streaming benefits** - Quantified reduction in perceived latency
+3. **Quality impact** - How wait time affects perceived response quality  
+4. **Individual differences** - Variation in latency tolerance
+5. **Operational guidelines** - Recommended wait times for AI systems
 
-# Example evaluation
-candidate_answer = """
-Your personalized BuyAbility estimate is $318,431, based on your specific financial profile.
-This calculation uses your $90,000 annual income, $200 monthly debts, $18,000 down payment...
-"""
+## 🔧 Technical Requirements
 
-question = "What factors were considered to calculate my Buyability?"
-user_profile = {
-    "annual_income": 90000,
-    "monthly_debts": 200,
-    "down_payment": 18000,
-    "credit_score": "660-719"
-}
+### Qualtrics Features Used
+- Survey Flow with embedded data and randomization
+- Matrix table questions with custom JavaScript
+- Multi-slider questions
+- Multiple choice and single slider questions
+- Timing data collection
 
-result = evaluator.evaluate(candidate_answer, question, user_profile)
-print(result)
-```
+### Browser Compatibility
+- Modern browsers with JavaScript enabled
+- Mobile-responsive design
+- Fallback handling for technical issues
 
-**Using the Wrapper:**
-```python
-from evals_wrapper import ZillowEvalsWrapper
+## 📋 Implementation Checklist
 
-wrapper = ZillowEvalsWrapper()
-wrapper.run_example_evaluation()  # Runs built-in example
-```
+- [ ] Create Qualtrics survey
+- [ ] Set up Survey Flow with 5 randomization groups
+- [ ] Add consent/instructions page
+- [ ] Create 5 trial questions with JavaScript
+- [ ] Add post-trial slider question
+- [ ] Add wrap-up questions
+- [ ] Test all conditions and timing
+- [ ] Verify data export format
+- [ ] Launch survey
+- [ ] Monitor data quality
+- [ ] Run analysis with provided R script
 
-### OpenAI Evals Framework Compatible
+## 🎯 Study Validation
 
-```python
-from oai_evals_zillow_judge import ZillowJudgeOAIEval
+The implementation includes multiple validation features:
+- **Timing accuracy**: JavaScript logs actual vs intended latencies
+- **Attention checks**: Subtle instructions embedded in responses
+- **Data quality**: Multiple measures of the same constructs
+- **Balance checking**: Randomization verification in analysis
+- **Mobile testing**: Cross-device compatibility
 
-evaluator = ZillowJudgeOAIEval()
+## 📞 Support
 
-# Single sample evaluation
-sample = {
-    "input": {
-        "candidate_answer": "Your response here...",
-        "question": "What factors were considered?",
-        "user_profile": {"annual_income": 90000, "monthly_debts": 200}
-    }
-}
+For implementation questions:
+1. Check the detailed setup guide first
+2. Test in Qualtrics preview mode
+3. Verify JavaScript console for errors
+4. Use browser developer tools for debugging
 
-result = evaluator.eval_sample(sample)
-print(f"Overall Score: {result['score']:.3f}")
+## 🏆 Expected Impact
 
-# Batch evaluation
-samples = [sample1, sample2, sample3]
-batch_results = evaluator.run_eval(samples)
-```
+This study design enables robust conclusions about:
+- **User experience optimization** for AI systems
+- **Interface design decisions** (streaming vs non-streaming)
+- **Performance benchmarks** for response latency
+- **Individual difference factors** in latency tolerance
 
-## Running the Examples
+The complete implementation provides everything needed to run a publication-quality study on response latency perception with minimal setup time and maximum scientific rigor.
 
-**Test the Core Evaluator:**
-```bash
-source eval_env/bin/activate
-python zillow_judge_evaluator.py
-```
+---
 
-**Test the Wrapper:**
-```bash
-python evals_wrapper.py
-```
-
-**Test OpenAI Evals Compatibility:**
-```bash
-python oai_evals_zillow_judge.py
-```
-
-## Input Format
-
-### Required Fields
-- `candidate_answer` (string): The LLM response to evaluate
-- `question` (string, optional): The original question
-- `user_profile` (dict, optional): User's buyability profile
-
-### User Profile Format
-```json
-{
-    "annual_income": 90000,
-    "monthly_debts": 200,
-    "down_payment": 18000,
-    "credit_score": "660-719",
-    "preferred_monthly_payment": 2500,
-    "comfortable_max_monthly_payment": 3000
-}
-```
-
-## Output Format
-
-### Evaluation Table
-The evaluator returns a markdown table with scores and detailed justifications:
-
-```
-| Metric | Score | Justification |
-|--------|-------|---------------|
-| Personalization Accuracy | Accurate | The response demonstrates excellent personalization... |
-| Context based Personalization | 4 | The response includes 6 out of 10 relevant elements... |
-| ... | ... | ... |
-```
-
-### Structured Output (OAI Evals)
-```json
-{
-    "score": 0.85,
-    "evaluation_table": "| Metric | Score | Justification |...",
-    "detailed_scores": {
-        "personalization_accuracy": {
-            "score": "Accurate",
-            "justification": "...",
-            "numeric_score": 1.0
-        }
-    },
-    "metadata": {
-        "question": "...",
-        "user_profile_provided": true,
-        "answer_length": 145
-    }
-}
-```
-
-## Key Features
-
-### Deterministic Evaluation
-- Uses regex patterns and mathematical verification
-- No LLM calls for scoring (only for the candidate answers being evaluated)
-- Reproducible results across runs
-
-### Comprehensive Coverage
-- **Personalization**: Matches user-specific financial data
-- **Mathematical Accuracy**: Verifies DTI calculations and financial math
-- **Content Quality**: Assesses structure, coherence, and completeness
-- **Practical Value**: Checks for actionable guidance and transparency
-- **Legal Compliance**: Ensures fair housing law adherence and non-discriminatory language
-
-### Flexible Integration
-- Standalone Python classes
-- OpenAI Evals framework compatible
-- Batch processing capabilities
-- Detailed logging and error handling
-
-## Customization
-
-### Adding New Profiles
-Edit `assets/buyability_profiles.json`:
-```json
-[
-    {
-        "profile_id": "Profile2",
-        "down_payment": 50000,
-        "credit_score": "excellent",
-        "annual_income": 120000,
-        "monthly_debts": 300
-    }
-]
-```
-
-### Modifying Ground Truth
-Edit `assets/golden_responses.json` to add new question types or update response templates.
-
-### Adjusting Scoring
-Modify the evaluation methods in `ZillowJudgeEvaluator` class:
-- `_evaluate_personalization_accuracy()`
-- `_evaluate_calculation_accuracy()`
-- etc.
-
-## Troubleshooting
-
-**FileNotFoundError for assets:**
-- Ensure `assets/` directory is in the same location as the Python files
-- Check that JSON files are properly formatted
-
-**Import Errors:**
-- Activate the virtual environment: `source eval_env/bin/activate`
-- Install required packages: `pip install openai`
-
-**Low Scores:**
-- Verify user profile data matches the response content
-- Check that responses include specific financial figures
-- Ensure responses address the original question
-
-## Integration with CI/CD
-
-The evaluator can be integrated into automated testing pipelines:
-
-```python
-# Example test script
-def test_llm_responses():
-    evaluator = ZillowJudgeOAIEval()
-    test_cases = load_test_cases()
-    
-    results = evaluator.run_eval(test_cases)
-    
-    assert results['average_score'] >= 0.7, f"Average score too low: {results['average_score']}"
-    assert results['failed_evaluations'] == 0, "Some evaluations failed"
-```
-
-## Contributing
-
-To extend the evaluator:
-1. Add new metrics in the `ZillowJudgeEvaluator` class
-2. Update the `evaluate()` method to include new metrics
-3. Modify the output table format in `_format_evaluation_table()`
-4. Add corresponding tests and examples
-
-## License
-
-This implementation is provided as-is for educational and evaluation purposes. Ensure compliance with your organization's policies when using financial data and evaluation criteria.
+*Total estimated setup time: 2-3 hours*  
+*Data collection time: ~10 hours for 100 participants*  
+*Analysis time: 1-2 hours with provided R script*

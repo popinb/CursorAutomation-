@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Compatibility Test - Response Latency Study</title>
+    <style>
+        /* Base styles from the actual implementation */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Question display */
+        .question-container {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .question-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        /* Response container */
+        #response-container {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            min-height: 120px;
+            background-color: #fafafa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #response-text {
+            font-family: Georgia, serif;
+            line-height: 1.6;
+            font-size: 16px;
+            color: #333;
+        }
+
+        #loading-indicator {
+            color: #666;
+            font-style: italic;
+        }
+
+        .typing-cursor {
+            animation: blink 1s infinite;
+            font-weight: bold;
+            color: #666;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Matrix table styles */
+        .matrix-container {
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 2px solid #ddd;
+        }
+
+        td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        td:first-child {
+            text-align: left;
+            font-weight: 500;
+            background-color: #fafafa;
+        }
+
+        input[type="radio"] {
+            transform: scale(1.2);
+            margin: 0;
+        }
+
+        /* Controls */
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        button:hover {
+            background-color: #1976D2;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Progress indicator */
+        .progress-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        /* Mobile-specific optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            #response-container {
+                margin: 15px 0;
+                padding: 15px;
+                font-size: 15px;
+            }
+
+            .question-container {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .question-title {
+                font-size: 16px;
+            }
+
+            .question-text {
+                font-size: 15px;
+            }
+
+            /* Make table more mobile-friendly */
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px 4px;
+            }
+
+            td:first-child {
+                font-size: 11px;
+                max-width: 120px;
+                word-wrap: break-word;
+            }
+
+            /* Stack buttons on mobile */
+            button {
+                display: block;
+                width: 100%;
+                margin: 5px 0;
+            }
+
+            /* Adjust progress indicator for mobile */
+            .progress-indicator {
+                position: relative;
+                top: auto;
+                right: auto;
+                display: block;
+                text-align: center;
+                margin-bottom: 15px;
+            }
+        }
+
+        /* Very small screens */
+        @media (max-width: 480px) {
+            th, td {
+                padding: 6px 2px;
+                font-size: 11px;
+            }
+
+            input[type="radio"] {
+                transform: scale(1.0);
+            }
+
+            #response-text {
+                font-size: 14px;
+            }
+        }
+
+        /* Results display */
+        .results {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #28a745;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .device-info {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Mobile Compatibility Test</h1>
+        <p>This page tests the mobile responsiveness and touch interaction for the Response Latency Study.</p>
+
+        <div class="device-info results">
+            <strong>Device Information:</strong><br>
+            <span id="device-info">Loading device info...</span>
+        </div>
+
+        <div class="progress-indicator">Trial 3 of 5</div>
+
+        <div class="controls">
+            <h3>Test Different Scenarios:</h3>
+            <button onclick="testMobileNonStreaming()">Test Non-streaming (Mobile)</button>
+            <button onclick="testMobileStreaming()">Test Streaming (Mobile)</button>
+            <button onclick="testTouchInteraction()">Test Touch Interaction</button>
+            <button onclick="resetTest()" style="background-color: #ff9800;">Reset Test</button>
+        </div>
+
+        <div class="question-container">
+            <div class="question-title">Question:</div>
+            <div class="question-text" id="current-question">
+                Give 3 dinner ideas using only rice, eggs, and spinach.
+            </div>
+        </div>
+
+        <div id="response-container">
+            <div id="response-text"></div>
+            <div id="loading-indicator">Ready for mobile test...</div>
+        </div>
+
+        <div class="matrix-container" id="matrix-container" style="display: none;">
+            <h3>Response Rating Matrix</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="min-width: 150px;">Statement</th>
+                        <th>1</th>
+                        <th>2</th>
+                        <th>3</th>
+                        <th>4</th>
+                        <th>5</th>
+                        <th>6</th>
+                        <th>7</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Overall quality of the response</td>
+                        <td><input type="radio" name="quality" value="1"></td>
+                        <td><input type="radio" name="quality" value="2"></td>
+                        <td><input type="radio" name="quality" value="3"></td>
+                        <td><input type="radio" name="quality" value="4"></td>
+                        <td><input type="radio" name="quality" value="5"></td>
+                        <td><input type="radio" name="quality" value="6"></td>
+                        <td><input type="radio" name="quality" value="7"></td>
+                    </tr>
+                    <tr>
+                        <td>The wait felt... (1=very short, 7=very long)</td>
+                        <td><input type="radio" name="wait" value="1"></td>
+                        <td><input type="radio" name="wait" value="2"></td>
+                        <td><input type="radio" name="wait" value="3"></td>
+                        <td><input type="radio" name="wait" value="4"></td>
+                        <td><input type="radio" name="wait" value="5"></td>
+                        <td><input type="radio" name="wait" value="6"></td>
+                        <td><input type="radio" name="wait" value="7"></td>
+                    </tr>
+                    <tr>
+                        <td>The wait negatively affected my quality judgment</td>
+                        <td><input type="radio" name="impact" value="1"></td>
+                        <td><input type="radio" name="impact" value="2"></td>
+                        <td><input type="radio" name="impact" value="3"></td>
+                        <td><input type="radio" name="impact" value="4"></td>
+                        <td><input type="radio" name="impact" value="5"></td>
+                        <td><input type="radio" name="impact" value="6"></td>
+                        <td><input type="radio" name="impact" value="7"></td>
+                    </tr>
+                    <tr>
+                        <td>I would accept this wait time regularly</td>
+                        <td><input type="radio" name="accept" value="1"></td>
+                        <td><input type="radio" name="accept" value="2"></td>
+                        <td><input type="radio" name="accept" value="3"></td>
+                        <td><input type="radio" name="accept" value="4"></td>
+                        <td><input type="radio" name="accept" value="5"></td>
+                        <td><input type="radio" name="accept" value="6"></td>
+                        <td><input type="radio" name="accept" value="7"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="results" id="test-results">
+            No tests run yet. Device information and test results will appear here.
+        </div>
+    </div>
+
+    <script>
+        // Device detection and information
+        function getDeviceInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                devicePixelRatio: window.devicePixelRatio || 1,
+                touchSupport: 'ontouchstart' in window,
+                orientation: screen.orientation ? screen.orientation.type : 'unknown'
+            };
+
+            // Detect device type
+            let deviceType = 'Desktop';
+            if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                deviceType = 'Mobile/Tablet';
+            }
+
+            return { ...info, deviceType };
+        }
+
+        function displayDeviceInfo() {
+            const info = getDeviceInfo();
+            const infoText = `
+                Device Type: ${info.deviceType}<br>
+                Screen: ${info.screenWidth}×${info.screenHeight}<br>
+                Window: ${info.windowWidth}×${info.windowHeight}<br>
+                Pixel Ratio: ${info.devicePixelRatio}<br>
+                Touch Support: ${info.touchSupport ? 'Yes' : 'No'}<br>
+                Orientation: ${info.orientation}
+            `;
+            document.getElementById('device-info').innerHTML = infoText;
+        }
+
+        function logResult(message, isError = false) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = isError ? 'results error' : 'results';
+            resultDiv.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            resultsDiv.appendChild(resultDiv);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        // Test response text
+        const responseText = "Here are three delicious dinner options: (1) Spinach Fried Rice - stir-fry cooked rice with scrambled eggs and fresh spinach, seasoned with soy sauce and garlic; (2) Rice Bowl with Poached Egg - serve steamed rice topped with sautéed spinach and a perfectly poached egg; (3) Spanish-Style Rice - cook rice with beaten eggs stirred in at the end, mixed with wilted spinach and seasoned with paprika and salt.";
+
+        function resetTest() {
+            document.getElementById('response-text').innerHTML = '';
+            document.getElementById('loading-indicator').style.display = 'block';
+            document.getElementById('loading-indicator').textContent = 'Ready for mobile test...';
+            document.getElementById('matrix-container').style.display = 'none';
+            
+            // Clear all radio buttons
+            const radios = document.querySelectorAll('input[type="radio"]');
+            radios.forEach(radio => radio.checked = false);
+            
+            logResult('Test reset - ready for new mobile test');
+        }
+
+        function testMobileNonStreaming() {
+            resetTest();
+            logResult('Starting mobile non-streaming test (2s delay)');
+            
+            document.getElementById('loading-indicator').textContent = 'Thinking...';
+            
+            setTimeout(function() {
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('response-text').innerHTML = responseText;
+                
+                // Show matrix and scroll to it on mobile
+                setTimeout(function() {
+                    document.getElementById('matrix-container').style.display = 'block';
+                    
+                    // Mobile-specific scroll behavior
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('matrix-container').scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                    }
+                    
+                    logResult('Non-streaming test complete - matrix displayed and scrolled on mobile');
+                }, 300);
+                
+            }, 2000);
+        }
+
+        function testMobileStreaming() {
+            resetTest();
+            logResult('Starting mobile streaming test (3s total, 300ms to first token)');
+            
+            document.getElementById('loading-indicator').textContent = 'Thinking...';
+            
+            const words = responseText.split(' ');
+            const totalWords = words.length;
+            const tftMs = 300;
+            const totalMs = 3000;
+            const remainingTime = totalMs - tftMs;
+            const intervalTime = remainingTime / totalWords;
+            
+            logResult(`Streaming: ${totalWords} words, ${intervalTime.toFixed(1)}ms per word`);
+            
+            setTimeout(function() {
+                document.getElementById('loading-indicator').style.display = 'none';
+                
+                let currentText = '';
+                let wordIndex = 0;
+                
+                function addNextWord() {
+                    if (wordIndex < totalWords) {
+                        currentText += (wordIndex > 0 ? ' ' : '') + words[wordIndex];
+                        document.getElementById('response-text').innerHTML = currentText + '<span class="typing-cursor">|</span>';
+                        wordIndex++;
+                        setTimeout(addNextWord, intervalTime);
+                    } else {
+                        // Streaming complete
+                        document.getElementById('response-text').innerHTML = currentText;
+                        
+                        // Show matrix with mobile scroll
+                        setTimeout(function() {
+                            document.getElementById('matrix-container').style.display = 'block';
+                            
+                            if (window.innerWidth <= 768) {
+                                document.getElementById('matrix-container').scrollIntoView({ 
+                                    behavior: 'smooth', 
+                                    block: 'center' 
+                                });
+                            }
+                            
+                            logResult('Streaming test complete - matrix displayed and scrolled on mobile');
+                        }, 300);
+                    }
+                }
+                
+                addNextWord();
+            }, tftMs);
+        }
+
+        function testTouchInteraction() {
+            logResult('Testing touch interaction with radio buttons');
+            
+            // Show matrix if not already visible
+            document.getElementById('matrix-container').style.display = 'block';
+            
+            // Add touch event listeners to test responsiveness
+            const radios = document.querySelectorAll('input[type="radio"]');
+            let touchCount = 0;
+            
+            radios.forEach((radio, index) => {
+                radio.addEventListener('touchstart', function() {
+                    touchCount++;
+                    logResult(`Touch detected on radio button ${index + 1} (total: ${touchCount})`);
+                });
+                
+                radio.addEventListener('change', function() {
+                    logResult(`Radio button changed: ${this.name} = ${this.value}`);
+                });
+            });
+            
+            logResult('Touch event listeners added to radio buttons - try tapping them');
+            
+            // Test table scrolling on mobile
+            if (window.innerWidth <= 768) {
+                logResult('Mobile detected - testing horizontal table scroll');
+                const table = document.querySelector('table');
+                if (table.scrollWidth > table.clientWidth) {
+                    logResult('Table is scrollable horizontally - swipe to test');
+                } else {
+                    logResult('Table fits in viewport - no horizontal scroll needed');
+                }
+            }
+        }
+
+        // Window resize handler for orientation changes
+        window.addEventListener('resize', function() {
+            const info = getDeviceInfo();
+            logResult(`Window resized: ${info.windowWidth}×${info.windowHeight}, Orientation: ${info.orientation}`);
+            displayDeviceInfo();
+        });
+
+        // Touch event debugging
+        document.addEventListener('touchstart', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                logResult(`Touch start detected on ${e.target.tagName}`);
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            displayDeviceInfo();
+            logResult('Mobile compatibility test loaded');
+            
+            // Auto-detect mobile and provide guidance
+            const info = getDeviceInfo();
+            if (info.deviceType === 'Mobile/Tablet') {
+                logResult('📱 Mobile device detected - all tests optimized for touch interaction');
+            } else {
+                logResult('🖥️ Desktop detected - resize window to test mobile breakpoints');
+            }
+            
+            // Test viewport meta tag
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            if (viewportMeta) {
+                logResult('✅ Viewport meta tag found - mobile scaling enabled');
+            } else {
+                logResult('⚠️ Viewport meta tag missing - mobile scaling may be incorrect');
+            }
+        });
+
+        // Performance monitoring for mobile
+        function measurePerformance(testName, startTime) {
+            const endTime = performance.now();
+            const duration = endTime - startTime;
+            logResult(`${testName} performance: ${duration.toFixed(1)}ms`);
+            
+            if (duration > 100) {
+                logResult(`⚠️ Slow performance detected - may affect mobile experience`);
+            }
+        }
+
+        // Add performance monitoring to existing functions
+        const originalTestMobileNonStreaming = testMobileNonStreaming;
+        testMobileNonStreaming = function() {
+            const startTime = performance.now();
+            originalTestMobileNonStreaming();
+            setTimeout(() => measurePerformance('Non-streaming mobile test', startTime), 2500);
+        };
+
+        const originalTestMobileStreaming = testMobileStreaming;
+        testMobileStreaming = function() {
+            const startTime = performance.now();
+            originalTestMobileStreaming();
+            setTimeout(() => measurePerformance('Streaming mobile test', startTime), 3500);
+        };
+    </script>
+</body>
+</html>

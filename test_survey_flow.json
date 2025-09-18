@@ -1,0 +1,337 @@
+{
+  "survey_flow_test": {
+    "description": "Test Survey Flow configuration and embedded data logic",
+    "test_scenarios": [
+      {
+        "scenario": "Group 1 Assignment",
+        "embedded_data_values": {
+          "participant_id": "TEST001",
+          "current_trial": "1",
+          "trial_1_prompt_id": "1",
+          "trial_1_modality": "nonstream",
+          "trial_1_latency_ms": "500",
+          "trial_1_tft_ms": "300",
+          "trial_2_prompt_id": "2",
+          "trial_2_modality": "nonstream", 
+          "trial_2_latency_ms": "2000",
+          "trial_2_tft_ms": "300",
+          "trial_3_prompt_id": "3",
+          "trial_3_modality": "nonstream",
+          "trial_3_latency_ms": "6000",
+          "trial_3_tft_ms": "300",
+          "trial_4_prompt_id": "4",
+          "trial_4_modality": "stream",
+          "trial_4_latency_ms": "2000",
+          "trial_4_tft_ms": "300",
+          "trial_5_prompt_id": "5",
+          "trial_5_modality": "stream",
+          "trial_5_latency_ms": "6000",
+          "trial_5_tft_ms": "300"
+        },
+        "expected_behavior": {
+          "trial_1": {
+            "prompt": "Define 'compound interest' in one sentence.",
+            "timing": "Non-streaming, 500ms delay",
+            "response_appears": "All at once after 0.5 seconds"
+          },
+          "trial_4": {
+            "prompt": "Summarize this blurb in one sentence: 'Machine learning algorithms require large datasets to train effectively. However, collecting quality data can be expensive and time-consuming. Synthetic data generation offers a promising solution to this challenge.'",
+            "timing": "Streaming, 2000ms total, 300ms to first token",
+            "response_appears": "Gradually over 1.7 seconds after 0.3s delay"
+          }
+        }
+      }
+    ],
+    "data_validation_checks": [
+      {
+        "check": "Embedded data field presence",
+        "fields_required": [
+          "participant_id",
+          "current_trial",
+          "trial_1_prompt_id",
+          "trial_1_modality",
+          "trial_1_latency_ms",
+          "trial_1_tft_ms"
+        ],
+        "validation": "All fields must be present and populated"
+      },
+      {
+        "check": "Data type validation",
+        "validations": [
+          {"field": "trial_X_prompt_id", "type": "string", "values": ["1", "2", "3", "4", "5"]},
+          {"field": "trial_X_modality", "type": "string", "values": ["stream", "nonstream"]},
+          {"field": "trial_X_latency_ms", "type": "integer", "values": [500, 2000, 6000]},
+          {"field": "trial_X_tft_ms", "type": "integer", "values": [300]}
+        ]
+      },
+      {
+        "check": "JavaScript variable substitution",
+        "test_cases": [
+          {
+            "embedded_data": "trial_1_prompt_id = '1'",
+            "javascript_reference": "${e://Field/trial_1_prompt_id}",
+            "expected_result": "1"
+          },
+          {
+            "embedded_data": "current_trial = '3'",
+            "javascript_reference": "${e://Field/current_trial}",
+            "expected_result": "3"
+          }
+        ]
+      }
+    ],
+    "qualtrics_implementation_notes": [
+      "Survey Flow order is critical - embedded data must be set before blocks",
+      "Randomizer must assign all trial variables before first trial block",
+      "Each trial block needs current_trial embedded data updated",
+      "JavaScript uses ${e://Field/variable_name} syntax for embedded data",
+      "Timing questions should be added to capture page exposure time",
+      "Force Response should be enabled on all matrix questions"
+    ]
+  },
+  "survey_flow_structure": {
+    "elements": [
+      {
+        "element_type": "EmbeddedData",
+        "position": 1,
+        "purpose": "Initialize participant ID and empty trial variables",
+        "fields": {
+          "participant_id": "${q://QID_SYSTEM/ResponseID}",
+          "trial_1_prompt_id": "",
+          "trial_1_modality": "",
+          "trial_1_latency_ms": "",
+          "trial_1_tft_ms": "300",
+          "trial_1_actual_latency_ms": "",
+          "trial_2_prompt_id": "",
+          "trial_2_modality": "",
+          "trial_2_latency_ms": "",
+          "trial_2_tft_ms": "300",
+          "trial_2_actual_latency_ms": "",
+          "trial_3_prompt_id": "",
+          "trial_3_modality": "",
+          "trial_3_latency_ms": "",
+          "trial_3_tft_ms": "300",
+          "trial_3_actual_latency_ms": "",
+          "trial_4_prompt_id": "",
+          "trial_4_modality": "",
+          "trial_4_latency_ms": "",
+          "trial_4_tft_ms": "300",
+          "trial_4_actual_latency_ms": "",
+          "trial_5_prompt_id": "",
+          "trial_5_modality": "",
+          "trial_5_latency_ms": "",
+          "trial_5_tft_ms": "300",
+          "trial_5_actual_latency_ms": ""
+        }
+      },
+      {
+        "element_type": "Randomizer",
+        "position": 2,
+        "purpose": "Assign participants to randomization groups",
+        "groups": [
+          {
+            "group_id": 1,
+            "weight": 20,
+            "embedded_data_assignments": {
+              "trial_1_prompt_id": "1",
+              "trial_1_modality": "nonstream",
+              "trial_1_latency_ms": "500",
+              "trial_2_prompt_id": "2",
+              "trial_2_modality": "nonstream",
+              "trial_2_latency_ms": "2000",
+              "trial_3_prompt_id": "3",
+              "trial_3_modality": "nonstream",
+              "trial_3_latency_ms": "6000",
+              "trial_4_prompt_id": "4",
+              "trial_4_modality": "stream",
+              "trial_4_latency_ms": "2000",
+              "trial_5_prompt_id": "5",
+              "trial_5_modality": "stream",
+              "trial_5_latency_ms": "6000"
+            }
+          },
+          {
+            "group_id": 2,
+            "weight": 20,
+            "embedded_data_assignments": {
+              "trial_1_prompt_id": "2",
+              "trial_1_modality": "nonstream",
+              "trial_1_latency_ms": "500",
+              "trial_2_prompt_id": "3",
+              "trial_2_modality": "nonstream",
+              "trial_2_latency_ms": "2000",
+              "trial_3_prompt_id": "4",
+              "trial_3_modality": "nonstream",
+              "trial_3_latency_ms": "6000",
+              "trial_4_prompt_id": "5",
+              "trial_4_modality": "stream",
+              "trial_4_latency_ms": "2000",
+              "trial_5_prompt_id": "1",
+              "trial_5_modality": "stream",
+              "trial_5_latency_ms": "6000"
+            }
+          },
+          {
+            "group_id": 3,
+            "weight": 20,
+            "embedded_data_assignments": {
+              "trial_1_prompt_id": "3",
+              "trial_1_modality": "nonstream",
+              "trial_1_latency_ms": "500",
+              "trial_2_prompt_id": "4",
+              "trial_2_modality": "nonstream",
+              "trial_2_latency_ms": "2000",
+              "trial_3_prompt_id": "5",
+              "trial_3_modality": "nonstream",
+              "trial_3_latency_ms": "6000",
+              "trial_4_prompt_id": "1",
+              "trial_4_modality": "stream",
+              "trial_4_latency_ms": "2000",
+              "trial_5_prompt_id": "2",
+              "trial_5_modality": "stream",
+              "trial_5_latency_ms": "6000"
+            }
+          },
+          {
+            "group_id": 4,
+            "weight": 20,
+            "embedded_data_assignments": {
+              "trial_1_prompt_id": "4",
+              "trial_1_modality": "nonstream",
+              "trial_1_latency_ms": "500",
+              "trial_2_prompt_id": "5",
+              "trial_2_modality": "nonstream",
+              "trial_2_latency_ms": "2000",
+              "trial_3_prompt_id": "1",
+              "trial_3_modality": "nonstream",
+              "trial_3_latency_ms": "6000",
+              "trial_4_prompt_id": "2",
+              "trial_4_modality": "stream",
+              "trial_4_latency_ms": "2000",
+              "trial_5_prompt_id": "3",
+              "trial_5_modality": "stream",
+              "trial_5_latency_ms": "6000"
+            }
+          },
+          {
+            "group_id": 5,
+            "weight": 20,
+            "embedded_data_assignments": {
+              "trial_1_prompt_id": "5",
+              "trial_1_modality": "nonstream",
+              "trial_1_latency_ms": "500",
+              "trial_2_prompt_id": "1",
+              "trial_2_modality": "nonstream",
+              "trial_2_latency_ms": "2000",
+              "trial_3_prompt_id": "2",
+              "trial_3_modality": "nonstream",
+              "trial_3_latency_ms": "6000",
+              "trial_4_prompt_id": "3",
+              "trial_4_modality": "stream",
+              "trial_4_latency_ms": "2000",
+              "trial_5_prompt_id": "4",
+              "trial_5_modality": "stream",
+              "trial_5_latency_ms": "6000"
+            }
+          }
+        ]
+      },
+      {
+        "element_type": "Block",
+        "position": 3,
+        "block_id": "BL_consent",
+        "purpose": "Consent and instructions page"
+      },
+      {
+        "element_type": "EmbeddedData",
+        "position": 4,
+        "purpose": "Set current trial to 1",
+        "fields": {"current_trial": "1"}
+      },
+      {
+        "element_type": "Block", 
+        "position": 5,
+        "block_id": "BL_trial1",
+        "purpose": "First trial question"
+      },
+      {
+        "element_type": "EmbeddedData",
+        "position": 6,
+        "purpose": "Set current trial to 2",
+        "fields": {"current_trial": "2"}
+      },
+      {
+        "element_type": "Block",
+        "position": 7, 
+        "block_id": "BL_trial2",
+        "purpose": "Second trial question"
+      },
+      {
+        "element_type": "EmbeddedData",
+        "position": 8,
+        "purpose": "Set current trial to 3",
+        "fields": {"current_trial": "3"}
+      },
+      {
+        "element_type": "Block",
+        "position": 9,
+        "block_id": "BL_trial3", 
+        "purpose": "Third trial question"
+      },
+      {
+        "element_type": "EmbeddedData",
+        "position": 10,
+        "purpose": "Set current trial to 4",
+        "fields": {"current_trial": "4"}
+      },
+      {
+        "element_type": "Block",
+        "position": 11,
+        "block_id": "BL_trial4",
+        "purpose": "Fourth trial question"
+      },
+      {
+        "element_type": "EmbeddedData",
+        "position": 12,
+        "purpose": "Set current trial to 5", 
+        "fields": {"current_trial": "5"}
+      },
+      {
+        "element_type": "Block",
+        "position": 13,
+        "block_id": "BL_trial5",
+        "purpose": "Fifth trial question"
+      },
+      {
+        "element_type": "Randomizer",
+        "position": 14,
+        "purpose": "Randomize trial order",
+        "note": "This randomizer contains the trial blocks (positions 5,7,9,11,13) in random order"
+      },
+      {
+        "element_type": "Block",
+        "position": 15,
+        "block_id": "BL_post_trials",
+        "purpose": "Post-trial perception sliders"
+      },
+      {
+        "element_type": "Block",
+        "position": 16,
+        "block_id": "BL_wrap_up",
+        "purpose": "Wrap-up questions"
+      }
+    ]
+  },
+  "testing_recommendations": [
+    "Use Qualtrics Preview to test each randomization group",
+    "Check browser console for JavaScript errors during trials",
+    "Verify embedded data values are correctly substituted in JavaScript",
+    "Test on multiple devices (desktop, tablet, mobile)",
+    "Validate timing accuracy across different browsers",
+    "Check that matrix questions appear after response completion",
+    "Verify data export includes all embedded data fields",
+    "Test with different internet connection speeds",
+    "Confirm attention checks work as expected",
+    "Validate that trial randomization preserves condition assignment"
+  ]
+}

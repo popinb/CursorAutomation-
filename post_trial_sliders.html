@@ -1,0 +1,75 @@
+<!-- POST-TRIAL PERCEPTION SLIDERS -->
+<!-- Question Type: Slider -->
+<!-- Multi-slider configuration -->
+
+<div style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h3>Perceived Wait Times</h3>
+    <p>Think back to each of the 5 trials you just completed. For each trial, how long did the wait <strong>feel</strong> to you? Use the sliders below to indicate your perception in seconds.</p>
+    
+    <p><em>Note: The actual wait times varied, but we want to know how long each one felt subjectively to you.</em></p>
+</div>
+
+<!-- Slider Configuration: -->
+<!-- Create 5 sliders with the following settings: -->
+
+<!-- Slider 1: Trial A -->
+<!-- Label: "Trial A: ${e://Field/trial_1_prompt_text}" -->
+<!-- Range: 0 to 10 seconds -->
+<!-- Step: 1 (whole numbers) -->
+<!-- Default: No default position -->
+
+<!-- Slider 2: Trial B -->
+<!-- Label: "Trial B: ${e://Field/trial_2_prompt_text}" -->
+<!-- Range: 0 to 10 seconds -->
+<!-- Step: 1 (whole numbers) -->
+<!-- Default: No default position -->
+
+<!-- Slider 3: Trial C -->
+<!-- Label: "Trial C: ${e://Field/trial_3_prompt_text}" -->
+<!-- Range: 0 to 10 seconds -->
+<!-- Step: 1 (whole numbers) -->
+<!-- Default: No default position -->
+
+<!-- Slider 4: Trial D -->
+<!-- Label: "Trial D: ${e://Field/trial_4_prompt_text}" -->
+<!-- Range: 0 to 10 seconds -->
+<!-- Step: 1 (whole numbers) -->
+<!-- Default: No default position -->
+
+<!-- Slider 5: Trial E -->
+<!-- Label: "Trial E: ${e://Field/trial_5_prompt_text}" -->
+<!-- Range: 0 to 10 seconds -->
+<!-- Step: 1 (whole numbers) -->
+<!-- Default: No default position -->
+
+<!-- JavaScript to populate trial labels -->
+<script>
+Qualtrics.SurveyEngine.addOnload(function() {
+    // Get prompt texts for labeling
+    var prompts = {
+        "1": "Define 'compound interest'",
+        "2": "Give 3 dinner ideas with rice, eggs, spinach", 
+        "3": "Fix Python bug: pritn('hi')",
+        "4": "Summarize machine learning blurb",
+        "5": "Recommend rainy day activity"
+    };
+    
+    // Update slider labels with actual prompts
+    for (var i = 1; i <= 5; i++) {
+        var promptId = "${e://Field/trial_" + i + "_prompt_id}";
+        var promptText = prompts[promptId] || "Trial " + i;
+        
+        // Update the label text (this depends on Qualtrics DOM structure)
+        var sliderLabel = jQuery('label[for*="QR~QID' + this.questionId + '~' + i + '"]');
+        if (sliderLabel.length > 0) {
+            sliderLabel.html("Trial " + String.fromCharCode(64 + i) + ": " + promptText);
+        }
+    }
+});
+</script>
+
+<!-- Question Settings: -->
+<!-- - Force Response: Yes -->
+<!-- - Request Response: Yes -->
+<!-- - Mobile Friendly: Yes -->
+<!-- - Show Value: Yes (display current slider value) -->

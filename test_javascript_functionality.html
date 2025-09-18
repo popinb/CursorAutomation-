@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Functionality Test - Response Latency Study</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #1976D2;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .results {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #28a745;
+            font-family: monospace;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        .timing-display {
+            font-weight: bold;
+            color: #1976D2;
+            margin: 10px 0;
+        }
+        #response-container {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            min-height: 120px;
+            background-color: #fafafa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #response-text {
+            font-family: Georgia, serif;
+            line-height: 1.6;
+            font-size: 16px;
+            color: #333;
+        }
+        .typing-cursor {
+            animation: blink 1s infinite;
+            font-weight: bold;
+            color: #666;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        .test-matrix {
+            margin: 20px 0;
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        input[type="radio"] {
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 JavaScript Functionality Test</h1>
+    <p>This page tests the core JavaScript functionality for the Response Latency Study before implementing in Qualtrics.</p>
+
+    <div class="test-container">
+        <h2>Test Controls</h2>
+        <div class="test-controls">
+            <h3>Test Scenarios:</h3>
+            <button onclick="testNonStreaming(500)">Non-streaming Fast (0.5s)</button>
+            <button onclick="testNonStreaming(2000)">Non-streaming Medium (2s)</button>
+            <button onclick="testNonStreaming(6000)">Non-streaming Slow (6s)</button>
+            <button onclick="testStreaming(2000)">Streaming Medium (2s)</button>
+            <button onclick="testStreaming(6000)">Streaming Slow (6s)</button>
+            <button onclick="resetTest()" style="background-color: #ff9800;">Reset Test</button>
+        </div>
+        
+        <div class="timing-display" id="timing-info">
+            Click a test button to begin timing test
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Simulated Trial Display</h2>
+        
+        <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <strong style="font-size: 18px;">Question:</strong>
+            <div style="margin-top: 10px; font-size: 16px; line-height: 1.5;" id="current-question">
+                Define 'compound interest' in one sentence.
+            </div>
+        </div>
+
+        <div id="response-container">
+            <div id="response-text"></div>
+            <div id="loading-indicator" style="color: #666; font-style: italic;">Ready for test...</div>
+        </div>
+
+        <div class="test-matrix" id="matrix-container">
+            <h3>Response Rating Matrix</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Statement</th>
+                        <th>1</th>
+                        <th>2</th>
+                        <th>3</th>
+                        <th>4</th>
+                        <th>5</th>
+                        <th>6</th>
+                        <th>7</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Overall quality of the response</td>
+                        <td><input type="radio" name="quality" value="1"></td>
+                        <td><input type="radio" name="quality" value="2"></td>
+                        <td><input type="radio" name="quality" value="3"></td>
+                        <td><input type="radio" name="quality" value="4"></td>
+                        <td><input type="radio" name="quality" value="5"></td>
+                        <td><input type="radio" name="quality" value="6"></td>
+                        <td><input type="radio" name="quality" value="7"></td>
+                    </tr>
+                    <tr>
+                        <td>The wait felt... (1=very short, 7=very long)</td>
+                        <td><input type="radio" name="wait" value="1"></td>
+                        <td><input type="radio" name="wait" value="2"></td>
+                        <td><input type="radio" name="wait" value="3"></td>
+                        <td><input type="radio" name="wait" value="4"></td>
+                        <td><input type="radio" name="wait" value="5"></td>
+                        <td><input type="radio" name="wait" value="6"></td>
+                        <td><input type="radio" name="wait" value="7"></td>
+                    </tr>
+                    <tr>
+                        <td>The wait negatively affected my quality judgment</td>
+                        <td><input type="radio" name="impact" value="1"></td>
+                        <td><input type="radio" name="impact" value="2"></td>
+                        <td><input type="radio" name="impact" value="3"></td>
+                        <td><input type="radio" name="impact" value="4"></td>
+                        <td><input type="radio" name="impact" value="5"></td>
+                        <td><input type="radio" name="impact" value="6"></td>
+                        <td><input type="radio" name="impact" value="7"></td>
+                    </tr>
+                    <tr>
+                        <td>I would accept this wait time regularly</td>
+                        <td><input type="radio" name="accept" value="1"></td>
+                        <td><input type="radio" name="accept" value="2"></td>
+                        <td><input type="radio" name="accept" value="3"></td>
+                        <td><input type="radio" name="accept" value="4"></td>
+                        <td><input type="radio" name="accept" value="5"></td>
+                        <td><input type="radio" name="accept" value="6"></td>
+                        <td><input type="radio" name="accept" value="7"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Test Results</h2>
+        <div id="test-results">
+            No tests run yet.
+        </div>
+    </div>
+
+    <script>
+        // Test data - same as in the actual implementation
+        const prompts = {
+            "1": {
+                "question": "Define 'compound interest' in one sentence.",
+                "answer": "Compound interest is the interest earned on both the original principal amount and previously earned interest, causing money to grow exponentially over time. This powerful financial concept means that the longer you save or invest, the more dramatic your returns become, as each period's interest becomes part of the base for calculating the next period's interest."
+            },
+            "2": {
+                "question": "Give 3 dinner ideas using only rice, eggs, and spinach.",
+                "answer": "Here are three delicious dinner options: (1) Spinach Fried Rice - stir-fry cooked rice with scrambled eggs and fresh spinach, seasoned with soy sauce and garlic; (2) Rice Bowl with Poached Egg - serve steamed rice topped with sautéed spinach and a perfectly poached egg; (3) Spanish-Style Rice - cook rice with beaten eggs stirred in at the end, mixed with wilted spinach and seasoned with paprika and salt."
+            }
+        };
+
+        let currentTest = null;
+        let testStartTime = 0;
+        let testResults = [];
+
+        function logResult(message, isError = false) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = isError ? 'results error' : 'results';
+            resultDiv.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            resultsDiv.appendChild(resultDiv);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function updateTiming(message) {
+            document.getElementById('timing-info').textContent = message;
+        }
+
+        function resetTest() {
+            // Clear previous test
+            document.getElementById('response-text').innerHTML = '';
+            document.getElementById('loading-indicator').style.display = 'block';
+            document.getElementById('loading-indicator').textContent = 'Ready for test...';
+            document.getElementById('matrix-container').style.display = 'none';
+            
+            // Clear all radio buttons
+            const radios = document.querySelectorAll('input[type="radio"]');
+            radios.forEach(radio => radio.checked = false);
+            
+            updateTiming('Test reset - ready for new test');
+            logResult('Test environment reset');
+        }
+
+        function testNonStreaming(latencyMs) {
+            resetTest();
+            
+            const promptData = prompts["1"];
+            const responseText = promptData.answer;
+            
+            testStartTime = Date.now();
+            currentTest = {
+                type: 'nonstream',
+                latency: latencyMs,
+                startTime: testStartTime
+            };
+            
+            updateTiming(`Testing non-streaming with ${latencyMs}ms delay...`);
+            logResult(`Started non-streaming test: ${latencyMs}ms delay`);
+            
+            // Update question
+            document.getElementById('current-question').textContent = promptData.question;
+            document.getElementById('loading-indicator').textContent = 'Thinking...';
+            
+            setTimeout(function() {
+                const actualLatency = Date.now() - testStartTime;
+                
+                // Hide loading, show response
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('response-text').innerHTML = responseText;
+                
+                // Show matrix
+                setTimeout(function() {
+                    document.getElementById('matrix-container').style.display = 'block';
+                    document.getElementById('matrix-container').scrollIntoView({ behavior: 'smooth' });
+                }, 300);
+                
+                updateTiming(`Non-streaming complete! Actual delay: ${actualLatency}ms (target: ${latencyMs}ms)`);
+                logResult(`Non-streaming test completed - Target: ${latencyMs}ms, Actual: ${actualLatency}ms, Error: ${actualLatency - latencyMs}ms`);
+                
+                testResults.push({
+                    type: 'nonstream',
+                    targetLatency: latencyMs,
+                    actualLatency: actualLatency,
+                    error: actualLatency - latencyMs
+                });
+                
+            }, latencyMs);
+        }
+
+        function testStreaming(latencyMs) {
+            resetTest();
+            
+            const promptData = prompts["2"];
+            const responseText = promptData.answer;
+            const tftMs = 300; // Time to first token
+            
+            testStartTime = Date.now();
+            currentTest = {
+                type: 'stream',
+                latency: latencyMs,
+                startTime: testStartTime
+            };
+            
+            updateTiming(`Testing streaming with ${latencyMs}ms total delay (${tftMs}ms to first token)...`);
+            logResult(`Started streaming test: ${latencyMs}ms total, ${tftMs}ms to first token`);
+            
+            // Update question
+            document.getElementById('current-question').textContent = promptData.question;
+            document.getElementById('loading-indicator').textContent = 'Thinking...';
+            
+            // Calculate streaming parameters
+            const words = responseText.split(' ');
+            const totalWords = words.length;
+            const remainingTime = latencyMs - tftMs;
+            const intervalTime = remainingTime / totalWords;
+            
+            logResult(`Streaming parameters: ${totalWords} words, ${intervalTime.toFixed(1)}ms per word`);
+            
+            setTimeout(function() {
+                document.getElementById('loading-indicator').style.display = 'none';
+                
+                let currentText = '';
+                let wordIndex = 0;
+                const streamStartTime = Date.now();
+                
+                function addNextWord() {
+                    if (wordIndex < totalWords) {
+                        currentText += (wordIndex > 0 ? ' ' : '') + words[wordIndex];
+                        document.getElementById('response-text').innerHTML = currentText + '<span class="typing-cursor">|</span>';
+                        wordIndex++;
+                        setTimeout(addNextWord, intervalTime);
+                    } else {
+                        // Streaming complete
+                        const actualLatency = Date.now() - testStartTime;
+                        document.getElementById('response-text').innerHTML = currentText;
+                        
+                        // Show matrix
+                        setTimeout(function() {
+                            document.getElementById('matrix-container').style.display = 'block';
+                            document.getElementById('matrix-container').scrollIntoView({ behavior: 'smooth' });
+                        }, 300);
+                        
+                        updateTiming(`Streaming complete! Actual total time: ${actualLatency}ms (target: ${latencyMs}ms)`);
+                        logResult(`Streaming test completed - Target: ${latencyMs}ms, Actual: ${actualLatency}ms, Error: ${actualLatency - latencyMs}ms`);
+                        
+                        testResults.push({
+                            type: 'stream',
+                            targetLatency: latencyMs,
+                            actualLatency: actualLatency,
+                            error: actualLatency - latencyMs,
+                            tft: tftMs,
+                            wordsPerSecond: (totalWords / (actualLatency / 1000)).toFixed(1)
+                        });
+                    }
+                }
+                
+                addNextWord();
+                
+            }, tftMs);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            logResult('JavaScript functionality test loaded successfully');
+            updateTiming('Test environment ready');
+        });
+
+        // Add test summary function
+        function showTestSummary() {
+            if (testResults.length === 0) {
+                logResult('No tests completed yet', true);
+                return;
+            }
+            
+            logResult('=== TEST SUMMARY ===');
+            testResults.forEach((result, index) => {
+                const accuracy = Math.abs(result.error) <= 50 ? '✅ GOOD' : '⚠️ CHECK';
+                logResult(`Test ${index + 1}: ${result.type} ${result.targetLatency}ms - Error: ${result.error}ms ${accuracy}`);
+                if (result.wordsPerSecond) {
+                    logResult(`  Streaming rate: ${result.wordsPerSecond} words/second`);
+                }
+            });
+            
+            const avgError = testResults.reduce((sum, r) => sum + Math.abs(r.error), 0) / testResults.length;
+            logResult(`Average timing error: ${avgError.toFixed(1)}ms`);
+        }
+
+        // Add button for test summary
+        window.addEventListener('load', function() {
+            const controlsDiv = document.querySelector('.test-controls');
+            const summaryButton = document.createElement('button');
+            summaryButton.textContent = 'Show Test Summary';
+            summaryButton.style.backgroundColor = '#4CAF50';
+            summaryButton.onclick = showTestSummary;
+            controlsDiv.appendChild(summaryButton);
+        });
+    </script>
+</body>
+</html>

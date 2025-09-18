@@ -1,0 +1,44 @@
+{
+  "matrix_table_configuration": {
+    "question_type": "Matrix Table",
+    "scale_type": "Likert",
+    "scale_points": 7,
+    "statements": [
+      {
+        "id": "quality",
+        "text": "Overall quality of the response",
+        "variable_name": "quality_rating"
+      },
+      {
+        "id": "wait_perception",
+        "text": "The wait felt... (1=very short, 7=very long)",
+        "variable_name": "wait_felt"
+      },
+      {
+        "id": "quality_impact",
+        "text": "The wait negatively affected my quality judgment",
+        "variable_name": "wait_hurt_quality"
+      },
+      {
+        "id": "acceptance",
+        "text": "I would accept this wait time regularly",
+        "variable_name": "would_accept"
+      }
+    ],
+    "scale_labels": {
+      "1": "Strongly Disagree / Very Short / Very Poor",
+      "2": "Disagree / Short / Poor", 
+      "3": "Somewhat Disagree / Somewhat Short / Below Average",
+      "4": "Neither / Neutral / Average",
+      "5": "Somewhat Agree / Somewhat Long / Above Average",
+      "6": "Agree / Long / Good",
+      "7": "Strongly Agree / Very Long / Excellent"
+    },
+    "settings": {
+      "force_response": true,
+      "request_response": true,
+      "add_timing": true,
+      "mobile_friendly": true
+    }
+  }
+}
