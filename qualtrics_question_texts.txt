@@ -1,0 +1,118 @@
+QUALTRICS QUESTION TEXTS
+========================
+
+1. CONSENT & INSTRUCTIONS PAGE
+   Question Type: Text/Graphic
+   Content:
+   ---
+   <h2>Study: Response Time and User Experience</h2>
+   <p><strong>Purpose:</strong> We're studying how response timing affects your experience with AI-generated content.</p>
+   <p><strong>What you'll do:</strong> You'll see 5 questions with AI-generated answers. Some answers will appear all at once, others will stream in character by character. After each answer, you'll rate your experience.</p>
+   <p><strong>Time:</strong> About 5-7 minutes total.</p>
+   <p><strong>Confidentiality:</strong> Your responses are anonymous and will only be used for research purposes.</p>
+   <p><strong>By continuing, you consent to participate in this study.</strong></p>
+   ---
+
+   Follow-up Question: Multiple Choice
+   Question Text: "I have read and agree to participate in this study"
+   Answer Choices: Yes, No
+
+2. TRIAL PAGES (1-5)
+   Question Type: Text/Graphic
+   Content Template:
+   ---
+   <div class="trial-info">
+       <strong>Trial ${e://Field/trial_order} of 5</strong> | 
+       Modality: ${e://Field/trial_X_modality} | 
+       Target Latency: ${e://Field/trial_X_latency}ms
+   </div>
+   
+   <h3>${e://Field/trial_X_prompt}</h3>
+   
+   <div id="response-container" class="response-container">
+       <div class="loading-indicator">Preparing response...</div>
+   </div>
+   ---
+
+   Follow-up Question: Matrix
+   Question Text: "Please rate your experience with this response:"
+   Rows:
+   1. Overall quality of the response
+   2. The wait felt... (1=Very Short, 7=Very Long)
+   3. The wait negatively affected my quality judgment
+   4. I would accept this wait time regularly
+   
+   Scale: 7-point scale (1-7)
+   Scale Labels: 
+   - Row 1: 1=Very Poor, 7=Excellent
+   - Row 2: 1=Very Short, 7=Very Long
+   - Row 3: 1=Strongly Disagree, 7=Strongly Agree
+   - Row 4: 1=Strongly Disagree, 7=Strongly Agree
+
+3. POST-TRIAL PERCEPTION SLIDERS
+   Question Type: Slider (5 separate questions)
+   
+   Question 1: "Trial A: ${e://Field/trial_1_prompt}"
+   Range: 0-10 seconds
+   Default: 5
+   
+   Question 2: "Trial B: ${e://Field/trial_2_prompt}"
+   Range: 0-10 seconds
+   Default: 5
+   
+   Question 3: "Trial C: ${e://Field/trial_3_prompt}"
+   Range: 0-10 seconds
+   Default: 5
+   
+   Question 4: "Trial D: ${e://Field/trial_4_prompt}"
+   Range: 0-10 seconds
+   Default: 5
+   
+   Question 5: "Trial E: ${e://Field/trial_5_prompt}"
+   Range: 0-10 seconds
+   Default: 5
+
+4. WRAP-UP QUESTIONS
+   
+   Question 1: Slider
+   Question Text: "For similar AI-generated content tasks, what's the longest wait time you would accept regularly?"
+   Range: 0-10 seconds
+   Default: 5
+   
+   Question 2: Multiple Choice
+   Question Text: "For similar tasks, which response style do you prefer?"
+   Answer Choices:
+   - Responses that stream in character by character
+   - No preference
+   - Responses that appear all at once
+
+5. THANK YOU PAGE
+   Question Type: Text/Graphic
+   Content:
+   ---
+   <h2>Thank You!</h2>
+   <p>Your responses have been recorded. Thank you for participating in this study.</p>
+   <p><strong>Study ID:</strong> ${e://Field/ResponseID}</p>
+   ---
+
+PROMPT CONTENT FOR EMBEDDED DATA
+================================
+
+Prompt 1: "Define 'compound interest' in one sentence."
+Prompt 2: "Give 3 dinner ideas using only rice, eggs, and spinach."
+Prompt 3: "Fix this one-line Python bug: `print('hi')` (the original had 'pritn')."
+Prompt 4: "Summarize this in one sentence: 'The weather forecast predicts heavy rain throughout the weekend, with temperatures dropping significantly and strong winds expected to accompany the storm system.'"
+Prompt 5: "Recommend a weekend activity for a rainy day."
+
+ANSWER CONTENT (for JavaScript)
+===============================
+
+Answer 1: "Compound interest is the interest calculated on the initial principal and the accumulated interest from previous periods, meaning you earn interest on your interest, causing your investment to grow exponentially over time."
+
+Answer 2: "1) Fried rice with scrambled eggs and wilted spinach, 2) Spinach and egg rice bowl with a soft-boiled egg on top, 3) Rice and egg frittata with fresh spinach mixed in and baked until golden."
+
+Answer 3: "The corrected code is: `print('hi')` - the original had a typo 'pritn' instead of 'print', which is the proper Python function for displaying output to the console."
+
+Answer 4: "Heavy rain, dropping temperatures, and strong winds are expected throughout the weekend according to the weather forecast."
+
+Answer 5: "For a rainy weekend, I recommend indoor activities like reading a good book, cooking a new recipe, doing puzzles or board games, watching movies, or learning something new online through tutorials or courses."

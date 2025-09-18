@@ -1,0 +1,140 @@
+QUALTRICS SURVEY FLOW CONFIGURATION
+=====================================
+
+1. SURVEY FLOW SETUP
+   - Create a new survey in Qualtrics
+   - Go to Survey Flow
+   - Add the following blocks in order:
+
+2. EMBEDDED DATA VARIABLES
+   Add these as Embedded Data elements in Survey Flow:
+
+   Required Variables:
+   - participant_id = ${e://Field/ResponseID}
+   - trial_1_prompt = (will be set by randomization)
+   - trial_1_modality = (will be set by randomization)
+   - trial_1_latency = (will be set by randomization)
+   - trial_1_tft = (will be set by randomization)
+   - trial_2_prompt = (will be set by randomization)
+   - trial_2_modality = (will be set by randomization)
+   - trial_2_latency = (will be set by randomization)
+   - trial_2_tft = (will be set by randomization)
+   - trial_3_prompt = (will be set by randomization)
+   - trial_3_modality = (will be set by randomization)
+   - trial_3_latency = (will be set by randomization)
+   - trial_3_tft = (will be set by randomization)
+   - trial_4_prompt = (will be set by randomization)
+   - trial_4_modality = (will be set by randomization)
+   - trial_4_latency = (will be set by randomization)
+   - trial_4_tft = (will be set by randomization)
+   - trial_5_prompt = (will be set by randomization)
+   - trial_5_modality = (will be set by randomization)
+   - trial_5_latency = (will be set by randomization)
+   - trial_5_tft = (will be set by randomization)
+   - trial_order = (will be set by randomization)
+
+3. RANDOMIZATION BLOCK
+   Add a Randomizer element with the following conditions:
+
+   Condition 1: Non-stream Fast (500ms)
+   - Set trial_1_prompt = 1
+   - Set trial_1_modality = nonstream
+   - Set trial_1_latency = 500
+   - Set trial_1_tft = 0
+   - Set trial_2_prompt = 2
+   - Set trial_2_modality = nonstream
+   - Set trial_2_latency = 2000
+   - Set trial_2_tft = 0
+   - Set trial_3_prompt = 3
+   - Set trial_3_modality = nonstream
+   - Set trial_3_latency = 6000
+   - Set trial_3_tft = 0
+   - Set trial_4_prompt = 4
+   - Set trial_4_modality = stream
+   - Set trial_4_latency = 2000
+   - Set trial_4_tft = 300
+   - Set trial_5_prompt = 5
+   - Set trial_5_modality = stream
+   - Set trial_5_latency = 6000
+   - Set trial_5_tft = 300
+   - Set trial_order = 1,2,3,4,5
+
+   Condition 2: Non-stream Medium (2000ms)
+   - Set trial_1_prompt = 2
+   - Set trial_1_modality = nonstream
+   - Set trial_1_latency = 2000
+   - Set trial_1_tft = 0
+   - Set trial_2_prompt = 3
+   - Set trial_2_modality = nonstream
+   - Set trial_2_latency = 6000
+   - Set trial_2_tft = 0
+   - Set trial_3_prompt = 4
+   - Set trial_3_modality = nonstream
+   - Set trial_3_latency = 500
+   - Set trial_3_tft = 0
+   - Set trial_4_prompt = 5
+   - Set trial_4_modality = stream
+   - Set trial_4_latency = 2000
+   - Set trial_4_tft = 300
+   - Set trial_5_prompt = 1
+   - Set trial_5_modality = stream
+   - Set trial_5_latency = 6000
+   - Set trial_5_tft = 300
+   - Set trial_order = 2,3,4,5,1
+
+   [Continue with 8 more conditions to ensure all prompts appear in all conditions]
+
+4. QUESTION BLOCKS
+   Create the following question blocks:
+
+   Block 1: Consent & Instructions
+   - Text/Graphic question with consent information
+   - Multiple Choice question: "I agree to participate" (Yes/No)
+
+   Block 2: Trial 1
+   - Text/Graphic question with the trial content
+   - Matrix question for ratings (4 rows, 7-point scale)
+
+   Block 3: Trial 2
+   - Text/Graphic question with the trial content
+   - Matrix question for ratings (4 rows, 7-point scale)
+
+   Block 4: Trial 3
+   - Text/Graphic question with the trial content
+   - Matrix question for ratings (4 rows, 7-point scale)
+
+   Block 5: Trial 4
+   - Text/Graphic question with the trial content
+   - Matrix question for ratings (4 rows, 7-point scale)
+
+   Block 6: Trial 5
+   - Text/Graphic question with the trial content
+   - Matrix question for ratings (4 rows, 7-point scale)
+
+   Block 7: Post-Trial Perceptions
+   - Slider question: Trial A perceived wait time (0-10 seconds)
+   - Slider question: Trial B perceived wait time (0-10 seconds)
+   - Slider question: Trial C perceived wait time (0-10 seconds)
+   - Slider question: Trial D perceived wait time (0-10 seconds)
+   - Slider question: Trial E perceived wait time (0-10 seconds)
+
+   Block 8: Wrap-up Questions
+   - Slider question: Maximum acceptable wait time (0-10 seconds)
+   - Multiple Choice question: Preference (Streaming/No preference/Non-streaming)
+
+   Block 9: Thank You
+   - Text/Graphic question with completion message
+
+5. DISPLAY LOGIC
+   For each trial block, add display logic:
+   - Show Block 2 (Trial 1) if trial_1_prompt is not empty
+   - Show Block 3 (Trial 2) if trial_2_prompt is not empty
+   - etc.
+
+6. RANDOMIZATION WITHIN BLOCKS
+   - Use Randomizer elements to randomize the order of trial blocks
+   - This ensures participants see trials in random order
+
+7. PIPING TEXT
+   - Use piping to display the correct prompt text based on embedded data
+   - Example: ${e://Field/trial_1_prompt} will show the prompt for trial 1
