@@ -1,0 +1,295 @@
+# Example Configuration: Creative Writing Evaluation
+# This configuration evaluates creative writing outputs for style, creativity, and quality
+
+dataset:
+  file_path: "./data/creative_writing_samples.csv"
+  columns:
+    prompt: "writing_prompt"
+    response: "generated_text"
+    ground_truth: "reference_text"  # Optional - if you have reference examples
+    metadata: "genre"
+
+experiment:
+  name: "creative_writing_evaluation"
+  run_name_prefix: "writing_eval"
+  output_directory: "./results/creative_writing/"
+
+judges:
+  models:
+    - "gpt-4o"
+    - "gpt-4o-mini"
+  api:
+    openai_api_key_env: "OPENAI_API_KEY"
+    openai_base_url_env: "OPENAI_API_BASE"
+    temperature: 0.1  # Slightly higher for creative evaluation
+    timeout: 90
+
+metrics:
+  creativity:
+    enabled: true
+    description: "How creative and original the writing is"
+    prompt_template: |
+      You are an impartial evaluator with expertise in creative writing.
+      Your task is to assess the creativity and originality of the generated text.
+      
+      ### Materials
+      
+      * **Writing Prompt:**
+        ```
+        {prompt}
+        ```
+      
+      * **Generated Text:**
+        ```
+        {response}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      Rate the creativity on a scale of 1-5:
+      - 1: Highly predictable, clichéd, or unoriginal
+      - 2: Some creative elements but mostly conventional
+      - 3: Moderately creative with interesting ideas
+      - 4: Highly creative with original concepts and approaches
+      - 5: Exceptionally creative, innovative, and surprising
+      
+      Consider:
+      - Originality of ideas and concepts
+      - Unique perspectives or approaches
+      - Creative use of language and imagery
+      - Unexpected but effective plot/character developments
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "creativity_score": <1-5 integer>,
+        "explanation": "<concise explanation of creativity assessment>"
+      }}
+      ```
+    score_key: "creativity_score"
+    threshold: 3
+    scale: 5
+
+  style_quality:
+    enabled: true
+    description: "Quality of writing style and prose"
+    prompt_template: |
+      You are an impartial evaluator with expertise in writing and literature.
+      Your task is to assess the quality of the writing style and prose.
+      
+      ### Materials
+      
+      * **Writing Prompt:**
+        ```
+        {prompt}
+        ```
+      
+      * **Generated Text:**
+        ```
+        {response}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      Rate the style quality on a scale of 1-5:
+      - 1: Poor style, awkward phrasing, numerous issues
+      - 2: Below average style with noticeable problems
+      - 3: Average style, competent but unremarkable
+      - 4: Good style, engaging and well-crafted
+      - 5: Excellent style, masterful use of language
+      
+      Consider:
+      - Prose quality and flow
+      - Vocabulary and word choice
+      - Sentence structure and variety
+      - Tone and voice consistency
+      - Overall readability and engagement
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "style_quality_score": <1-5 integer>,
+        "explanation": "<concise explanation of style assessment>"
+      }}
+      ```
+    score_key: "style_quality_score"
+    threshold: 3
+    scale: 5
+
+  coherence:
+    enabled: true
+    description: "Logical consistency and narrative coherence"
+    prompt_template: |
+      You are an impartial evaluator.
+      Your task is to assess the coherence and logical consistency of the writing.
+      
+      ### Materials
+      
+      * **Writing Prompt:**
+        ```
+        {prompt}
+        ```
+      
+      * **Generated Text:**
+        ```
+        {response}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      Rate the coherence on a scale of 1-5:
+      - 1: Incoherent, contradictory, or confusing
+      - 2: Some coherence issues, inconsistent elements
+      - 3: Generally coherent with minor inconsistencies
+      - 4: Well-structured and logically consistent
+      - 5: Perfectly coherent, seamless narrative flow
+      
+      Consider:
+      - Internal logic and consistency
+      - Character development consistency
+      - Plot coherence (if applicable)
+      - Clear progression of ideas
+      - Resolution of introduced elements
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "coherence_score": <1-5 integer>,
+        "explanation": "<concise explanation of coherence assessment>"
+      }}
+      ```
+    score_key: "coherence_score"
+    threshold: 3
+    scale: 5
+
+  prompt_adherence:
+    enabled: true
+    description: "How well the writing follows the given prompt"
+    prompt_template: |
+      You are an impartial evaluator.
+      Your task is to assess how well the generated text adheres to the writing prompt.
+      
+      ### Materials
+      
+      * **Writing Prompt:**
+        ```
+        {prompt}
+        ```
+      
+      * **Generated Text:**
+        ```
+        {response}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      Rate the prompt adherence on a scale of 1-5:
+      - 1: Completely ignores or contradicts the prompt
+      - 2: Loosely related to prompt, misses key elements
+      - 3: Generally follows prompt with some deviations
+      - 4: Closely follows prompt requirements
+      - 5: Perfectly fulfills all prompt requirements
+      
+      Consider:
+      - Inclusion of required elements (characters, settings, themes)
+      - Adherence to specified genre or style
+      - Meeting word count or length requirements
+      - Addressing the core request of the prompt
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "prompt_adherence_score": <1-5 integer>,
+        "explanation": "<concise explanation of adherence assessment>"
+      }}
+      ```
+    score_key: "prompt_adherence_score"
+    threshold: 3
+    scale: 5
+
+  engagement:
+    enabled: true
+    description: "How engaging and compelling the writing is"
+    prompt_template: |
+      You are an impartial evaluator.
+      Your task is to assess how engaging and compelling the writing is for readers.
+      
+      ### Materials
+      
+      * **Writing Prompt:**
+        ```
+        {prompt}
+        ```
+      
+      * **Generated Text:**
+        ```
+        {response}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      Rate the engagement on a scale of 1-5:
+      - 1: Boring, unengaging, difficult to read
+      - 2: Somewhat engaging but loses reader interest
+      - 3: Moderately engaging, holds attention reasonably well
+      - 4: Highly engaging, compelling to read
+      - 5: Exceptionally engaging, captivating and memorable
+      
+      Consider:
+      - Reader interest and attention-holding ability
+      - Emotional impact and connection
+      - Pacing and momentum
+      - Compelling characters or situations
+      - Overall entertainment or artistic value
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "engagement_score": <1-5 integer>,
+        "explanation": "<concise explanation of engagement assessment>"
+      }}
+      ```
+    score_key: "engagement_score"
+    threshold: 3
+    scale: 5
+
+composite_metrics:
+  overall_writing_quality:
+    description: "Overall creative writing quality"
+    method: "weighted_average"
+    metrics:
+      - "creativity"
+      - "style_quality"
+      - "coherence"
+      - "engagement"
+    weights:
+      creativity: 0.25
+      style_quality: 0.30
+      coherence: 0.25
+      engagement: 0.20
+
+  publication_readiness:
+    description: "Whether the writing meets publication standards"
+    method: "average"
+    metrics:
+      - "style_quality"
+      - "coherence"
+      - "prompt_adherence"
+
+mlflow:
+  enabled: true
+  tracking_uri: null
+  experiment_tags:
+    evaluation_type: "creative_writing"
+    version: "1.0"
+    domain: "literature"

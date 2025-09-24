@@ -1,0 +1,193 @@
+# Evaluation Configuration Template
+# This file defines the evaluation setup including datasets, metrics, and scoring systems
+
+# Dataset Configuration
+dataset:
+  # Path to your evaluation dataset (CSV format)
+  file_path: "./data/evaluation_dataset.csv"
+  
+  # Column mappings - update these to match your dataset
+  columns:
+    prompt: "prompt"              # Column containing the input prompts/questions
+    response: "response"          # Column containing the model responses
+    ground_truth: "ground_truth"  # Column containing ground truth responses (optional)
+    metadata: "metadata"         # Column containing any metadata (optional)
+
+# Experiment Configuration
+experiment:
+  name: "custom_evaluation_experiment"
+  run_name_prefix: "eval_run"
+  output_directory: "./results/"
+
+# Model Configuration for LLM Judges
+judges:
+  # List of models to use as judges (ensemble evaluation)
+  models:
+    - "gpt-4o"
+    - "gpt-4o-mini"
+  
+  # API Configuration
+  api:
+    openai_api_key_env: "OPENAI_API_KEY"
+    openai_base_url_env: "OPENAI_API_BASE"
+    temperature: 0
+    timeout: 60
+
+# Metrics Configuration
+# Define your custom metrics here
+metrics:
+  # Example 1: Accuracy Metric
+  accuracy:
+    enabled: true
+    description: "Measures how accurately the response matches the ground truth"
+    prompt_template: |
+      You are an impartial evaluator.
+      Your task is to evaluate the accuracy of the AI response compared to the ground truth.
+      
+      ### Materials
+      
+      * **User Query:**
+        ```
+        {prompt}
+        ```
+      
+      * **AI Response:**
+        ```
+        {response}
+        ```
+      
+      * **Ground Truth:**
+        ```
+        {ground_truth}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      Rate the accuracy on a scale of 1-5:
+      - 1: Completely incorrect or misleading
+      - 2: Mostly incorrect with some correct elements
+      - 3: Partially correct but missing key information
+      - 4: Mostly correct with minor inaccuracies
+      - 5: Completely accurate and comprehensive
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "accuracy_score": <1-5 integer>,
+        "explanation": "<concise explanation of the rating>"
+      }}
+      ```
+    
+    score_key: "accuracy_score"
+    threshold: 3
+    scale: 5
+
+  # Example 2: Relevance Metric  
+  relevance:
+    enabled: true
+    description: "Measures how relevant the response is to the user query"
+    prompt_template: |
+      You are an impartial evaluator.
+      Your task is to evaluate how relevant the AI response is to the user query.
+      
+      ### Materials
+      
+      * **User Query:**
+        ```
+        {prompt}
+        ```
+      
+      * **AI Response:**
+        ```
+        {response}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      Rate the relevance on a scale of 1-5:
+      - 1: Completely irrelevant to the query
+      - 2: Somewhat related but misses the main point
+      - 3: Generally relevant but incomplete
+      - 4: Highly relevant with good coverage
+      - 5: Perfectly relevant and comprehensive
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "relevance_score": <1-5 integer>,
+        "explanation": "<concise explanation of the rating>"
+      }}
+      ```
+    
+    score_key: "relevance_score"
+    threshold: 3
+    scale: 5
+
+  # Example 3: Binary Quality Metric
+  quality:
+    enabled: true
+    description: "Binary assessment of response quality"
+    prompt_template: |
+      You are an impartial evaluator.
+      Your task is to determine if the AI response meets basic quality standards.
+      
+      ### Materials
+      
+      * **User Query:**
+        ```
+        {prompt}
+        ```
+      
+      * **AI Response:**
+        ```
+        {response}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      Assess if the response:
+      - Is coherent and well-structured
+      - Addresses the user's question
+      - Is free from major errors
+      - Provides useful information
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "quality_score": <0 for fail, 1 for pass>,
+        "explanation": "<concise explanation of the rating>"
+      }}
+      ```
+    
+    score_key: "quality_score"
+    threshold: 1
+    scale: 1
+
+# Composite Scoring
+# Define how to combine multiple metrics into summary scores
+composite_metrics:
+  overall_score:
+    description: "Overall evaluation score combining all metrics"
+    method: "average"  # Options: "average", "weighted_average", "minimum"
+    metrics:
+      - "accuracy"
+      - "relevance"
+      - "quality"
+    weights:  # Only used if method is "weighted_average"
+      accuracy: 0.4
+      relevance: 0.4
+      quality: 0.2
+
+# MLflow Configuration
+mlflow:
+  enabled: true
+  tracking_uri: null  # Leave null for default local tracking
+  experiment_tags:
+    evaluation_type: "custom_template"
+    version: "1.0"
