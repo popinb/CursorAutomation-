@@ -1,0 +1,56 @@
+data:
+  columns:
+    personalization: user_personalization_features
+    prompt: prompt
+    response: response
+  files:
+  - test_responses.csv
+  ground_truth_dir: ./test_data_failures/
+experiment:
+  name: failure_test_evaluation
+  run_name_prefix: failure_test
+metrics:
+- description: Checks if personal info is used accurately
+  name: personalization_accuracy
+  output_format: json
+  prompt_template: Check if personal details are used...
+  score_range:
+  - 0
+  - 1
+  threshold: 1
+- description: How specific and detailed the response is
+  name: specificity
+  output_format: json
+  prompt_template: Rate specificity 1-5...
+  score_range:
+  - 1
+  - 5
+  threshold: 4
+- description: How actionable the advice is
+  name: actionability
+  output_format: json
+  prompt_template: Rate actionability 1-5...
+  score_range:
+  - 1
+  - 5
+  threshold: 4
+- description: How complete the answer is
+  name: completeness
+  output_format: json
+  prompt_template: Rate completeness 1-5...
+  score_range:
+  - 1
+  - 5
+  threshold: 4
+mlflow:
+  enable_logging: false
+models:
+  judge_models:
+  - gpt-4o
+  response_generation:
+    type: ground_truth
+output:
+  generate_summary: true
+  results_dir: ./failure_test_results/
+  save_detailed_scores: true
+  save_raw_responses: true

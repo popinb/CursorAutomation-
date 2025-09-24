@@ -1,0 +1,6 @@
+prompt,response,user_personalization_features
+"What's my mortgage rate?","Mortgage rates vary widely depending on many factors.","credit_score: 750, income: $95000"
+"How much can I borrow?","Based on your income of $95,000 and credit score of 750, you could qualify for a loan up to $380,000.","credit_score: 750, income: $95000"
+"Should I get a 15 or 30 year loan?","Both have pros and cons. 15-year loans have lower rates but higher payments.","loan_amount: $300000, income: $95000"
+"What's the process to buy a home?","The home buying process involves getting pre-approved, finding a home, making an offer, getting inspections, and closing. Based on your $95,000 income, you're in a good position to start.","income: $95000"
+"Can I afford a $400k house?","That might be stretching your budget. Generally, you should keep your housing costs under 28% of income.","income: $95000, current_savings: $80000"

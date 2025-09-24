@@ -1,0 +1,149 @@
+{
+  "samples": [
+    {
+      "prompt": "What's the best mortgage rate I can get?",
+      "response": "Based on your excellent credit score of 780 and 20% down payment, you could qualify for rates around 6.5% for a 30-year fixed mortgage.",
+      "user_personalization_features": "credit_score: 780, down_payment: 20%, location: California"
+    },
+    {
+      "prompt": "How much house can I afford?",
+      "response": "With your annual income of $120,000 and current monthly debts of $500, you could afford a home around $450,000-500,000.",
+      "user_personalization_features": "income: $120,000, monthly_debts: $500, location: Texas"
+    },
+    {
+      "prompt": "Should I refinance my mortgage?",
+      "response": "Given that your current rate is 7.5% and market rates are now around 6.5%, refinancing could save you approximately $300 per month.",
+      "user_personalization_features": "current_rate: 7.5%, loan_balance: $350,000"
+    },
+    {
+      "prompt": "What are closing costs like in my area?",
+      "response": "In New York, typical closing costs range from 2-5% of the home price, so for a $600,000 home, expect $12,000-30,000.",
+      "user_personalization_features": "location: New York, home_price: $600,000"
+    },
+    {
+      "prompt": "Can I get a loan with my credit score?",
+      "response": "With a credit score of 620, you can still qualify for an FHA loan with as little as 3.5% down, though rates will be higher than conventional loans.",
+      "user_personalization_features": "credit_score: 620"
+    }
+  ],
+  "evaluations": {
+    "personalization_accuracy": [
+      {
+        "personalization_accuracy_score": 1,
+        "explanation": "All personal details accurately used."
+      },
+      {
+        "personalization_accuracy_score": 1,
+        "explanation": "All personal details accurately used."
+      },
+      {
+        "personalization_accuracy_score": 1,
+        "explanation": "All personal details accurately used."
+      },
+      {
+        "personalization_accuracy_score": 1,
+        "explanation": "All personal details accurately used."
+      },
+      {
+        "personalization_accuracy_score": 1,
+        "explanation": "All personal details accurately used."
+      }
+    ],
+    "relevance": [
+      {
+        "relevance_score": 5,
+        "explanation": "Directly answers the question asked."
+      },
+      {
+        "relevance_score": 5,
+        "explanation": "Directly answers the question asked."
+      },
+      {
+        "relevance_score": 4,
+        "explanation": "Directly answers the question asked."
+      },
+      {
+        "relevance_score": 4,
+        "explanation": "Directly answers the question asked."
+      },
+      {
+        "relevance_score": 4,
+        "explanation": "Directly answers the question asked."
+      }
+    ],
+    "advice_quality": [
+      {
+        "advice_quality_score": 4,
+        "explanation": "Good personalized advice with specific numbers."
+      },
+      {
+        "advice_quality_score": 4,
+        "explanation": "Good personalized advice with specific numbers."
+      },
+      {
+        "advice_quality_score": 4,
+        "explanation": "Good personalized advice with specific numbers."
+      },
+      {
+        "advice_quality_score": 3,
+        "explanation": "Basic but accurate advice."
+      },
+      {
+        "advice_quality_score": 3,
+        "explanation": "Basic but accurate advice."
+      }
+    ],
+    "actionability": [
+      {
+        "actionability_score": 5,
+        "explanation": "Clear actionable steps provided."
+      },
+      {
+        "actionability_score": 3,
+        "explanation": "General guidance without specific next steps."
+      },
+      {
+        "actionability_score": 5,
+        "explanation": "Clear actionable steps provided."
+      },
+      {
+        "actionability_score": 3,
+        "explanation": "General guidance without specific next steps."
+      },
+      {
+        "actionability_score": 5,
+        "explanation": "Clear actionable steps provided."
+      }
+    ]
+  },
+  "summary": {
+    "personalization_accuracy": {
+      "mean": 1.0,
+      "min": 1,
+      "max": 1,
+      "threshold": 1,
+      "pass_rate": 1.0
+    },
+    "relevance": {
+      "mean": 4.4,
+      "min": 4,
+      "max": 5,
+      "threshold": 4,
+      "pass_rate": 1.0
+    },
+    "advice_quality": {
+      "mean": 3.6,
+      "min": 3,
+      "max": 4,
+      "threshold": 3,
+      "pass_rate": 1.0
+    },
+    "actionability": {
+      "mean": 4.2,
+      "min": 3,
+      "max": 5,
+      "threshold": 3,
+      "pass_rate": 1.0
+    }
+  }
+}
