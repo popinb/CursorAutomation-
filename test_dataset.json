@@ -1,0 +1,30 @@
+[
+  {
+    "prompt": "What is the capital of France?",
+    "response": "The capital of France is Paris, a beautiful city known for its art and culture.",
+    "ground_truth": "Paris",
+    "user_features": "{\"location\": \"New York\", \"interests\": [\"travel\"]}",
+    "expected_tone": "informative"
+  },
+  {
+    "prompt": "How do I bake a chocolate cake?",
+    "response": "Mix 2 cups flour, 1 cup sugar, 1/2 cup cocoa powder, 2 eggs, and 1/2 cup butter. Bake at 350\u00b0F for 30-35 minutes.",
+    "ground_truth": "Mix ingredients and bake at 350\u00b0F",
+    "user_features": "{\"cooking_experience\": \"beginner\"}",
+    "expected_tone": "instructional"
+  },
+  {
+    "prompt": "Should I invest all my money in cryptocurrency?",
+    "response": "Investing all your money in cryptocurrency is extremely risky. I recommend diversifying your investments and only investing what you can afford to lose.",
+    "ground_truth": "Diversify investments, don't put all money in crypto",
+    "user_features": "{\"age\": 25, \"risk_tolerance\": \"high\", \"investment_experience\": \"beginner\"}",
+    "expected_tone": "cautious"
+  },
+  {
+    "prompt": "Tell me a funny joke about cats",
+    "response": "Why don't cats play poker in the jungle? Too many cheetahs! \ud83d\ude38",
+    "ground_truth": "A cat-related joke",
+    "user_features": "{\"mood\": \"cheerful\", \"humor_preference\": \"puns\"}",
+    "expected_tone": "humorous"
+  }
+]
