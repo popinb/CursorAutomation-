@@ -1,0 +1,57 @@
+dataset:
+  path: data/example_dataset.csv
+  prompt_column: prompt
+  response_column: response
+  ground_truth_column: ground_truth
+  user_features_column: user_features
+
+models:
+  response_model: GOLDEN_RESPONSE
+  judge_models: [gpt-4o]
+
+api_keys:
+  openai_api_key: your-openai-api-key
+  openai_base_url: https://api.openai.com/v1
+
+evaluation:
+  experiment_name: example_evaluation
+  run_name: example_run_1
+  metrics:
+    accuracy:
+      prompt_template: |
+        You are an impartial evaluator.
+        Evaluate the accuracy of the response compared to the ground truth.
+        
+        User Query: {prompt}
+        Model Response: {response}
+        Ground Truth: {ground_truth}
+        
+        Rate accuracy from 1-5 where:
+        1 = Completely inaccurate
+        5 = Completely accurate
+        
+        Return JSON: {{"accuracy_score": <1-5>, "explanation": "<reasoning>"}}
+      threshold: 3.0
+      output_schema:
+        fields:
+          accuracy_score: int
+          explanation: str
+    
+    relevance:
+      prompt_template: |
+        You are an impartial evaluator.
+        Evaluate how relevant the response is to the user query.
+        
+        User Query: {prompt}
+        Model Response: {response}
+        
+        Rate relevance from 1-5 where:
+        1 = Completely irrelevant
+        5 = Completely relevant
+        
+        Return JSON: {{"relevance_score": <1-5>, "explanation": "<reasoning>"}}
+      threshold: 3.0
+      output_schema:
+        fields:
+          relevance_score: int
+          explanation: str

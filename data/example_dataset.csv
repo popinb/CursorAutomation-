@@ -1,4 +1,4 @@
-prompt,response,ground_truth,user_features,category
-What is the capital of France?,"The capital of France is Paris, a beautiful city known for its art and culture.",Paris,"{""location"": ""New York"", ""interests"": [""travel""]}",geography
-How do I improve my credit score?,"To improve your credit score, pay bills on time, keep credit card balances low, and check your credit report regularly.","Pay bills on time, keep balances low, check credit report","{""credit_score"": 650, ""debt_amount"": 5000}",finance
-What's the best programming language to learn?,Python is an excellent choice for beginners due to its simple syntax and wide range of applications.,Python is good for beginners,"{""programming_experience"": ""none"", ""goals"": ""data_science""}",technology
+prompt,response,ground_truth,user_features
+"What is the capital of France?","The capital of France is Paris.","Paris","{"location": "New York"}"
+"How do I cook pasta?","Boil water, add pasta, cook for 8-10 minutes.","Boil water, add pasta, cook","{"cooking_level": "beginner"}"
+"What is 2+2?","2+2 equals 4.","4","{"math_level": "basic"}"
