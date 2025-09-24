@@ -1,272 +1,346 @@
-# Zillow Judge Evaluator for OpenAI Evals
+# Universal Evaluation Template System
 
-This project converts a Custom GPT–based "LLM as a Judge" evaluator into a Python implementation compatible with the OpenAI Evals framework. The evaluator assesses LLM responses across 10 metrics using ground truth documents and buyability profiles.
+A flexible, MLflow-integrated evaluation system that allows anyone to evaluate any dataset with custom metrics and scoring systems. This template system makes it easy to set up comprehensive evaluations without writing custom code.
 
-## Overview
+## 🚀 Features
 
-The Zillow Judge Evaluator replicates the behavior of a Custom GPT that evaluates LLM responses about home-buying and financial guidance. It uses three knowledge sources:
-1. **Golden Responses** (`godenresponsealpha.docx`) - Reference answers for various buyability questions
-2. **Buyability Profiles** (`buyabilityprofile.rtf`) - User financial profiles for personalization
-3. **Fair Housing Guide** - Comprehensive guidelines for equal housing opportunity and compliance
+- **Universal Dataset Support**: Works with any CSV dataset containing prompts and responses
+- **Custom Metrics**: Define your own evaluation metrics with natural language prompts
+- **MLflow Integration**: Automatic logging and visualization of evaluation results
+- **Ensemble Evaluation**: Use multiple judge models for robust evaluation
+- **Domain-Specific Templates**: Pre-built metric templates for different domains (financial, medical, etc.)
+- **Flexible Configuration**: YAML-based configuration system
+- **Response Generation**: Support for various response generation methods
 
-## Evaluation Metrics
-
-The evaluator assesses responses across 12 metrics:
-
-1. **Personalization Accuracy** (Accurate/Inaccurate) - Matches user-specific figures
-2. **Context-Based Personalization** (1-5) - Percentage of relevant customizations included
-3. **Next-Step Identification** (Present/Not Present) - Actionable guidance provided
-4. **Assumption Listing** (True/False) - Explicit statement of assumptions
-5. **Assumption Trust** (1-5) - Transparency about limitations and gaps
-6. **Calculation Accuracy** (True/False) - Mathematical correctness verification
-7. **Faithfulness to Ground Truth** (True/False) - Alignment with all knowledge sources
-8. **Fair Housing Compliance** (True/False) - Adherence to fair housing laws
-9. **Overall Accuracy** (True/False) - Holistic correctness assessment
-10. **Structured Presentation** (1-5) - Quality of formatting and organization
-11. **Coherence** (True/False) - Logical consistency and flow
-12. **Completeness** (1-5) - Coverage of expected question elements
-
-## File Structure
+## 📁 Project Structure
 
 ```
-├── zillow_judge_evaluator.py     # Core evaluator implementation
-├── evals_wrapper.py              # Standalone wrapper with examples
-├── oai_evals_zillow_judge.py     # OpenAI Evals compatible interface
-├── assets/
-│   ├── golden_responses.json     # Processed ground truth responses
-│   ├── buyability_profiles.json  # Processed user profiles
-│   └── fair_housing_guide.json   # Processed fair housing guidelines
-└── README.md                     # This documentation
+template_evaluation_system/
+├── template_evaluation_system.py    # Main evaluation system
+├── metric_templates.py              # Pre-built metric templates
+├── generate_config.py               # Configuration generator utility
+├── example_usage.py                 # Usage examples
+├── config_template.yaml             # Configuration template
+├── requirements.txt                 # Python dependencies
+└── README.md                        # This file
 ```
 
-## Installation
+## 🛠️ Installation
 
-1. **Setup Python Environment**
+1. **Install dependencies**:
    ```bash
-   python3 -m venv eval_env
-   source eval_env/bin/activate  # On Windows: eval_env\Scripts\activate
-   pip install openai
+   pip install -r requirements.txt
    ```
 
-2. **Clone/Download Files**
+2. **Set up your OpenAI API key**:
    ```bash
-   # Place all .py files and assets/ directory in your working directory
+   export OPENAI_API_KEY="your-openai-api-key"
    ```
 
-## Usage
+## 📊 Quick Start
 
-### Standalone Usage
+### 1. Prepare Your Dataset
 
-**Basic Evaluation:**
-```python
-from zillow_judge_evaluator import ZillowJudgeEvaluator
+Your dataset should be a CSV file with at least these columns:
+- **prompt**: User questions or prompts
+- **response**: Model responses to evaluate
 
-evaluator = ZillowJudgeEvaluator()
+Optional columns:
+- **ground_truth**: Ground truth answers for accuracy evaluation
+- **user_features**: User personalization features (JSON string)
 
-# Example evaluation
-candidate_answer = """
-Your personalized BuyAbility estimate is $318,431, based on your specific financial profile.
-This calculation uses your $90,000 annual income, $200 monthly debts, $18,000 down payment...
-"""
-
-question = "What factors were considered to calculate my Buyability?"
-user_profile = {
-    "annual_income": 90000,
-    "monthly_debts": 200,
-    "down_payment": 18000,
-    "credit_score": "660-719"
-}
-
-result = evaluator.evaluate(candidate_answer, question, user_profile)
-print(result)
+Example dataset:
+```csv
+prompt,response,ground_truth,user_features
+"What is the capital of France?","Paris is the capital of France.","Paris","{}"
+"How do I bake a cake?","Mix ingredients and bake at 350°F for 30 minutes.","Mix and bake","{\"cooking_experience\": \"beginner\"}"
 ```
 
-**Using the Wrapper:**
-```python
-from evals_wrapper import ZillowEvalsWrapper
+### 2. Generate Configuration
 
-wrapper = ZillowEvalsWrapper()
-wrapper.run_example_evaluation()  # Runs built-in example
-```
+Use the configuration generator to create your evaluation setup:
 
-### OpenAI Evals Framework Compatible
-
-```python
-from oai_evals_zillow_judge import ZillowJudgeOAIEval
-
-evaluator = ZillowJudgeOAIEval()
-
-# Single sample evaluation
-sample = {
-    "input": {
-        "candidate_answer": "Your response here...",
-        "question": "What factors were considered?",
-        "user_profile": {"annual_income": 90000, "monthly_debts": 200}
-    }
-}
-
-result = evaluator.eval_sample(sample)
-print(f"Overall Score: {result['score']:.3f}")
-
-# Batch evaluation
-samples = [sample1, sample2, sample3]
-batch_results = evaluator.run_eval(samples)
-```
-
-## Running the Examples
-
-**Test the Core Evaluator:**
 ```bash
-source eval_env/bin/activate
-python zillow_judge_evaluator.py
+python generate_config.py \
+    --dataset data/your_dataset.csv \
+    --prompt-col prompt \
+    --response-col response \
+    --experiment my_evaluation \
+    --metrics accuracy relevance helpfulness \
+    --output config.yaml
 ```
 
-**Test the Wrapper:**
+### 3. Run Evaluation
+
 ```bash
-python evals_wrapper.py
+python template_evaluation_system.py --config config.yaml --output results/
 ```
 
-**Test OpenAI Evals Compatibility:**
-```bash
-python oai_evals_zillow_judge.py
+## 🎯 Available Metrics
+
+### General Metrics
+- **accuracy**: Measures correctness against ground truth
+- **relevance**: Evaluates how relevant the response is to the query
+- **helpfulness**: Assesses how helpful the response is
+- **safety**: Evaluates safety and appropriateness
+- **factual_accuracy**: Checks for factual correctness
+- **completeness**: Measures how complete the response is
+- **clarity**: Evaluates clarity and understandability
+- **personalization**: Assesses use of user personalization features
+
+### Domain-Specific Metrics
+
+#### Financial Advice
+- **risk_assessment**: Evaluates risk communication
+- **regulatory_compliance**: Checks regulatory compliance
+
+#### Medical Advice
+- **safety_first**: Prioritizes safety in medical advice
+
+## 🔧 Configuration
+
+### Basic Configuration
+
+```yaml
+dataset:
+  path: "data/your_dataset.csv"
+  prompt_column: "prompt"
+  response_column: "response"
+  ground_truth_column: "ground_truth"  # Optional
+  user_features_column: "user_features"  # Optional
+
+models:
+  response_model: "GOLDEN_RESPONSE"  # or LLM_gpt-4o, LLM_gpt-4, FIRST_CALL
+  judge_models: ["gpt-4o", "gpt-4"]
+
+api_keys:
+  openai_api_key: "your-openai-api-key"
+  openai_base_url: "https://api.openai.com/v1"  # Optional
+
+evaluation:
+  experiment_name: "my_evaluation"
+  run_name: "run_1"  # Optional
+  metrics:
+    accuracy:
+      prompt_template: "Your evaluation prompt here..."
+      threshold: 3.0
+      output_schema:
+        fields:
+          accuracy_score: int
+          explanation: str
 ```
 
-## Input Format
+### Custom Metrics
 
-### Required Fields
-- `candidate_answer` (string): The LLM response to evaluate
-- `question` (string, optional): The original question
-- `user_profile` (dict, optional): User's buyability profile
+You can define custom metrics by adding them to your configuration:
 
-### User Profile Format
-```json
-{
-    "annual_income": 90000,
-    "monthly_debts": 200,
-    "down_payment": 18000,
-    "credit_score": "660-719",
-    "preferred_monthly_payment": 2500,
-    "comfortable_max_monthly_payment": 3000
-}
+```yaml
+evaluation:
+  metrics:
+    my_custom_metric:
+      prompt_template: |
+        You are an impartial evaluator.
+        Evaluate the response based on your custom criteria.
+        
+        User Query: {prompt}
+        Model Response: {response}
+        
+        Rate from 1-5 where:
+        1 = Poor
+        5 = Excellent
+        
+        Return JSON: {{"my_custom_metric_score": <1-5>, "explanation": "<reasoning>"}}
+      threshold: 3.0
+      output_schema:
+        fields:
+          my_custom_metric_score: int
+          explanation: str
 ```
 
-## Output Format
+## 📈 MLflow Integration
 
-### Evaluation Table
-The evaluator returns a markdown table with scores and detailed justifications:
+The system automatically logs evaluation results to MLflow:
 
+1. **Experiment Tracking**: Each evaluation creates a new experiment
+2. **Run Logging**: Individual runs are logged with metrics and parameters
+3. **Artifact Storage**: Detailed evaluation results are stored as artifacts
+4. **Dashboard**: View results in the MLflow UI
+
+### Accessing Results
+
+```python
+import mlflow
+
+# List experiments
+experiments = mlflow.search_experiments()
+print(experiments)
+
+# Get specific run
+run = mlflow.get_run("your_run_id")
+print(run.data.metrics)
 ```
-| Metric | Score | Justification |
-|--------|-------|---------------|
-| Personalization Accuracy | Accurate | The response demonstrates excellent personalization... |
-| Context based Personalization | 4 | The response includes 6 out of 10 relevant elements... |
-| ... | ... | ... |
+
+## 🎨 Examples
+
+### Example 1: Basic Evaluation
+
+```python
+from template_evaluation_system import UniversalEvaluator, EvaluationConfig
+
+# Load configuration
+config = EvaluationConfig("config.yaml")
+
+# Load dataset
+import pandas as pd
+df = pd.read_csv("data/your_dataset.csv")
+
+# Run evaluation
+evaluator = UniversalEvaluator(config)
+results = evaluator.evaluate_dataset(df)
+
+# View results
+print(results[["prompt", "accuracy", "relevance"]].head())
 ```
 
-### Structured Output (OAI Evals)
-```json
-{
-    "score": 0.85,
-    "evaluation_table": "| Metric | Score | Justification |...",
-    "detailed_scores": {
-        "personalization_accuracy": {
-            "score": "Accurate",
-            "justification": "...",
-            "numeric_score": 1.0
+### Example 2: Custom Metrics
+
+```python
+# Define custom metric
+custom_metric = {
+    "creativity": {
+        "prompt_template": """
+        Evaluate the creativity of the response.
+        
+        User Query: {prompt}
+        Model Response: {response}
+        
+        Rate creativity from 1-5:
+        1 = Not creative
+        5 = Highly creative
+        
+        Return JSON: {{"creativity_score": <1-5>, "explanation": "<reasoning>"}}
+        """,
+        "threshold": 3.0,
+        "output_schema": {
+            "fields": {
+                "creativity_score": "int",
+                "explanation": "str"
+            }
         }
-    },
-    "metadata": {
-        "question": "...",
-        "user_profile_provided": true,
-        "answer_length": 145
     }
 }
+
+# Add to configuration
+config.evaluation.metrics.update(custom_metric)
 ```
 
-## Key Features
-
-### Deterministic Evaluation
-- Uses regex patterns and mathematical verification
-- No LLM calls for scoring (only for the candidate answers being evaluated)
-- Reproducible results across runs
-
-### Comprehensive Coverage
-- **Personalization**: Matches user-specific financial data
-- **Mathematical Accuracy**: Verifies DTI calculations and financial math
-- **Content Quality**: Assesses structure, coherence, and completeness
-- **Practical Value**: Checks for actionable guidance and transparency
-- **Legal Compliance**: Ensures fair housing law adherence and non-discriminatory language
-
-### Flexible Integration
-- Standalone Python classes
-- OpenAI Evals framework compatible
-- Batch processing capabilities
-- Detailed logging and error handling
-
-## Customization
-
-### Adding New Profiles
-Edit `assets/buyability_profiles.json`:
-```json
-[
-    {
-        "profile_id": "Profile2",
-        "down_payment": 50000,
-        "credit_score": "excellent",
-        "annual_income": 120000,
-        "monthly_debts": 300
-    }
-]
-```
-
-### Modifying Ground Truth
-Edit `assets/golden_responses.json` to add new question types or update response templates.
-
-### Adjusting Scoring
-Modify the evaluation methods in `ZillowJudgeEvaluator` class:
-- `_evaluate_personalization_accuracy()`
-- `_evaluate_calculation_accuracy()`
-- etc.
-
-## Troubleshooting
-
-**FileNotFoundError for assets:**
-- Ensure `assets/` directory is in the same location as the Python files
-- Check that JSON files are properly formatted
-
-**Import Errors:**
-- Activate the virtual environment: `source eval_env/bin/activate`
-- Install required packages: `pip install openai`
-
-**Low Scores:**
-- Verify user profile data matches the response content
-- Check that responses include specific financial figures
-- Ensure responses address the original question
-
-## Integration with CI/CD
-
-The evaluator can be integrated into automated testing pipelines:
+### Example 3: Domain-Specific Evaluation
 
 ```python
-# Example test script
-def test_llm_responses():
-    evaluator = ZillowJudgeOAIEval()
-    test_cases = load_test_cases()
-    
-    results = evaluator.run_eval(test_cases)
-    
-    assert results['average_score'] >= 0.7, f"Average score too low: {results['average_score']}"
-    assert results['failed_evaluations'] == 0, "Some evaluations failed"
+# Use financial domain metrics
+config_dict = generate_config(
+    dataset_path="financial_data.csv",
+    prompt_column="prompt",
+    response_column="response",
+    experiment_name="financial_eval",
+    metrics=["risk_assessment", "regulatory_compliance"],
+    domain="financial_advice",
+    user_features_column="user_profile"
+)
 ```
 
-## Contributing
+## 🔍 Advanced Usage
 
-To extend the evaluator:
-1. Add new metrics in the `ZillowJudgeEvaluator` class
-2. Update the `evaluate()` method to include new metrics
-3. Modify the output table format in `_format_evaluation_table()`
-4. Add corresponding tests and examples
+### Response Generation
 
-## License
+The system supports different response generation methods:
 
-This implementation is provided as-is for educational and evaluation purposes. Ensure compliance with your organization's policies when using financial data and evaluation criteria.
+1. **GOLDEN_RESPONSE**: Use existing responses in your dataset
+2. **LLM_gpt-4o**: Generate responses using GPT-4o
+3. **LLM_gpt-4**: Generate responses using GPT-4
+4. **FIRST_CALL**: Use external API for response generation
+
+### Ensemble Evaluation
+
+Use multiple judge models for more robust evaluation:
+
+```yaml
+models:
+  judge_models: ["gpt-4o", "gpt-4", "claude-3-sonnet"]
+```
+
+The system will use majority voting for final scores.
+
+### Custom API Integration
+
+For external APIs, add configuration:
+
+```yaml
+api:
+  base_url: "https://your-api-endpoint.com"
+  headers:
+    apikey: "your-api-key"
+  timeout: 60.0
+```
+
+## 📊 Output Format
+
+The system generates several output files:
+
+1. **evaluation_results_TIMESTAMP.csv**: Detailed evaluation results
+2. **evaluation_results_TIMESTAMP_summary.csv**: Summary statistics
+3. **MLflow artifacts**: Detailed logs and metrics
+
+### Result Columns
+
+- **Original columns**: All original dataset columns
+- **Metric scores**: Individual scores for each metric (e.g., `accuracy`, `relevance`)
+- **Status indicators**: Pass/fail indicators (e.g., `accuracy_status`)
+- **Details**: Detailed evaluation explanations (`{metric}_details`)
+
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+1. **Missing API Key**: Ensure `OPENAI_API_KEY` is set
+2. **Column Not Found**: Check that your dataset has the required columns
+3. **Model Errors**: Verify that your judge models are available
+4. **Configuration Errors**: Validate your YAML configuration
+
+### Debug Mode
+
+Enable debug logging:
+
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Add your metric templates to `metric_templates.py`
+4. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For questions and support:
+1. Check the examples in `example_usage.py`
+2. Review the configuration template in `config_template.yaml`
+3. Open an issue on GitHub
+
+## 🔄 Migration from Databricks
+
+If you're migrating from the original Databricks notebook:
+
+1. Export your dataset as CSV
+2. Convert your prompt templates to the new format
+3. Update your configuration using the generator
+4. Run the evaluation system
+
+The new system provides the same functionality with better modularity and easier customization.
