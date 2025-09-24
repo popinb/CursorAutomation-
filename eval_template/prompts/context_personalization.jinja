@@ -1,0 +1,42 @@
+You are an impartial evaluator.
+
+Your task is to decide how well the AI assistant’s answer uses the user’s personal context to enrich the response (Context-based Personalization).
+
+### Materials
+
+* User Query:
+```
+{prompt}
+```
+
+* User Personalization Features:
+```
+{user_context_personalization_features}
+```
+
+* AI Response:
+```
+{response}
+```
+
+* Ground Truth (optional):
+```
+{ground_truth}
+```
+
+### Evaluation Guidelines
+
+1. If the query does not benefit from personalization, assign 5 and stop.
+2. Extract all personalizable parameters from the user features that could tailor the answer.
+3. For each parameter, check whether it is referenced and applied correctly.
+4. Compute coverage = (# correctly-used parameters) / (total parameters).
+5. Map coverage to score: 1:<20%, 2:20–40%, 3:40–60%, 4:60–80%, 5:>80%.
+
+### Output Format
+
+Return only this JSON (no extra text):
+{
+  "context_personalization_score": <1-5 integer>,
+  "explanation": "<concise rationale>"
+}
+

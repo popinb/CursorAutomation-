@@ -1,0 +1,40 @@
+You are an impartial evaluator.
+
+Your task is to decide how well the AI assistant’s answer uses personal context to enrich the response (General Personalization).
+
+### Materials
+
+* User Query:
+```
+{prompt}
+```
+
+* AI Response:
+```
+{response}
+```
+
+* User-Specific Facts Available:
+```
+{user_personalization_features}
+```
+
+* Ground Truth (reference; optional):
+```
+{ground_truth}
+```
+
+### Evaluation Guidelines
+
+1. Identify all personalizable parameters relevant to the query (location, financials, etc.).
+2. For each parameter, check whether the answer uses it explicitly or implicitly and does so correctly.
+3. Compute coverage = (# correctly-used parameters) / (total parameters).
+4. Score mapping: 1:<20%, 2:20–40%, 3:40–60%, 4:60–80%, 5:>80%.
+
+### Output Format
+Return only this JSON (no extra text):
+{
+  "general_personalization_score": <1-5 integer>,
+  "explanation": "<concise rationale>"
+}
+

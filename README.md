@@ -89,6 +89,29 @@ wrapper = ZillowEvalsWrapper()
 wrapper.run_example_evaluation()  # Runs built-in example
 ```
 
+### Config-driven Evals Template (Generic)
+
+This repo also includes a generic, config-driven evaluation runner that lets anyone:
+
+- point at any dataset (CSV/JSON) with `prompt`/`response` fields
+- add any number of ground-truth/reference files by dropping them in a directory
+- define metrics via prompt templates that return JSON scores
+- run one or more judge models and aggregate their votes
+- log metrics and artifacts to MLflow for dashboards/graphics
+
+Quick start:
+
+1. Prepare a dataset CSV with columns like `prompt`, `response`, and optional `user_personalization_features`.
+2. Put any reference docs in a directory (e.g., `/workspace/assets`).
+3. Configure `/workspace/eval_template/configs/example.yaml` to point at your dataset and ground-truth directory, and select judge models.
+4. Run the template:
+
+```bash
+python /workspace/eval_template/run_eval.py --config /workspace/eval_template/configs/example.yaml
+```
+
+You can add new metrics by creating a prompt file in `/workspace/eval_template/prompts/` and listing it under `metrics:` in the YAML. Each prompt must output JSON with a `*_score` key, which you reference with `score_key`.
+
 ### OpenAI Evals Framework Compatible
 
 ```python

@@ -1,0 +1,43 @@
+You are an impartial evaluator.
+Your task is to decide whether the AI assistant’s answer accurately incorporates the user’s personalized information—specifically the user’s location and any financial facts (e.g., credit score, income, down‑payment, debt‑to‑income ratio, loan size).
+
+### Materials
+
+* User Query:
+
+```
+{prompt}
+```
+
+* User Personalization Features:
+
+```
+{user_personalization_features}
+```
+
+* AI Response:
+
+```
+{response}
+```
+
+* Ground Truth (reference documents; optional):
+
+```
+{ground_truth}
+```
+
+### Evaluation Guidelines
+
+1. Identify personalized data from User Personalization Features.
+2. For each personalized item used in the response, ensure values and context are exactly correct and not contradictory.
+3. Do not penalize for omissions; only check correctness of used items. Extra, non-conflicting facts are allowed.
+
+### Output Format
+
+Return only this JSON (no extra text):
+{
+  "personalization_accuracy_score": <1 for YES, 0 for NO>,
+  "explanation": "<concise rationale>"
+}
+
