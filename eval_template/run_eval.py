@@ -24,10 +24,35 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import mlflow
-import pandas as pd
-import yaml
-import matplotlib.pyplot as plt
+try:
+    import pandas as pd  # type: ignore
+    PANDAS_AVAILABLE = True
+except Exception:  # pragma: no cover
+    pd = None  # type: ignore
+    PANDAS_AVAILABLE = False
+
+# YAML is optional; JSON config is supported
+try:
+    import yaml  # type: ignore
+    YAML_AVAILABLE = True
+except Exception:  # pragma: no cover
+    yaml = None  # type: ignore
+    YAML_AVAILABLE = False
+
+# Optional deps: mlflow, matplotlib
+try:  # pragma: no cover
+    import mlflow  # type: ignore
+    MLFLOW_AVAILABLE = True
+except Exception:  # pragma: no cover
+    mlflow = None  # type: ignore
+    MLFLOW_AVAILABLE = False
+
+try:  # pragma: no cover
+    import matplotlib.pyplot as plt  # type: ignore
+    MATPLOTLIB_AVAILABLE = True
+except Exception:  # pragma: no cover
+    plt = None  # type: ignore
+    MATPLOTLIB_AVAILABLE = False
 
 try:
     from openai import OpenAI
@@ -62,6 +87,7 @@ class RunConfig:
     ground_truth_dir: Optional[str] = None
     ground_truth_globs: Optional[List[str]] = None
     response_model: Optional[str] = None  # If you want to generate responses
+    dry_run: bool = False
 
 
 # -----------------------------
@@ -110,7 +136,11 @@ def load_ground_truth(ground_truth_dir: Optional[str], patterns: Optional[List[s
 
 def load_config(path: str) -> RunConfig:
     with open(path, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
+        text = f.read()
+    if path.endswith(".json") or not YAML_AVAILABLE:
+        data = json.loads(text)
+    else:
+        data = yaml.safe_load(text)
 
     metrics: List[MetricConfig] = []
     for m in data.get("metrics", []):
@@ -136,32 +166,53 @@ def load_config(path: str) -> RunConfig:
         ground_truth_dir=data.get("ground_truth", {}).get("dir"),
         ground_truth_globs=data.get("ground_truth", {}).get("globs"),
         response_model=data.get("response_generation", {}).get("model"),
+        dry_run=bool(data.get("dry_run", False)),
     )
     return cfg
 
 
-def load_dataset(cfg: RunConfig) -> pd.DataFrame:
+def load_dataset(cfg: RunConfig):
     if cfg.dataset_format == "csv":
-        df = pd.read_csv(cfg.dataset_path)
+        if PANDAS_AVAILABLE:
+            return pd.read_csv(cfg.dataset_path)
+        # Fallback CSV reader
+        import csv
+        rows: List[Dict[str, Any]] = []
+        with open(cfg.dataset_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                rows.append(dict(r))
+        return rows
     elif cfg.dataset_format == "json":
         with open(cfg.dataset_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        df = pd.DataFrame(data)
+        if PANDAS_AVAILABLE:
+            return pd.DataFrame(data)
+        else:
+            return list(data)
     else:
         raise ValueError(f"Unsupported dataset format: {cfg.dataset_format}")
 
-    return df
-
 
 def render_template(template_path: str, variables: Dict[str, Any]) -> str:
+    """Render a template by replacing only known placeholders.
+
+    This avoids interfering with literal JSON braces in templates by not
+    using str.format. We replace exact tokens like {prompt} and leave other
+    braces untouched.
+    """
     template_text = Path(template_path).read_text(encoding="utf-8")
-    try:
-        return template_text.format(**variables)
-    except KeyError as exc:
-        missing = str(exc)
-        # Fill missing with blank and try again for robustness
-        safe_vars = {k: ("" if v is None else v) for k, v in variables.items()}
-        return template_text.format(**safe_vars)
+    replacements = {
+        "{prompt}": variables.get("prompt", "") or "",
+        "{response}": variables.get("response", "") or "",
+        "{user_personalization_features}": variables.get("user_personalization_features", "") or "",
+        "{user_context_personalization_features}": variables.get("user_context_personalization_features", "") or "",
+        "{ground_truth}": variables.get("ground_truth", "") or "",
+    }
+    out = template_text
+    for token, value in replacements.items():
+        out = out.replace(token, str(value))
+    return out
 
 
 def get_openai_client() -> OpenAI:
@@ -210,14 +261,15 @@ def aggregate_scores(values: List[float | int], mode: str) -> float:
 
 
 def log_metric_histogram(metric_name: str, scores: List[float]) -> None:
-    if not scores:
+    if not scores or not MATPLOTLIB_AVAILABLE or not MLFLOW_AVAILABLE:
         return
     plt.figure(figsize=(5, 3))
     plt.hist(scores, bins=min(10, max(3, len(set(scores)))))
     plt.title(metric_name)
     plt.xlabel("score")
     plt.ylabel("count")
-    mlflow.log_figure(plt.gcf(), f"figures/{metric_name}_hist.png")
+    if MLFLOW_AVAILABLE:
+        mlflow.log_figure(plt.gcf(), f"figures/{metric_name}_hist.png")
     plt.close()
 
 
@@ -241,23 +293,34 @@ def main() -> int:
     per_metric_scores: Dict[str, List[float]] = {m.name: [] for m in cfg.metrics}
     per_row_details: List[Dict[str, Any]] = []
 
-    mlflow.set_experiment(cfg.experiment_name)
-    with mlflow.start_run(run_name=cfg.run_name):
-        mlflow.log_params(
-            {
-                "dataset_path": cfg.dataset_path,
-                "dataset_format": cfg.dataset_format,
-                "judges": ",".join(cfg.judges or []),
-                "num_rows": len(df),
-            }
-        )
+    if MLFLOW_AVAILABLE:
+        mlflow.set_experiment(cfg.experiment_name)
+        run_ctx = mlflow.start_run(run_name=cfg.run_name)
+    else:
+        run_ctx = None
+    try:
+        if MLFLOW_AVAILABLE:
+            mlflow.log_params(
+                {
+                    "dataset_path": cfg.dataset_path,
+                    "dataset_format": cfg.dataset_format,
+                    "judges": ",".join(cfg.judges or []),
+                    "num_rows": len(df),
+                }
+            )
 
-        for row_idx, row in df.iterrows():
+        # Normalize iteration over rows for both pandas and list-of-dicts
+        if PANDAS_AVAILABLE and hasattr(df, "iterrows"):
+            iterator = enumerate((r for _, r in df.iterrows()))
+        else:
+            iterator = enumerate(df)
+
+        for row_idx, row in iterator:
             variables = {
-                "prompt": row.get(prompt_col, ""),
-                "response": row.get(response_col, ""),
-                "user_personalization_features": row.get(upf_col, ""),
-                "user_context_personalization_features": row.get(ucpf_col, ""),
+                "prompt": (row.get(prompt_col, "") if isinstance(row, dict) else row.get(prompt_col, "")),
+                "response": (row.get(response_col, "") if isinstance(row, dict) else row.get(response_col, "")),
+                "user_personalization_features": (row.get(upf_col, "") if isinstance(row, dict) else row.get(upf_col, "")),
+                "user_context_personalization_features": (row.get(ucpf_col, "") if isinstance(row, dict) else row.get(ucpf_col, "")),
                 "ground_truth": ground_truth_text,
             }
 
@@ -269,15 +332,22 @@ def main() -> int:
                 model_outputs: List[Dict[str, Any]] = []
                 scores: List[float] = []
 
-                for model in (cfg.judges or ["gpt-4o"]):
-                    result_json = call_judge(model, eval_prompt)
-                    model_outputs.append({"model": model, "result": result_json})
+                if cfg.dry_run or os.environ.get("EVAL_DRY_RUN") == "1":
+                    # Produce deterministic stub scores for testing without API access
+                    # Binary thresholds -> 1; Five-point -> 4 as default
+                    default_score = 1.0 if metric.threshold == 1 else 4.0
+                    scores = [default_score for _ in (cfg.judges or ["gpt-4o"])]
+                    model_outputs = [{"model": m, "result": {metric.score_key: default_score, metric.explanation_key: "dry_run"}} for m in (cfg.judges or ["gpt-4o"])]
+                else:
+                    for model in (cfg.judges or ["gpt-4o"]):
+                        result_json = call_judge(model, eval_prompt)
+                        model_outputs.append({"model": model, "result": result_json})
 
-                    if isinstance(result_json, dict) and metric.score_key in result_json:
-                        try:
-                            scores.append(float(result_json[metric.score_key]))
-                        except Exception:
-                            pass
+                        if isinstance(result_json, dict) and metric.score_key in result_json:
+                            try:
+                                scores.append(float(result_json[metric.score_key]))
+                            except Exception:
+                                pass
 
                 final_score = aggregate_scores(scores, metric.aggregation)
                 status = float(final_score) >= float(metric.threshold)
@@ -293,27 +363,51 @@ def main() -> int:
 
             per_row_details.append(row_detail)
 
-        # Attach scores into DataFrame and log
+        # Attach scores into DataFrame/list and log
         for metric in cfg.metrics:
-            df[metric.name] = per_metric_scores[metric.name]
-            mean_score = sum(per_metric_scores[metric.name]) / max(1, len(per_metric_scores[metric.name]))
-            mlflow.log_metric(f"{metric.name}/mean", float(mean_score))
-            log_metric_histogram(metric.name, [float(s) for s in per_metric_scores[metric.name]])
+            scores_for_metric = per_metric_scores[metric.name]
+            if PANDAS_AVAILABLE and hasattr(df, "__setitem__"):
+                df[metric.name] = scores_for_metric
+            else:
+                # list-of-dicts path
+                for i, score_val in enumerate(scores_for_metric):
+                    if isinstance(df[i], dict):
+                        df[i][metric.name] = score_val
+            mean_score = sum(scores_for_metric) / max(1, len(scores_for_metric))
+            if MLFLOW_AVAILABLE:
+                mlflow.log_metric(f"{metric.name}/mean", float(mean_score))
+            log_metric_histogram(metric.name, [float(s) for s in scores_for_metric])
 
         # Save artifacts
-        out_dir = Path("./eval_results")
+        out_dir = Path("/workspace/eval_results")
         out_dir.mkdir(parents=True, exist_ok=True)
         results_csv = out_dir / f"results_{cfg.run_name}.csv"
         details_json = out_dir / f"details_{cfg.run_name}.json"
-        df.to_csv(results_csv, index=False)
+        # Save results table
+        if PANDAS_AVAILABLE and hasattr(df, "to_csv"):
+            df.to_csv(results_csv, index=False)
+        else:
+            # write a simple CSV for list-of-dicts
+            import csv
+            rows = df
+            fieldnames = sorted({k for r in rows for k in r.keys()}) if isinstance(rows, list) else []
+            with open(results_csv, "w", encoding="utf-8", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                for r in rows:
+                    writer.writerow(r)
         details_json.write_text(json.dumps(per_row_details, indent=2), encoding="utf-8")
 
-        mlflow.log_artifact(str(results_csv))
-        mlflow.log_artifact(str(details_json))
+        if MLFLOW_AVAILABLE:
+            mlflow.log_artifact(str(results_csv))
+            mlflow.log_artifact(str(details_json))
 
-    print(f"Saved results to {results_csv}")
-    print(f"Saved details to {details_json}")
-    return 0
+        print(f"Saved results to {results_csv}")
+        print(f"Saved details to {details_json}")
+        return 0
+    finally:
+        if MLFLOW_AVAILABLE and run_ctx is not None:
+            mlflow.end_run()
 
 
 if __name__ == "__main__":

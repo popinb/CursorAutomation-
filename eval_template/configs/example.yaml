@@ -21,6 +21,8 @@ ground_truth:
 judges:
   - "gpt-4o"
 
+dry_run: true
+
 metrics:
   - name: "Personalization_accuracy"
     template_path: "/workspace/eval_template/prompts/personalization_accuracy.jinja"
@@ -39,4 +41,10 @@ metrics:
     score_key: "general_personalization_score"
     threshold: 3
     aggregation: "average"
+
+  - name: "Faithfulness"
+    template_path: "/workspace/eval_template/prompts/faithfulness.jinja"
+    score_key: "faithfulness_score"
+    threshold: 1
+    aggregation: "majority"
 
