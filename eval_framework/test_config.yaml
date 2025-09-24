@@ -1,0 +1,128 @@
+# Test Configuration with 4 Metrics
+experiment:
+  name: "test_evaluation_4_metrics"
+  run_name_prefix: "test_run"
+  
+data:
+  ground_truth_dir: "./examples/"
+  columns:
+    prompt: "prompt"
+    response: "response"
+    personalization: "user_personalization_features"
+  files:
+    - "sample_ground_truth.csv"
+    
+models:
+  response_generation:
+    type: "ground_truth"
+    
+  judge_models:
+    - "gpt-4o"
+    
+metrics:
+  # Metric 1: Accuracy of personalized information
+  - name: "personalization_accuracy"
+    description: "Checks if personal financial information is used accurately"
+    prompt_template: |
+      You are an expert financial advisor evaluating another advisor's response.
+      
+      Check if ALL personal financial details mentioned in the response are accurate based on the user's information.
+      
+      User Question: {prompt}
+      User's Personal Information: {personalization}
+      Advisor's Response: {response}
+      
+      Evaluate:
+      1. Are all numbers (credit score, income, percentages) exactly correct?
+      2. Is the location information accurate if mentioned?
+      3. Are there any made-up or incorrect personal details?
+      
+      Score 1 if ALL personal details are perfectly accurate, 0 if ANY detail is wrong or made up.
+      
+      Return JSON: {"personalization_accuracy_score": <0 or 1>, "explanation": "<what was wrong if anything>"}
+    
+    score_range: [0, 1]
+    threshold: 1
+    output_format: "json"
+    
+  # Metric 2: Relevance to the question
+  - name: "relevance"
+    description: "Measures how well the response addresses the specific question"
+    prompt_template: |
+      You are evaluating if this financial advice directly answers the user's question.
+      
+      User Question: {prompt}
+      Response: {response}
+      
+      Rate how relevant and on-topic the response is:
+      1 = Completely off-topic or doesn't answer the question
+      2 = Somewhat related but misses the main point
+      3 = Addresses the question but with unnecessary tangents
+      4 = Directly addresses the question with minor irrelevant details
+      5 = Perfectly focused on answering exactly what was asked
+      
+      Return JSON: {"relevance_score": <1-5>, "explanation": "<brief reason>"}
+    
+    score_range: [1, 5]
+    threshold: 4
+    output_format: "json"
+    
+  # Metric 3: Financial advice quality
+  - name: "advice_quality"
+    description: "Evaluates the quality and soundness of financial advice given"
+    prompt_template: |
+      You are a senior financial advisor evaluating the quality of advice.
+      
+      Question: {prompt}
+      User Context: {personalization}
+      Advice Given: {response}
+      
+      Evaluate the financial advice quality:
+      1 = Dangerous or completely wrong advice
+      2 = Poor advice with significant issues
+      3 = Acceptable but basic advice
+      4 = Good, sound financial advice
+      5 = Excellent, comprehensive, and highly personalized advice
+      
+      Consider: accuracy, completeness, personalization, and practical value.
+      
+      Return JSON: {"advice_quality_score": <1-5>, "explanation": "<what makes it good/bad>"}
+    
+    score_range: [1, 5]
+    threshold: 3
+    output_format: "json"
+    
+  # Metric 4: Actionability
+  - name: "actionability"
+    description: "Measures how actionable and practical the advice is"
+    prompt_template: |
+      Evaluate how actionable this financial advice is for the user.
+      
+      Question: {prompt}
+      Response: {response}
+      
+      Rate the actionability:
+      1 = No actionable advice, just general information
+      2 = Vague suggestions without clear steps
+      3 = Some actionable points but lacks specifics
+      4 = Clear action items with good guidance
+      5 = Highly actionable with specific steps, numbers, and next actions
+      
+      Return JSON: {"actionability_score": <1-5>, "explanation": "<what makes it actionable or not>"}
+    
+    score_range: [1, 5]
+    threshold: 3
+    output_format: "json"
+
+output:
+  results_dir: "./test_results/"
+  save_raw_responses: true
+  save_detailed_scores: true
+  generate_summary: true
+  
+mlflow:
+  tracking_uri: null
+  experiment_name: "{experiment.name}"
+  enable_logging: true
+  log_models: false
+  log_artifacts: true
