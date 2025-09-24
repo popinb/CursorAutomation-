@@ -1,0 +1,6 @@
+prompt,response,user_personalization_features
+"What's the best mortgage rate I can get?","Based on your excellent credit score of 780 and 20% down payment, you could qualify for rates around 6.5% for a 30-year fixed mortgage.","credit_score: 780, down_payment: 20%, location: California"
+"How much house can I afford?","With your annual income of $120,000 and current monthly debts of $500, you could afford a home around $450,000-500,000.","income: $120,000, monthly_debts: $500, location: Texas"
+"Should I refinance my mortgage?","Given that your current rate is 7.5% and market rates are now around 6.5%, refinancing could save you approximately $300 per month.","current_rate: 7.5%, loan_balance: $350,000"
+"What are closing costs like in my area?","In New York, typical closing costs range from 2-5% of the home price, so for a $600,000 home, expect $12,000-30,000.","location: New York, home_price: $600,000"
+"Can I get a loan with my credit score?","With a credit score of 620, you can still qualify for an FHA loan with as little as 3.5% down, though rates will be higher than conventional loans.","credit_score: 620"

@@ -1,0 +1,98 @@
+# Evaluation Framework Configuration Template
+# This file defines all the parameters for your evaluation pipeline
+
+experiment:
+  name: "my_evaluation_experiment"
+  run_name_prefix: "eval_run"
+  
+# Data Configuration
+data:
+  # Directory containing ground truth CSV files
+  ground_truth_dir: "./ground_truth_data/"
+  
+  # Column mappings - customize based on your CSV structure
+  columns:
+    prompt: "prompt"           # Column containing input prompts/questions
+    response: "response"       # Column containing model responses
+    personalization: "user_personalization_features"  # Optional: user context
+    
+  # Optional: specific files to evaluate (leave empty to process all CSVs in directory)
+  files: []
+  
+# Model Configuration
+models:
+  # Response generation model (how to get responses)
+  response_generation:
+    type: "ground_truth"  # Options: "ground_truth", "api_endpoint", "llm"
+    model_name: null      # For LLM type, specify model name
+    
+  # Judge models for evaluation
+  judge_models:
+    - "gpt-4o"
+    # - "gpt-4.1"
+    # - "claude-3-5-haiku"
+    
+# Metrics Configuration
+metrics:
+  # Define your custom metrics here
+  - name: "accuracy"
+    description: "Measures the accuracy of the response"
+    prompt_template: |
+      You are an impartial evaluator.
+      Evaluate if the response correctly answers the question.
+      
+      Question: {prompt}
+      Response: {response}
+      
+      Score from 1-5 where:
+      1 = Completely incorrect
+      3 = Partially correct
+      5 = Completely correct
+      
+      Return JSON: {"accuracy_score": <score>, "explanation": "<reason>"}
+    
+    score_range: [1, 5]
+    threshold: 3
+    output_format: "json"
+    
+  - name: "relevance"
+    description: "Measures if the response is relevant to the question"
+    prompt_template: |
+      You are an impartial evaluator.
+      Evaluate the relevance of the response to the question.
+      
+      Question: {prompt}
+      Response: {response}
+      
+      Score from 1-5 where:
+      1 = Completely irrelevant
+      3 = Somewhat relevant
+      5 = Highly relevant
+      
+      Return JSON: {"relevance_score": <score>, "explanation": "<reason>"}
+    
+    score_range: [1, 5]
+    threshold: 3
+    output_format: "json"
+
+# API Configuration (if using external endpoints)
+api:
+  base_url: null
+  endpoints:
+    response_generation: null
+  headers: {}
+  
+# Output Configuration
+output:
+  results_dir: "./evaluation_results/"
+  save_raw_responses: true
+  save_detailed_scores: true
+  generate_summary: true
+  
+# MLflow Configuration
+mlflow:
+  tracking_uri: null  # Leave null for default
+  experiment_name: "{experiment.name}"
+  enable_logging: true
+  log_models: false
+  log_artifacts: true
