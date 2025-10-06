@@ -24,11 +24,14 @@
 
 # COMMAND ----------
 
-!pip install mlflow>=3.0 --upgrade --quiet
-!pip install databricks-agents --quiet
+# Install required packages with dependency resolution
+!pip install --upgrade pip --quiet
+!pip install protobuf==3.20.3 --quiet
+!pip install mlflow>=3.0 --quiet
 !pip install langchain_openai langchain_core --quiet
 !pip install plotly --quiet
 !pip install python-docx --quiet
+!pip install pandas --quiet
 
 # COMMAND ----------
 
