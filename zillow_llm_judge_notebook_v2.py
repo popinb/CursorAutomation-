@@ -304,108 +304,110 @@ except Exception as e:
 
 CUSTOM_METRICS = [
     # ========================================
-    # EXAMPLE 1: BINARY METRIC (Pass/Fail)
+    # EXAMPLE 1: BINARY METRIC (Pass/Fail) - ACTIVE FOR DEMO
     # ========================================
-    # {
-    #     "name": "accuracy_check",
-    #     "type": "binary",
-    #     "description": "Checks if the response contains accurate information",
-    #     "evaluation_prompt": """
-    # Evaluate if the response contains accurate information.
-    # 
-    # User Query: {prompt}
-    # AI Response: {response}
-    # Ground Truth (if available): {ground_truth}
-    # 
-    # Accuracy Criteria:
-    # - All facts must be correct
-    # - No misleading information
-    # - Numbers and statistics must be accurate
-    # - Procedures described correctly
-    # 
-    # Scoring:
-    # - 1 (PASS): All information is accurate
-    # - 0 (FAIL): Contains any inaccurate information
-    # 
-    # Return JSON:
-    # {{
-    #     "accuracy_check_score": 1,
-    #     "explanation": "All facts verified as accurate. The response correctly states..."
-    # }}
-    # """
-    # },
+    {
+        "name": "accuracy_check",
+        "type": "binary",
+        "description": "Checks if the response contains accurate information",
+        "evaluation_prompt": """
+Evaluate if the response contains accurate information.
+
+User Query: {prompt}
+AI Response: {response}
+Ground Truth (if available): {ground_truth}
+
+Accuracy Criteria:
+- All facts must be correct
+- No misleading information
+- Numbers and statistics must be accurate
+- Procedures described correctly
+
+Scoring:
+- 1 (PASS): All information is accurate
+- 0 (FAIL): Contains any inaccurate information
+
+Return JSON:
+{{
+    "accuracy_check_score": 1,
+    "explanation": "All facts verified as accurate. The response correctly states..."
+}}
+"""
+    },
     
     # ========================================
-    # EXAMPLE 2: 1-5 SCALE METRIC
+    # EXAMPLE 2: 1-5 SCALE METRIC - ACTIVE FOR DEMO
     # ========================================
-    # {
-    #     "name": "helpfulness_rating",
-    #     "type": "scale_1_5",
-    #     "description": "Rates how helpful the response is on a 1-5 scale",
-    #     "evaluation_prompt": """
-    # Rate the helpfulness of this response from 1 to 5.
-    # 
-    # User Query: {prompt}
-    # AI Response: {response}
-    # Ground Truth (if available): {ground_truth}
-    # 
-    # Helpfulness Scale:
-    # 5 = Extremely helpful - Comprehensive answer with actionable steps
-    # 4 = Very helpful - Good answer with useful information
-    # 3 = Moderately helpful - Adequate but could be better
-    # 2 = Slightly helpful - Limited value, missing key information
-    # 1 = Not helpful - Fails to address the question
-    # 
-    # Consider:
-    # - Does it answer the user's question?
-    # - Is the information actionable?
-    # - Are next steps clear?
-    # 
-    # Return JSON:
-    # {{
-    #     "helpfulness_rating_score": 4,
-    #     "explanation": "Very helpful response that answers the main question and provides clear next steps..."
-    # }}
-    # """
-    # },
+    {
+        "name": "helpfulness_rating",
+        "type": "scale_1_5",
+        "description": "Rates how helpful the response is on a 1-5 scale",
+        "evaluation_prompt": """
+Rate the helpfulness of this response from 1 to 5.
+
+User Query: {prompt}
+AI Response: {response}
+Ground Truth (if available): {ground_truth}
+
+Helpfulness Scale:
+5 = Extremely helpful - Comprehensive answer with actionable steps
+4 = Very helpful - Good answer with useful information
+3 = Moderately helpful - Adequate but could be better
+2 = Slightly helpful - Limited value, missing key information
+1 = Not helpful - Fails to address the question
+
+Consider:
+- Does it answer the user's question?
+- Is the information actionable?
+- Are next steps clear?
+
+Return JSON:
+{{
+    "helpfulness_rating_score": 4,
+    "explanation": "Very helpful response that answers the main question and provides clear next steps..."
+}}
+"""
+    },
     
     # ========================================
-    # EXAMPLE 3: PERCENTAGE METRIC (0-100%)
+    # EXAMPLE 3: PERCENTAGE METRIC (0-100%) - ACTIVE FOR DEMO
     # ========================================
-    # {
-    #     "name": "completeness_percentage",
-    #     "type": "percentage",
-    #     "description": "Measures what percentage of the question was addressed",
-    #     "evaluation_prompt": """
-    # Evaluate what percentage (0-100%) of the user's question was addressed.
-    # 
-    # User Query: {prompt}
-    # AI Response: {response}
-    # Ground Truth (if available): {ground_truth}
-    # 
-    # Assessment Process:
-    # 1. Identify all components of the user's question
-    # 2. Check which components were addressed
-    # 3. Calculate percentage of coverage
-    # 
-    # Examples:
-    # - 90-100%: Fully addresses all aspects
-    # - 70-89%: Most important parts covered
-    # - 50-69%: About half addressed
-    # - 30-49%: Some parts addressed
-    # - 0-29%: Minimal coverage
-    # 
-    # Return JSON (use decimal, e.g., 0.85 for 85%):
-    # {{
-    #     "completeness_percentage_score": 0.85,
-    #     "explanation": "The response addresses 85% of the question. It covers the main topic well but misses..."
-    # }}
-    # """
-    # },
+    {
+        "name": "completeness_percentage",
+        "type": "percentage",
+        "description": "Measures what percentage of the question was addressed",
+        "evaluation_prompt": """
+Evaluate what percentage (0-100%) of the user's question was addressed.
+
+User Query: {prompt}
+AI Response: {response}
+Ground Truth (if available): {ground_truth}
+
+Assessment Process:
+1. Identify all components of the user's question
+2. Check which components were addressed
+3. Calculate percentage of coverage
+
+Examples:
+- 90-100%: Fully addresses all aspects
+- 70-89%: Most important parts covered
+- 50-69%: About half addressed
+- 30-49%: Some parts addressed
+- 0-29%: Minimal coverage
+
+Return JSON (use decimal, e.g., 0.85 for 85%):
+{{
+    "completeness_percentage_score": 0.85,
+    "explanation": "The response addresses 85% of the question. It covers the main topic well but misses..."
+}}
+"""
+    },
     
     # ========================================
-    # ADD YOUR METRICS BELOW
+    # ADD YOUR METRICS BELOW (or comment out examples above)
     # ========================================
+    # To disable demo metrics, just add # at the start of each line of the metric
+    # To add your own metrics, copy any example above and modify it
     
     # Your custom metrics here...
     
