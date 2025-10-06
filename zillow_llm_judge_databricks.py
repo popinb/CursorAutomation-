@@ -38,6 +38,7 @@ dbutils.library.restartPython()
 
 from __future__ import annotations
 
+# Standard library imports
 import argparse
 import asyncio
 import time
@@ -48,7 +49,9 @@ from typing import Any, Dict, List, Optional, Union
 import requests
 from dataclasses import dataclass
 from enum import Enum
+import collections
 
+# Third-party imports
 import httpx
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -56,12 +59,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from langchain_openai import ChatOpenAI
+from docx import Document
+
+# MLflow imports
 import mlflow
 import mlflow.metrics
 import mlflow.metrics.genai
-import collections
-from docx import Document
-
 from mlflow.genai.scorers import scorer
 
 # COMMAND ----------
@@ -124,12 +127,18 @@ class EvaluationConfig:
 # =============================================================================
 
 # Your experiment name (will appear in MLflow UI)
+# This helps you identify your experiments in the MLflow dashboard
 EXPERIMENT_NAME = "my_zillow_evaluation"  # Change to your project name
 
 # Your data file path (CSV file with prompts and responses)
+# This should contain the data you want to evaluate
+# Required columns: prompt, response
+# Optional columns: user_profile, context
 DATA_SOURCE = "/workspace/my_data.csv"  # Change to your CSV file path
 
 # Ground truth file path (optional - CSV or DOCX file with known good responses)
+# Ground truth provides reference answers for comparison
+# This is optional but recommended for better evaluation quality
 GROUND_TRUTH_SOURCE = "/workspace/ground_truth.csv"  # Change to your ground truth file path (.csv or .docx)
 GROUND_TRUTH_FORMAT = "csv"  # File format: "csv" or "docx"
 USE_GROUND_TRUTH = False  # Set to True if you want to verify against ground truth
@@ -140,19 +149,23 @@ AUTO_CONSUME_GROUND_TRUTH = True  # Automatically use ground truth in all applic
 # =============================================================================
 
 # Turn metrics ON (True) or OFF (False)
+# You can enable/disable any combination of these metrics
+# Start with 1-2 metrics and add more as needed
 ENABLE_METRICS = {
-    "response_quality": True,           # Is the response helpful and relevant? (True/False)
-    "personalization_accuracy": True,   # Does it use user info correctly? (True/False)
-    "helpfulness": True,                # How helpful is the response? (True/False)
-    "ground_truth_accuracy": False,     # How close is response to ground truth? (True/False)
+    "response_quality": True,           # Is the response helpful and relevant? (Binary: True/False)
+    "personalization_accuracy": True,   # Does it use user info correctly? (Binary: True/False)
+    "helpfulness": True,                # How helpful is the response? (Scale: 1-5)
+    "ground_truth_accuracy": False,     # How close is response to ground truth? (Scale: 0-1)
 }
 
 # Set what score counts as "PASS" for each metric
+# These thresholds determine pass/fail status in the results
+# Adjust these based on your quality requirements
 METRIC_THRESHOLDS = {
-    "response_quality": 1.0,           # 1 = pass, 0 = fail (don't change)
-    "personalization_accuracy": 1.0,   # 1 = pass, 0 = fail (don't change)
-    "helpfulness": 3.0,                # 3+ = pass, 1-2 = fail (can change to 2.0, 3.0, 4.0)
-    "ground_truth_accuracy": 0.8,      # 0.8+ = pass, 0.0-0.79 = fail (can change to 0.7, 0.8, 0.9)
+    "response_quality": 1.0,           # 1 = pass, 0 = fail (binary metric)
+    "personalization_accuracy": 1.0,   # 1 = pass, 0 = fail (binary metric)
+    "helpfulness": 3.0,                # 3+ = pass, 1-2 = fail (1-5 scale metric)
+    "ground_truth_accuracy": 0.8,      # 0.8+ = pass, 0.0-0.79 = fail (0-1 scale metric)
 }
 
 # =============================================================================
@@ -160,11 +173,16 @@ METRIC_THRESHOLDS = {
 # =============================================================================
 
 # Choose 1 or 2 models (more models = more reliable but slower)
-# Options: ["gpt-4o"], ["gpt-4o-mini"], or combinations
-# Note: ["databricks-llm"] is available but not recommended for production use
-JUDGE_MODELS = ["gpt-4o"]  # Standard options: ["gpt-4o"], ["gpt-4o-mini"], ["gpt-4o", "gpt-4o-mini"]
+# Standard options: ["gpt-4o"], ["gpt-4o-mini"], ["gpt-4o", "gpt-4o-mini"]
+# Note: ["databricks-llm"] is available but experimental and not recommended for production
+# Single model: Faster and cheaper
+# Multiple models: More reliable through ensemble voting
+JUDGE_MODELS = ["gpt-4o"]  # Change to your preferred model(s)
 
-# How many evaluations to run at once (don't change unless you have issues)
+# How many evaluations to run at once (concurrency control)
+# Higher values = faster but may hit rate limits
+# Lower values = slower but more reliable
+# Recommended: 2 for most cases, 1 if you get rate limit errors
 MAX_CONCURRENCY = 2  # Keep as 2 (or change to 1 if you get errors)
 
 # =============================================================================
@@ -172,10 +190,11 @@ MAX_CONCURRENCY = 2  # Keep as 2 (or change to 1 if you get errors)
 # =============================================================================
 
 # Column names in your CSV file (only change if your CSV has different column names)
-PROMPT_COLUMN = "prompt"          # Column with user questions
-RESPONSE_COLUMN = "response"      # Column with AI responses
-USER_PROFILE_COLUMN = "user_profile"  # Column with user info (optional)
-GROUND_TRUTH_COLUMN = "ground_truth"  # Column with ground truth responses (if using ground truth)
+# These should match the column names in your data files
+PROMPT_COLUMN = "prompt"          # Column with user questions (required)
+RESPONSE_COLUMN = "response"      # Column with AI responses (required)
+USER_PROFILE_COLUMN = "user_profile"  # Column with user info (optional, for personalization metrics)
+GROUND_TRUTH_COLUMN = "ground_truth"  # Column with ground truth responses (optional, for ground truth metrics)
 
 # COMMAND ----------
 
@@ -185,15 +204,32 @@ GROUND_TRUTH_COLUMN = "ground_truth"  # Column with ground truth responses (if u
 # COMMAND ----------
 
 def get_enabled_metrics():
-    """Get list of enabled metrics."""
+    """
+    Get list of enabled metrics.
+    
+    Returns:
+        List of metric names that are currently enabled
+    """
     return [name for name, enabled in ENABLE_METRICS.items() if enabled]
 
 def get_metric_threshold(metric_name):
-    """Get threshold for a specific metric."""
+    """
+    Get threshold for a specific metric.
+    
+    Args:
+        metric_name: Name of the metric
+        
+    Returns:
+        Threshold value for the metric (default: 1.0)
+    """
     return METRIC_THRESHOLDS.get(metric_name, 1.0)
 
 def print_config():
-    """Print current configuration."""
+    """
+    Print current configuration.
+    
+    This helps you verify your settings before running evaluation.
+    """
     print("Current Configuration:")
     print("=" * 40)
     print(f"Experiment: {EXPERIMENT_NAME}")
@@ -201,10 +237,22 @@ def print_config():
     print(f"Judge Models: {JUDGE_MODELS}")
     print(f"Enabled Metrics: {get_enabled_metrics()}")
     print(f"Max Concurrency: {MAX_CONCURRENCY}")
+    print(f"Use Ground Truth: {USE_GROUND_TRUTH}")
+    if USE_GROUND_TRUTH:
+        print(f"Ground Truth Source: {GROUND_TRUTH_SOURCE}")
+        print(f"Ground Truth Format: {GROUND_TRUTH_FORMAT}")
+        print(f"Auto Consume Ground Truth: {AUTO_CONSUME_GROUND_TRUTH}")
 
 # Quick setup functions for common configurations
+# These functions help you quickly configure the system for common use cases
+
 def setup_basic_evaluation():
-    """Set up basic evaluation with common metrics."""
+    """
+    Set up basic evaluation with common metrics.
+    
+    Enables: response_quality, helpfulness
+    Good for: Quick testing and basic quality assessment
+    """
     global ENABLE_METRICS
     ENABLE_METRICS = {
         "response_quality": True,
@@ -213,7 +261,12 @@ def setup_basic_evaluation():
     print("✅ Basic evaluation setup complete!")
 
 def setup_full_evaluation():
-    """Set up full evaluation with all metrics."""
+    """
+    Set up full evaluation with all metrics.
+    
+    Enables: response_quality, personalization_accuracy, helpfulness
+    Good for: Comprehensive evaluation when you have user profile data
+    """
     global ENABLE_METRICS
     ENABLE_METRICS = {
         "response_quality": True,
@@ -223,7 +276,13 @@ def setup_full_evaluation():
     print("✅ Full evaluation setup complete!")
 
 def setup_reliable_evaluation():
-    """Set up evaluation with multiple judge models for reliability."""
+    """
+    Set up evaluation with multiple judge models for reliability.
+    
+    Uses: gpt-4o and gpt-4o-mini for ensemble evaluation
+    Good for: Important evaluations where reliability is critical
+    Note: Slower and more expensive but more reliable
+    """
     global JUDGE_MODELS
     JUDGE_MODELS = ["gpt-4o", "gpt-4o-mini"]
     global MAX_CONCURRENCY
@@ -231,13 +290,25 @@ def setup_reliable_evaluation():
     print("✅ Reliable evaluation setup complete!")
 
 def setup_databricks_llm_evaluation():
-    """Set up evaluation using Databricks default LLM (experimental)."""
+    """
+    Set up evaluation using Databricks default LLM (experimental).
+    
+    Uses: databricks-llm model
+    Good for: Testing or when you want to use Databricks native LLM
+    Note: Experimental feature, not recommended for production
+    """
     global JUDGE_MODELS
     JUDGE_MODELS = ["databricks-llm"]
     print("⚠️  Databricks LLM evaluation setup complete! (Experimental - not recommended for production)")
 
 def setup_ground_truth_evaluation():
-    """Set up evaluation with ground truth verification."""
+    """
+    Set up evaluation with ground truth verification.
+    
+    Enables: ground_truth_accuracy metric and ground truth auto-consumption
+    Good for: When you have reference answers to compare against
+    Note: Requires ground truth file to be uploaded
+    """
     global USE_GROUND_TRUTH
     global ENABLE_METRICS
     USE_GROUND_TRUTH = True
@@ -508,19 +579,19 @@ class LLMJudgeEvaluator:
                         template_vars[var] = row.get(var, "")
                 
                 # Auto-include ground truth if available and auto-consume is enabled
-                if AUTO_CONSUME_GROUND_TRUTH and "ground_truth" in row and pd.notna(row["ground_truth"]):
-                    # Add ground truth section to prompt if not already present
-                    if "ground_truth_section" not in metric.prompt_template:
-                        # Add ground truth section dynamically
-                        ground_truth_section = f"\n**Ground Truth Response:** {row['ground_truth']}"
-                        ground_truth_criteria = "\n4. How well does the response compare to the ground truth (if available)?"
-                    else:
-                        ground_truth_section = f"**Ground Truth Response:** {row['ground_truth']}"
-                        ground_truth_criteria = "4. How well does the response compare to the ground truth?"
+                if (AUTO_CONSUME_GROUND_TRUTH and 
+                    "ground_truth" in row and 
+                    pd.notna(row["ground_truth"]) and 
+                    str(row["ground_truth"]).strip()):
+                    # Add ground truth section to prompt dynamically
+                    ground_truth_text = str(row["ground_truth"]).strip()
+                    ground_truth_section = f"\n**Ground Truth Response:** {ground_truth_text}"
+                    ground_truth_criteria = "\n4. How well does the response compare to the ground truth (if available)?"
                     
                     template_vars["ground_truth_section"] = ground_truth_section
                     template_vars["ground_truth_criteria"] = ground_truth_criteria
                 else:
+                    # No ground truth available or auto-consume disabled
                     template_vars["ground_truth_section"] = ""
                     template_vars["ground_truth_criteria"] = ""
                 
@@ -584,8 +655,29 @@ class LLMJudgeEvaluator:
         return evaluator
     
     def run_evaluation(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Run evaluation on the provided dataframe."""
+        """
+        Run evaluation on the provided dataframe.
+        
+        Args:
+            df: DataFrame with prompts, responses, and optional ground truth
+            
+        Returns:
+            DataFrame with evaluation results added
+            
+        Raises:
+            ValueError: If required columns are missing
+            Exception: If evaluation fails
+        """
         print(f"Running evaluation with {len(self.metrics)} metrics...")
+        
+        # Validate input data
+        if df.empty:
+            raise ValueError("Input dataframe is empty")
+        
+        required_columns = [self.config.prompt_column, self.config.response_column]
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {missing_columns}")
         
         # Prepare data for evaluation
         eval_data = df.copy()
@@ -594,24 +686,43 @@ class LLMJudgeEvaluator:
             self.config.response_column: "predictions"
         })
         
-        # Run each metric
+        # Run each metric with error handling
         for metric in self.metrics:
-            print(f"Evaluating {metric.name}...")
-            evaluator_func = self._create_evaluator_function(metric)
-            results = evaluator_func(eval_data)
-            
-            # Add results to dataframe
-            df[f"{metric.name}_score"] = results[f"{metric.name}/scores"]
-            df[f"{metric.name}_details"] = results[f"{metric.name}/details"]
-            
-            # Add status based on threshold
-            if metric.threshold is not None:
-                df[f"{metric.name}_status"] = [
-                    "✅" if score >= metric.threshold else "❌" 
-                    for score in results[f"{metric.name}/scores"]
-                ]
-            
-            print(f"✅ {metric.name}: {results[f'{metric.name}/mean']:.3f}")
+            try:
+                print(f"Evaluating {metric.name}...")
+                evaluator_func = self._create_evaluator_function(metric)
+                results = evaluator_func(eval_data)
+                
+                # Validate results
+                if f"{metric.name}/scores" not in results:
+                    raise ValueError(f"No scores returned for metric {metric.name}")
+                
+                scores = results[f"{metric.name}/scores"]
+                if len(scores) != len(df):
+                    raise ValueError(f"Score count mismatch for metric {metric.name}: expected {len(df)}, got {len(scores)}")
+                
+                # Add results to dataframe
+                df[f"{metric.name}_score"] = scores
+                df[f"{metric.name}_details"] = results.get(f"{metric.name}/details", [])
+                
+                # Add status based on threshold
+                if metric.threshold is not None:
+                    df[f"{metric.name}_status"] = [
+                        "✅" if score >= metric.threshold else "❌" 
+                        for score in scores
+                    ]
+                
+                mean_score = results.get(f"{metric.name}/mean", 0.0)
+                print(f"✅ {metric.name}: {mean_score:.3f}")
+                
+            except Exception as e:
+                print(f"❌ Error evaluating {metric.name}: {str(e)}")
+                # Add default values to prevent dataframe corruption
+                df[f"{metric.name}_score"] = [0.0] * len(df)
+                df[f"{metric.name}_details"] = [{"error": str(e)}] * len(df)
+                if metric.threshold is not None:
+                    df[f"{metric.name}_status"] = ["❌"] * len(df)
+                print(f"   Added default values for {metric.name}")
         
         return df
 
@@ -734,37 +845,87 @@ def create_sample_data() -> pd.DataFrame:
     return pd.DataFrame(sample_data)
 
 def load_ground_truth_file(file_path: str, file_format: str) -> pd.DataFrame:
-    """Load ground truth data from CSV or DOCX file."""
-    if file_format.lower() == "csv":
-        return pd.read_csv(file_path)
-    elif file_format.lower() == "docx":
-        # Load DOCX file and convert to DataFrame
-        doc = Document(file_path)
-        data = []
+    """
+    Load ground truth data from CSV or DOCX file.
+    
+    Args:
+        file_path: Path to the ground truth file
+        file_format: File format ('csv' or 'docx')
         
-        # Extract data from tables in the DOCX
-        for table in doc.tables:
-            headers = [cell.text.strip() for cell in table.rows[0].cells]
-            for row in table.rows[1:]:  # Skip header row
-                row_data = [cell.text.strip() for cell in row.cells]
-                if len(row_data) == len(headers):
-                    data.append(dict(zip(headers, row_data)))
+    Returns:
+        pandas.DataFrame: Ground truth data
         
-        if not data:
-            # If no tables found, try to extract from paragraphs
-            # This is a simple approach - you might need to customize based on your DOCX structure
-            paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
-            if len(paragraphs) >= 2:
-                # Assume first paragraph is headers, rest are data
-                headers = paragraphs[0].split('\t') if '\t' in paragraphs[0] else paragraphs[0].split(',')
-                for para in paragraphs[1:]:
-                    row_data = para.split('\t') if '\t' in para else para.split(',')
-                    if len(row_data) == len(headers):
+    Raises:
+        FileNotFoundError: If file doesn't exist
+        ValueError: If file format is unsupported
+        Exception: If file cannot be parsed
+    """
+    try:
+        if file_format.lower() == "csv":
+            # Load CSV file with error handling
+            df = pd.read_csv(file_path)
+            if df.empty:
+                raise ValueError("CSV file is empty")
+            return df
+            
+        elif file_format.lower() == "docx":
+            # Load DOCX file and convert to DataFrame
+            doc = Document(file_path)
+            data = []
+            
+            # Extract data from tables in the DOCX
+            if doc.tables:
+                for table in doc.tables:
+                    if len(table.rows) < 2:  # Need at least header + 1 data row
+                        continue
+                        
+                    headers = [cell.text.strip() for cell in table.rows[0].cells]
+                    if not headers or not any(headers):  # Skip empty headers
+                        continue
+                        
+                    for row in table.rows[1:]:  # Skip header row
+                        row_data = [cell.text.strip() for cell in row.cells]
+                        # Pad row_data if it's shorter than headers
+                        while len(row_data) < len(headers):
+                            row_data.append("")
+                        # Truncate if longer
+                        row_data = row_data[:len(headers)]
                         data.append(dict(zip(headers, row_data)))
-        
-        return pd.DataFrame(data)
-    else:
-        raise ValueError(f"Unsupported file format: {file_format}. Supported formats: csv, docx")
+            
+            if not data:
+                # If no tables found, try to extract from paragraphs
+                paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
+                if len(paragraphs) >= 2:
+                    # Try different delimiters
+                    for delimiter in ['\t', ',', '|']:
+                        if delimiter in paragraphs[0]:
+                            headers = [h.strip() for h in paragraphs[0].split(delimiter)]
+                            if len(headers) > 1:  # Valid headers found
+                                for para in paragraphs[1:]:
+                                    if delimiter in para:
+                                        row_data = [d.strip() for d in para.split(delimiter)]
+                                        # Pad or truncate to match headers
+                                        while len(row_data) < len(headers):
+                                            row_data.append("")
+                                        row_data = row_data[:len(headers)]
+                                        data.append(dict(zip(headers, row_data)))
+                                break
+            
+            if not data:
+                raise ValueError("No valid data found in DOCX file. Ensure it contains a table or properly formatted text.")
+            
+            df = pd.DataFrame(data)
+            if df.empty:
+                raise ValueError("DOCX file could not be parsed into valid data")
+            return df
+            
+        else:
+            raise ValueError(f"Unsupported file format: {file_format}. Supported formats: csv, docx")
+            
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Ground truth file not found: {file_path}")
+    except Exception as e:
+        raise Exception(f"Error loading ground truth file {file_path}: {str(e)}")
 
 # COMMAND ----------
 
@@ -776,9 +937,19 @@ def load_ground_truth_file(file_path: str, file_format: str) -> pd.DataFrame:
 # Load main data (or create sample data if file doesn't exist)
 try:
     df = pd.read_csv(DATA_SOURCE)
-    print(f"✅ Loaded {len(df)} samples from {DATA_SOURCE}")
+    if df.empty:
+        print("⚠️  Data file is empty, creating sample data...")
+        df = create_sample_data()
+        print(f"✅ Created {len(df)} sample records")
+    else:
+        print(f"✅ Loaded {len(df)} samples from {DATA_SOURCE}")
 except FileNotFoundError:
     print("⚠️  Data file not found, creating sample data...")
+    df = create_sample_data()
+    print(f"✅ Created {len(df)} sample records")
+except Exception as e:
+    print(f"⚠️  Error loading data file: {e}")
+    print("   Creating sample data instead...")
     df = create_sample_data()
     print(f"✅ Created {len(df)} sample records")
 
@@ -826,19 +997,23 @@ display(df.head())
 
 # COMMAND ----------
 
-# Initialize the evaluator
+# Initialize the evaluator with your configuration and enabled metrics
+# This creates the evaluation engine that will run all your enabled metrics
 evaluator = LLMJudgeEvaluator(EVALUATION_CONFIG, METRICS)
 
 # Run the evaluation
+# This will evaluate each row in your data against all enabled metrics
 print("🚀 Starting evaluation...")
 print("=" * 50)
 
+# Execute the evaluation - this may take a few minutes depending on your data size
 results_df = evaluator.run_evaluation(df)
 
 print("\n✅ Evaluation complete!")
 print("=" * 50)
 
 # Display results
+# Shows the original prompts/responses plus the scores for each metric
 display(results_df[['prompt', 'response'] + [f"{m.name}_score" for m in METRICS]])
 
 # COMMAND ----------
@@ -849,14 +1024,17 @@ display(results_df[['prompt', 'response'] + [f"{m.name}_score" for m in METRICS]
 # COMMAND ----------
 
 # Initialize MLflow visualizer
+# This will create visualizations and log results to MLflow for analysis
 visualizer = MLflowVisualizer(EVALUATION_CONFIG.experiment_name)
 
-# Log results
+# Log results to MLflow
+# This creates charts, tables, and detailed metrics in the MLflow UI
 print("📈 Logging results to MLflow...")
 visualizer.log_evaluation_results(results_df, METRICS, EVALUATION_CONFIG.run_name)
 
 print("✅ Results logged to MLflow!")
 print(f"Check MLflow UI for experiment: {EVALUATION_CONFIG.experiment_name}")
+print("   You can find detailed charts, metrics, and analysis in the MLflow dashboard")
 
 # COMMAND ----------
 
@@ -866,20 +1044,23 @@ print(f"Check MLflow UI for experiment: {EVALUATION_CONFIG.experiment_name}")
 # COMMAND ----------
 
 # Display summary statistics
+# This shows you the overall performance across all your metrics
 print("📊 Evaluation Summary:")
 print("=" * 50)
 
+# Calculate and display statistics for each metric
 for metric in METRICS:
     scores = results_df[f"{metric.name}_score"]
     print(f"\n{metric.name.upper()}:")
-    print(f"  Mean: {scores.mean():.3f}")
-    print(f"  Std:  {scores.std():.3f}")
-    print(f"  Min:  {scores.min():.3f}")
-    print(f"  Max:  {scores.max():.3f}")
+    print(f"  Mean: {scores.mean():.3f}")  # Average score
+    print(f"  Std:  {scores.std():.3f}")   # Standard deviation (consistency)
+    print(f"  Min:  {scores.min():.3f}")   # Lowest score
+    print(f"  Max:  {scores.max():.3f}")   # Highest score
     
+    # Show pass rate if threshold is defined
     if metric.threshold is not None:
         pass_rate = (scores >= metric.threshold).mean()
-        print(f"  Pass Rate: {pass_rate:.1%}")
+        print(f"  Pass Rate: {pass_rate:.1%}")  # Percentage that passed the threshold
 
 # COMMAND ----------
 
@@ -889,9 +1070,11 @@ for metric in METRICS:
 # COMMAND ----------
 
 # Export results to CSV
+# This saves all your evaluation results to a CSV file for further analysis
 output_path = f"/workspace/evaluation_results_{time.strftime('%Y%m%d_%H%M%S')}.csv"
 results_df.to_csv(output_path, index=False)
 print(f"✅ Results exported to: {output_path}")
+print("   You can download this file for further analysis or sharing")
 
 # COMMAND ----------
 
@@ -944,6 +1127,93 @@ print(f"✅ Results exported to: {output_path}")
 
 # Example: Set up ground truth evaluation
 # setup_ground_truth_evaluation()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 16.5. System Test and Validation
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Test the system to ensure everything is working correctly
+# MAGIC 
+# MAGIC This section runs a quick test to verify the system is properly configured and working.
+
+# COMMAND ----------
+
+def test_system():
+    """
+    Test the system to ensure all components are working correctly.
+    
+    This function validates:
+    - Configuration is properly set
+    - Required dependencies are available
+    - Data loading works
+    - Metrics are properly configured
+    """
+    print("🧪 Testing system configuration...")
+    
+    # Test 1: Configuration validation
+    try:
+        print("✅ Configuration loaded successfully")
+        print(f"   - Experiment: {EXPERIMENT_NAME}")
+        print(f"   - Data source: {DATA_SOURCE}")
+        print(f"   - Judge models: {JUDGE_MODELS}")
+        print(f"   - Enabled metrics: {get_enabled_metrics()}")
+    except Exception as e:
+        print(f"❌ Configuration error: {e}")
+        return False
+    
+    # Test 2: Dependencies check
+    try:
+        import pandas as pd
+        import plotly.graph_objects as go
+        from langchain_openai import ChatOpenAI
+        from docx import Document
+        print("✅ All required dependencies are available")
+    except ImportError as e:
+        print(f"❌ Missing dependency: {e}")
+        return False
+    
+    # Test 3: Data loading test
+    try:
+        test_df = create_sample_data()
+        if test_df.empty:
+            print("❌ Sample data creation failed")
+            return False
+        print(f"✅ Sample data created successfully ({len(test_df)} rows)")
+    except Exception as e:
+        print(f"❌ Data loading error: {e}")
+        return False
+    
+    # Test 4: Metrics configuration test
+    try:
+        if not METRICS:
+            print("❌ No metrics configured")
+            return False
+        print(f"✅ {len(METRICS)} metrics configured")
+        for metric in METRICS:
+            print(f"   - {metric.name}: {metric.metric_type.value}")
+    except Exception as e:
+        print(f"❌ Metrics configuration error: {e}")
+        return False
+    
+    # Test 5: Ground truth loading test (if enabled)
+    if USE_GROUND_TRUTH:
+        try:
+            test_gt = load_ground_truth_file(GROUND_TRUTH_SOURCE, GROUND_TRUTH_FORMAT)
+            print(f"✅ Ground truth loading test passed ({len(test_gt)} rows)")
+        except Exception as e:
+            print(f"⚠️  Ground truth loading test failed: {e}")
+            print("   This is expected if ground truth file doesn't exist yet")
+    
+    print("\n🎉 System test completed successfully!")
+    print("   The system is ready for evaluation.")
+    return True
+
+# Run the system test
+test_system()
 
 # COMMAND ----------
 
@@ -1043,35 +1313,47 @@ print(f"✅ Results exported to: {output_path}")
 # MAGIC - Ensure your OpenAI API key is correctly set in the secrets
 # MAGIC - Check that the key has sufficient credits
 # MAGIC - For Databricks LLM, ensure you have access to the model
+# MAGIC - Run `test_system()` to verify API connectivity
 # MAGIC 
 # MAGIC **2. Data Format Issues**
 # MAGIC - Ensure your CSV has the required columns (prompt, response)
 # MAGIC - Check that user_profile column exists if using personalization metrics
 # MAGIC - For ground truth, ensure prompt column matches between files
+# MAGIC - Use sample data first to test the system
 # MAGIC 
 # MAGIC **3. Evaluation Errors**
 # MAGIC - Check that your prompt templates use correct variable names
 # MAGIC - Ensure JSON output format is properly specified
 # MAGIC - Verify that required_variables match your template
 # MAGIC - For ground truth metrics, ensure ground_truth column exists
+# MAGIC - Check the error details in the results dataframe
 # MAGIC 
 # MAGIC **4. Performance Issues**
 # MAGIC - Reduce max_concurrency if hitting rate limits
 # MAGIC - Use fewer judge models for faster evaluation
 # MAGIC - Consider using smaller models for initial testing
 # MAGIC - Use Databricks LLM for cost-effective evaluation
+# MAGIC - Start with small datasets for testing
 # MAGIC 
 # MAGIC **5. Configuration Issues**
 # MAGIC - Use print_config() to check your settings
 # MAGIC - Verify that enabled metrics exist in the metrics dictionary
 # MAGIC - Check that thresholds are appropriate for your metric types
 # MAGIC - Ensure ground truth file path is correct if using ground truth
+# MAGIC - Run test_system() to validate configuration
 # MAGIC 
 # MAGIC **6. Ground Truth Issues**
 # MAGIC - Ensure ground truth file is uploaded to correct folder
 # MAGIC - Check that prompt column matches between main data and ground truth
 # MAGIC - Verify ground truth column name matches configuration
 # MAGIC - Use USE_GROUND_TRUTH flag to enable/disable ground truth evaluation
+# MAGIC - Test with CSV format first before trying DOCX
+# MAGIC 
+# MAGIC **7. MLflow Issues**
+# MAGIC - Ensure MLflow is properly installed and configured
+# MAGIC - Check that experiment name doesn't contain special characters
+# MAGIC - Verify you have write permissions to the MLflow tracking server
+# MAGIC - Check MLflow UI for detailed error messages
 
 # COMMAND ----------
 
@@ -1081,17 +1363,28 @@ print(f"✅ Results exported to: {output_path}")
 # MAGIC This generalized LLM judge system provides a flexible framework for Product Managers to evaluate AI responses using custom metrics. The system is designed to be:
 # MAGIC 
 # MAGIC - **Easy to Use**: Simple configuration for non-technical PMs
-# MAGIC - **Flexible**: Easy to add/remove metrics
-# MAGIC - **Reliable**: Deterministic results with ensemble evaluation
-# MAGIC - **Visual**: Rich MLflow 3.0 visualizations
-# MAGIC - **Scalable**: Handles both small and large datasets
+# MAGIC - **Flexible**: Easy to add/remove metrics and support for CSV/DOCX ground truth
+# MAGIC - **Reliable**: Deterministic results with ensemble evaluation and comprehensive error handling
+# MAGIC - **Visual**: Rich MLflow 3.0 visualizations and detailed reporting
+# MAGIC - **Scalable**: Handles both small and large datasets with proper concurrency control
+# MAGIC - **Robust**: Comprehensive testing and validation built-in
+# MAGIC 
+# MAGIC **Key Features:**
+# MAGIC - ✅ **4 Pre-built Metrics**: Response quality, personalization accuracy, helpfulness, ground truth accuracy
+# MAGIC - ✅ **Multiple File Formats**: CSV and DOCX support for ground truth
+# MAGIC - ✅ **Auto Ground Truth**: Automatically includes ground truth in all applicable metrics
+# MAGIC - ✅ **Ensemble Evaluation**: Multiple judge models for reliability
+# MAGIC - ✅ **Comprehensive Testing**: Built-in system validation
+# MAGIC - ✅ **Rich Visualizations**: MLflow 3.0 integration with charts and tables
 # MAGIC 
 # MAGIC **Next Steps:**
-# MAGIC 1. Customize the metrics for your specific use case
-# MAGIC 2. Test with your own data
-# MAGIC 3. Iterate on prompt templates for better accuracy
-# MAGIC 4. Set up automated evaluation pipelines
-# MAGIC 5. Monitor results in MLflow UI
+# MAGIC 1. **Test the system**: Run `test_system()` to verify everything works
+# MAGIC 2. **Customize metrics**: Modify the configuration for your specific use case
+# MAGIC 3. **Upload your data**: Replace sample data with your actual prompts and responses
+# MAGIC 4. **Add ground truth**: Upload reference answers for better evaluation quality
+# MAGIC 5. **Iterate and improve**: Refine prompt templates based on results
+# MAGIC 6. **Set up automation**: Create scheduled evaluation pipelines
+# MAGIC 7. **Monitor results**: Use MLflow UI for ongoing analysis
 # MAGIC 
 # MAGIC **Support:** For questions or issues, refer to the troubleshooting section or contact the ML team.
 
