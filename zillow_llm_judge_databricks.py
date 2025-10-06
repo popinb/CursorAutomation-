@@ -28,6 +28,7 @@
 !pip install databricks-agents --quiet
 !pip install langchain_openai langchain_core --quiet
 !pip install plotly --quiet
+!pip install python-docx --quiet
 
 # COMMAND ----------
 
@@ -59,6 +60,7 @@ import mlflow
 import mlflow.metrics
 import mlflow.metrics.genai
 import collections
+from docx import Document
 
 from mlflow.genai.scorers import scorer
 
@@ -127,8 +129,9 @@ EXPERIMENT_NAME = "my_zillow_evaluation"  # Change to your project name
 # Your data file path (CSV file with prompts and responses)
 DATA_SOURCE = "/workspace/my_data.csv"  # Change to your CSV file path
 
-# Ground truth file path (optional - CSV file with known good responses)
-GROUND_TRUTH_SOURCE = "/workspace/ground_truth.csv"  # Change to your ground truth CSV file path
+# Ground truth file path (optional - CSV or DOCX file with known good responses)
+GROUND_TRUTH_SOURCE = "/workspace/ground_truth.csv"  # Change to your ground truth file path (.csv or .docx)
+GROUND_TRUTH_FORMAT = "csv"  # File format: "csv" or "docx"
 USE_GROUND_TRUTH = False  # Set to True if you want to verify against ground truth
 AUTO_CONSUME_GROUND_TRUTH = True  # Automatically use ground truth in all applicable metrics (recommended: True)
 
@@ -228,10 +231,10 @@ def setup_reliable_evaluation():
     print("✅ Reliable evaluation setup complete!")
 
 def setup_databricks_llm_evaluation():
-    """Set up evaluation using Databricks default LLM."""
+    """Set up evaluation using Databricks default LLM (experimental)."""
     global JUDGE_MODELS
     JUDGE_MODELS = ["databricks-llm"]
-    print("✅ Databricks LLM evaluation setup complete!")
+    print("⚠️  Databricks LLM evaluation setup complete! (Experimental - not recommended for production)")
 
 def setup_ground_truth_evaluation():
     """Set up evaluation with ground truth verification."""
@@ -261,11 +264,13 @@ You are an impartial evaluator assessing response quality.
 
 **User Query:** {prompt}
 **AI Response:** {response}
+{ground_truth_section}
 
 **Evaluation Criteria:**
 1. Is the response directly relevant to the user's question?
 2. Does it provide useful information or actionable advice?
 3. Is the response clear and well-structured?
+{ground_truth_criteria}
 
 **Output Format:**
 Return only this JSON:
@@ -502,6 +507,23 @@ class LLMJudgeEvaluator:
                     else:
                         template_vars[var] = row.get(var, "")
                 
+                # Auto-include ground truth if available and auto-consume is enabled
+                if AUTO_CONSUME_GROUND_TRUTH and "ground_truth" in row and pd.notna(row["ground_truth"]):
+                    # Add ground truth section to prompt if not already present
+                    if "ground_truth_section" not in metric.prompt_template:
+                        # Add ground truth section dynamically
+                        ground_truth_section = f"\n**Ground Truth Response:** {row['ground_truth']}"
+                        ground_truth_criteria = "\n4. How well does the response compare to the ground truth (if available)?"
+                    else:
+                        ground_truth_section = f"**Ground Truth Response:** {row['ground_truth']}"
+                        ground_truth_criteria = "4. How well does the response compare to the ground truth?"
+                    
+                    template_vars["ground_truth_section"] = ground_truth_section
+                    template_vars["ground_truth_criteria"] = ground_truth_criteria
+                else:
+                    template_vars["ground_truth_section"] = ""
+                    template_vars["ground_truth_criteria"] = ""
+                
                 # Format the evaluation prompt
                 eval_prompt = metric.prompt_template.format(**template_vars)
                 
@@ -711,6 +733,39 @@ def create_sample_data() -> pd.DataFrame:
     }
     return pd.DataFrame(sample_data)
 
+def load_ground_truth_file(file_path: str, file_format: str) -> pd.DataFrame:
+    """Load ground truth data from CSV or DOCX file."""
+    if file_format.lower() == "csv":
+        return pd.read_csv(file_path)
+    elif file_format.lower() == "docx":
+        # Load DOCX file and convert to DataFrame
+        doc = Document(file_path)
+        data = []
+        
+        # Extract data from tables in the DOCX
+        for table in doc.tables:
+            headers = [cell.text.strip() for cell in table.rows[0].cells]
+            for row in table.rows[1:]:  # Skip header row
+                row_data = [cell.text.strip() for cell in row.cells]
+                if len(row_data) == len(headers):
+                    data.append(dict(zip(headers, row_data)))
+        
+        if not data:
+            # If no tables found, try to extract from paragraphs
+            # This is a simple approach - you might need to customize based on your DOCX structure
+            paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
+            if len(paragraphs) >= 2:
+                # Assume first paragraph is headers, rest are data
+                headers = paragraphs[0].split('\t') if '\t' in paragraphs[0] else paragraphs[0].split(',')
+                for para in paragraphs[1:]:
+                    row_data = para.split('\t') if '\t' in para else para.split(',')
+                    if len(row_data) == len(headers):
+                        data.append(dict(zip(headers, row_data)))
+        
+        return pd.DataFrame(data)
+    else:
+        raise ValueError(f"Unsupported file format: {file_format}. Supported formats: csv, docx")
+
 # COMMAND ----------
 
 # MAGIC %md
@@ -730,8 +785,8 @@ except FileNotFoundError:
 # Load ground truth data if enabled
 if USE_GROUND_TRUTH:
     try:
-        ground_truth_df = pd.read_csv(GROUND_TRUTH_SOURCE)
-        print(f"✅ Loaded {len(ground_truth_df)} ground truth samples from {GROUND_TRUTH_SOURCE}")
+        ground_truth_df = load_ground_truth_file(GROUND_TRUTH_SOURCE, GROUND_TRUTH_FORMAT)
+        print(f"✅ Loaded {len(ground_truth_df)} ground truth samples from {GROUND_TRUTH_SOURCE} ({GROUND_TRUTH_FORMAT.upper()})")
         
         # Merge ground truth with main data
         # Assuming both have a common key (like prompt or index)
@@ -743,6 +798,10 @@ if USE_GROUND_TRUTH:
         
         print(f"✅ Ground truth data merged with main data")
         
+        # If auto-consume is enabled, add ground truth to all applicable metrics
+        if AUTO_CONSUME_GROUND_TRUTH:
+            print("✅ Ground truth will be automatically included in all applicable metrics")
+        
     except FileNotFoundError:
         print(f"⚠️  Ground truth file not found at {GROUND_TRUTH_SOURCE}")
         print("   Ground truth evaluation will be skipped")
@@ -751,6 +810,10 @@ if USE_GROUND_TRUTH:
         if "ground_truth_accuracy" in ENABLE_METRICS:
             ENABLE_METRICS["ground_truth_accuracy"] = False
             print("   Disabled ground_truth_accuracy metric")
+    except Exception as e:
+        print(f"⚠️  Error loading ground truth file: {e}")
+        print("   Ground truth evaluation will be skipped")
+        USE_GROUND_TRUTH = False
 
 # Display the data
 print(f"\nData Preview:")
@@ -855,9 +918,9 @@ print(f"✅ Results exported to: {output_path}")
 # MAGIC setup_reliable_evaluation()
 # MAGIC ```
 # MAGIC 
-# MAGIC **Databricks LLM Evaluation** (Use Databricks default LLM):
+# MAGIC **Databricks LLM Evaluation** (Experimental - Use Databricks default LLM):
 # MAGIC ```python
-# MAGIC setup_databricks_llm_evaluation()
+# MAGIC setup_databricks_llm_evaluation()  # ⚠️ Experimental - not recommended for production
 # MAGIC ```
 # MAGIC 
 # MAGIC **Ground Truth Evaluation** (Verify against ground truth):
@@ -892,7 +955,7 @@ print(f"✅ Results exported to: {output_path}")
 # MAGIC %md
 # MAGIC ### Ground Truth File Requirements
 # MAGIC 
-# MAGIC Your ground truth CSV file should have these columns:
+# MAGIC Your ground truth file (CSV or DOCX) should have these columns:
 # MAGIC 
 # MAGIC **Required Columns:**
 # MAGIC - `prompt`: User questions (must match your main data)
@@ -902,18 +965,25 @@ print(f"✅ Results exported to: {output_path}")
 # MAGIC - `user_profile`: User information (if using personalization metrics)
 # MAGIC - `context`: Additional context (if needed)
 # MAGIC 
-# MAGIC **Example Ground Truth File:**
+# MAGIC **Supported Formats:**
+# MAGIC - **CSV**: Standard comma-separated values file
+# MAGIC - **DOCX**: Microsoft Word document with tables
+# MAGIC 
+# MAGIC **Example Ground Truth File (CSV):**
 # MAGIC ```csv
 # MAGIC prompt,ground_truth,user_profile
 # MAGIC "What's the best way to buy a house in Seattle?","To buy a house in Seattle, you should first get pre-approved for a mortgage, work with a local real estate agent, and be prepared for a competitive market. Consider your budget, location preferences, and timeline.","Location: Seattle, WA; Income: $120k; Credit Score: 720"
 # MAGIC "I have a credit score of 750, can I get a mortgage?","With a credit score of 750, you're in excellent position to qualify for a mortgage. You'll likely get the best interest rates available. I recommend getting pre-approved to see your exact loan options.","Location: Seattle, WA; Income: $120k; Credit Score: 750"
 # MAGIC ```
 # MAGIC 
+# MAGIC **Example Ground Truth File (DOCX):**
+# MAGIC Create a Word document with a table containing the same columns as the CSV example above.
+# MAGIC 
 # MAGIC **Upload Instructions:**
-# MAGIC 1. Upload your ground truth CSV file to `/workspace/` folder in Databricks
-# MAGIC 2. Update `GROUND_TRUTH_SOURCE` in the configuration
+# MAGIC 1. Upload your ground truth file (CSV or DOCX) to `/workspace/` folder in Databricks
+# MAGIC 2. Update `GROUND_TRUTH_SOURCE` and `GROUND_TRUTH_FORMAT` in the configuration
 # MAGIC 3. Set `USE_GROUND_TRUTH = True`
-# MAGIC 4. Enable `ground_truth_accuracy` metric
+# MAGIC 4. Enable `ground_truth_accuracy` metric (optional - ground truth will be auto-consumed by all metrics)
 
 # COMMAND ----------
 
