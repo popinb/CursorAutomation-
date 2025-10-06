@@ -127,6 +127,10 @@ EXPERIMENT_NAME = "my_zillow_evaluation"  # Change to your project name
 # Your data file path (CSV file with prompts and responses)
 DATA_SOURCE = "/workspace/my_data.csv"  # Change to your CSV file path
 
+# Ground truth file path (optional - for verification against known good responses)
+GROUND_TRUTH_SOURCE = "/workspace/ground_truth.csv"  # Change to your ground truth file path
+USE_GROUND_TRUTH = False  # Set to True if you want to verify against ground truth
+
 # =============================================================================
 # METRICS SETTINGS - Turn metrics ON/OFF and set pass/fail thresholds
 # =============================================================================
@@ -136,6 +140,7 @@ ENABLE_METRICS = {
     "response_quality": True,           # Is the response helpful and relevant? (True/False)
     "personalization_accuracy": True,   # Does it use user info correctly? (True/False)
     "helpfulness": True,                # How helpful is the response? (True/False)
+    "ground_truth_accuracy": False,     # How close is response to ground truth? (True/False)
 }
 
 # Set what score counts as "PASS" for each metric
@@ -143,6 +148,7 @@ METRIC_THRESHOLDS = {
     "response_quality": 1.0,           # 1 = pass, 0 = fail (don't change)
     "personalization_accuracy": 1.0,   # 1 = pass, 0 = fail (don't change)
     "helpfulness": 3.0,                # 3+ = pass, 1-2 = fail (can change to 2.0, 3.0, 4.0)
+    "ground_truth_accuracy": 0.8,      # 0.8+ = pass, 0.0-0.79 = fail (can change to 0.7, 0.8, 0.9)
 }
 
 # =============================================================================
@@ -150,7 +156,8 @@ METRIC_THRESHOLDS = {
 # =============================================================================
 
 # Choose 1 or 2 models (more models = more reliable but slower)
-JUDGE_MODELS = ["gpt-4o"]  # Options: ["gpt-4o"] or ["gpt-4o", "gpt-4o-mini"]
+# Options: ["gpt-4o"], ["gpt-4o-mini"], ["databricks-llm"], or combinations
+JUDGE_MODELS = ["gpt-4o"]  # Change to ["databricks-llm"] to use Databricks default LLM
 
 # How many evaluations to run at once (don't change unless you have issues)
 MAX_CONCURRENCY = 2  # Keep as 2 (or change to 1 if you get errors)
@@ -163,6 +170,7 @@ MAX_CONCURRENCY = 2  # Keep as 2 (or change to 1 if you get errors)
 PROMPT_COLUMN = "prompt"          # Column with user questions
 RESPONSE_COLUMN = "response"      # Column with AI responses
 USER_PROFILE_COLUMN = "user_profile"  # Column with user info (optional)
+GROUND_TRUTH_COLUMN = "ground_truth"  # Column with ground truth responses (if using ground truth)
 
 # COMMAND ----------
 
@@ -216,6 +224,20 @@ def setup_reliable_evaluation():
     global MAX_CONCURRENCY
     MAX_CONCURRENCY = 1
     print("✅ Reliable evaluation setup complete!")
+
+def setup_databricks_llm_evaluation():
+    """Set up evaluation using Databricks default LLM."""
+    global JUDGE_MODELS
+    JUDGE_MODELS = ["databricks-llm"]
+    print("✅ Databricks LLM evaluation setup complete!")
+
+def setup_ground_truth_evaluation():
+    """Set up evaluation with ground truth verification."""
+    global USE_GROUND_TRUTH
+    global ENABLE_METRICS
+    USE_GROUND_TRUTH = True
+    ENABLE_METRICS["ground_truth_accuracy"] = True
+    print("✅ Ground truth evaluation setup complete!")
 
 # Display current configuration
 print_config()
@@ -319,6 +341,47 @@ Return only this JSON:
     required_variables=["prompt", "response"]
 )
 
+# Example 4: Ground Truth Accuracy (Continuous 0-1)
+GROUND_TRUTH_ACCURACY_METRIC = MetricConfig(
+    name="ground_truth_accuracy",
+    description="Measures how close the AI response is to the ground truth response",
+    metric_type=MetricType.CONTINUOUS,
+    prompt_template="""
+You are an impartial evaluator comparing AI responses to ground truth.
+
+**User Query:** {prompt}
+**AI Response:** {response}
+**Ground Truth Response:** {ground_truth}
+
+**Evaluation Criteria:**
+1. Content Accuracy: How well does the AI response match the key information in the ground truth?
+2. Completeness: Does the AI response cover the same important points as the ground truth?
+3. Clarity: Is the AI response as clear and well-structured as the ground truth?
+4. Relevance: Does the AI response address the same aspects of the user's question?
+
+**Scoring Guidelines:**
+- 1.0: Perfect match - AI response is essentially identical to ground truth in content and quality
+- 0.8-0.9: Very close - Minor differences but covers all key points
+- 0.6-0.7: Good match - Most key information present with some differences
+- 0.4-0.5: Partial match - Some key information missing or different
+- 0.2-0.3: Poor match - Significant differences in content or approach
+- 0.0-0.1: Very different - Little to no similarity with ground truth
+
+**Output Format:**
+Return only this JSON:
+```json
+{{
+  "ground_truth_accuracy_score": 0.85,
+  "explanation": "Brief explanation of your scoring decision"
+}}
+```
+""",
+    threshold=0.8,
+    scale_min=0.0,
+    scale_max=1.0,
+    required_variables=["prompt", "response", "ground_truth"]
+)
+
 # COMMAND ----------
 
 # MAGIC %md
@@ -334,6 +397,7 @@ METRICS_DICT = {
     "response_quality": RESPONSE_QUALITY_METRIC,
     "personalization_accuracy": PERSONALIZATION_ACCURACY_METRIC,
     "helpfulness": HELPFULNESS_METRIC,
+    "ground_truth_accuracy": GROUND_TRUTH_ACCURACY_METRIC,
 }
 
 # Filter to only enabled metrics
@@ -396,11 +460,20 @@ class LLMJudgeEvaluator:
         """Initialize LLM models for evaluation."""
         for model_name in self.config.judge_models:
             try:
-                self.models[model_name] = ChatOpenAI(
-                    model_name=model_name,
-                    temperature=0,
-                    model_kwargs={"response_format": {"type": "json_object"}}
-                )
+                if model_name == "databricks-llm":
+                    # Use Databricks default LLM
+                    self.models[model_name] = ChatOpenAI(
+                        model_name="databricks-llm",
+                        temperature=0,
+                        model_kwargs={"response_format": {"type": "json_object"}}
+                    )
+                else:
+                    # Use OpenAI-compatible models
+                    self.models[model_name] = ChatOpenAI(
+                        model_name=model_name,
+                        temperature=0,
+                        model_kwargs={"response_format": {"type": "json_object"}}
+                    )
             except Exception as e:
                 print(f"Warning: Could not initialize model {model_name}: {e}")
     
@@ -422,6 +495,8 @@ class LLMJudgeEvaluator:
                         template_vars[var] = row.get("user_profile", "")
                     elif var == "context":
                         template_vars[var] = row.get("context", "")
+                    elif var == "ground_truth":
+                        template_vars[var] = row.get("ground_truth", "")
                     else:
                         template_vars[var] = row.get(var, "")
                 
@@ -641,7 +716,7 @@ def create_sample_data() -> pd.DataFrame:
 
 # COMMAND ----------
 
-# Load data (or create sample data if file doesn't exist)
+# Load main data (or create sample data if file doesn't exist)
 try:
     df = pd.read_csv(DATA_SOURCE)
     print(f"✅ Loaded {len(df)} samples from {DATA_SOURCE}")
@@ -649,6 +724,31 @@ except FileNotFoundError:
     print("⚠️  Data file not found, creating sample data...")
     df = create_sample_data()
     print(f"✅ Created {len(df)} sample records")
+
+# Load ground truth data if enabled
+if USE_GROUND_TRUTH:
+    try:
+        ground_truth_df = pd.read_csv(GROUND_TRUTH_SOURCE)
+        print(f"✅ Loaded {len(ground_truth_df)} ground truth samples from {GROUND_TRUTH_SOURCE}")
+        
+        # Merge ground truth with main data
+        # Assuming both have a common key (like prompt or index)
+        if 'prompt' in ground_truth_df.columns and 'prompt' in df.columns:
+            df = df.merge(ground_truth_df[['prompt', GROUND_TRUTH_COLUMN]], on='prompt', how='left')
+        else:
+            # If no common key, merge by index
+            df[GROUND_TRUTH_COLUMN] = ground_truth_df[GROUND_TRUTH_COLUMN].values[:len(df)]
+        
+        print(f"✅ Ground truth data merged with main data")
+        
+    except FileNotFoundError:
+        print(f"⚠️  Ground truth file not found at {GROUND_TRUTH_SOURCE}")
+        print("   Ground truth evaluation will be skipped")
+        USE_GROUND_TRUTH = False
+        # Remove ground truth metrics if no ground truth data
+        if "ground_truth_accuracy" in ENABLE_METRICS:
+            ENABLE_METRICS["ground_truth_accuracy"] = False
+            print("   Disabled ground_truth_accuracy metric")
 
 # Display the data
 print(f"\nData Preview:")
@@ -752,6 +852,16 @@ print(f"✅ Results exported to: {output_path}")
 # MAGIC ```python
 # MAGIC setup_reliable_evaluation()
 # MAGIC ```
+# MAGIC 
+# MAGIC **Databricks LLM Evaluation** (Use Databricks default LLM):
+# MAGIC ```python
+# MAGIC setup_databricks_llm_evaluation()
+# MAGIC ```
+# MAGIC 
+# MAGIC **Ground Truth Evaluation** (Verify against ground truth):
+# MAGIC ```python
+# MAGIC setup_ground_truth_evaluation()
+# MAGIC ```
 
 # COMMAND ----------
 
@@ -764,10 +874,49 @@ print(f"✅ Results exported to: {output_path}")
 # Example: Set up reliable evaluation
 # setup_reliable_evaluation()
 
+# Example: Set up Databricks LLM evaluation
+# setup_databricks_llm_evaluation()
+
+# Example: Set up ground truth evaluation
+# setup_ground_truth_evaluation()
+
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 17. Tips for PMs
+# MAGIC ## 17. Ground Truth File Format
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Ground Truth File Requirements
+# MAGIC 
+# MAGIC Your ground truth CSV file should have these columns:
+# MAGIC 
+# MAGIC **Required Columns:**
+# MAGIC - `prompt`: User questions (must match your main data)
+# MAGIC - `ground_truth`: Known good responses for comparison
+# MAGIC 
+# MAGIC **Optional Columns:**
+# MAGIC - `user_profile`: User information (if using personalization metrics)
+# MAGIC - `context`: Additional context (if needed)
+# MAGIC 
+# MAGIC **Example Ground Truth File:**
+# MAGIC ```csv
+# MAGIC prompt,ground_truth,user_profile
+# MAGIC "What's the best way to buy a house in Seattle?","To buy a house in Seattle, you should first get pre-approved for a mortgage, work with a local real estate agent, and be prepared for a competitive market. Consider your budget, location preferences, and timeline.","Location: Seattle, WA; Income: $120k; Credit Score: 720"
+# MAGIC "I have a credit score of 750, can I get a mortgage?","With a credit score of 750, you're in excellent position to qualify for a mortgage. You'll likely get the best interest rates available. I recommend getting pre-approved to see your exact loan options.","Location: Seattle, WA; Income: $120k; Credit Score: 750"
+# MAGIC ```
+# MAGIC 
+# MAGIC **Upload Instructions:**
+# MAGIC 1. Upload your ground truth CSV file to `/workspace/` folder in Databricks
+# MAGIC 2. Update `GROUND_TRUTH_SOURCE` in the configuration
+# MAGIC 3. Set `USE_GROUND_TRUTH = True`
+# MAGIC 4. Enable `ground_truth_accuracy` metric
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 18. Tips for PMs
 
 # COMMAND ----------
 
@@ -793,6 +942,7 @@ print(f"✅ Results exported to: {output_path}")
 # MAGIC - Accuracy levels
 # MAGIC 
 # MAGIC **Continuous Metrics**:
+# MAGIC - Ground truth accuracy (0-1 scale)
 # MAGIC - Confidence scores
 # MAGIC - Detailed ratings
 # MAGIC - Performance metrics
@@ -804,11 +954,13 @@ print(f"✅ Results exported to: {output_path}")
 # MAGIC 3. **Monitor Costs**: LLM evaluation can be expensive with large datasets
 # MAGIC 4. **Validate Results**: Spot-check evaluations to ensure quality
 # MAGIC 5. **Document Changes**: Keep track of metric modifications
+# MAGIC 6. **Use Ground Truth**: When available, ground truth provides objective evaluation
+# MAGIC 7. **Leverage Databricks LLM**: Use Databricks default LLM for cost-effective evaluation
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 18. Troubleshooting
+# MAGIC ## 19. Troubleshooting
 
 # COMMAND ----------
 
@@ -818,30 +970,41 @@ print(f"✅ Results exported to: {output_path}")
 # MAGIC **1. API Key Issues**
 # MAGIC - Ensure your OpenAI API key is correctly set in the secrets
 # MAGIC - Check that the key has sufficient credits
+# MAGIC - For Databricks LLM, ensure you have access to the model
 # MAGIC 
 # MAGIC **2. Data Format Issues**
 # MAGIC - Ensure your CSV has the required columns (prompt, response)
 # MAGIC - Check that user_profile column exists if using personalization metrics
+# MAGIC - For ground truth, ensure prompt column matches between files
 # MAGIC 
 # MAGIC **3. Evaluation Errors**
 # MAGIC - Check that your prompt templates use correct variable names
 # MAGIC - Ensure JSON output format is properly specified
 # MAGIC - Verify that required_variables match your template
+# MAGIC - For ground truth metrics, ensure ground_truth column exists
 # MAGIC 
 # MAGIC **4. Performance Issues**
 # MAGIC - Reduce max_concurrency if hitting rate limits
 # MAGIC - Use fewer judge models for faster evaluation
 # MAGIC - Consider using smaller models for initial testing
+# MAGIC - Use Databricks LLM for cost-effective evaluation
 # MAGIC 
 # MAGIC **5. Configuration Issues**
 # MAGIC - Use print_config() to check your settings
 # MAGIC - Verify that enabled metrics exist in the metrics dictionary
 # MAGIC - Check that thresholds are appropriate for your metric types
+# MAGIC - Ensure ground truth file path is correct if using ground truth
+# MAGIC 
+# MAGIC **6. Ground Truth Issues**
+# MAGIC - Ensure ground truth file is uploaded to correct folder
+# MAGIC - Check that prompt column matches between main data and ground truth
+# MAGIC - Verify ground truth column name matches configuration
+# MAGIC - Use USE_GROUND_TRUTH flag to enable/disable ground truth evaluation
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 19. Conclusion
+# MAGIC ## 20. Conclusion
 # MAGIC 
 # MAGIC This generalized LLM judge system provides a flexible framework for Product Managers to evaluate AI responses using custom metrics. The system is designed to be:
 # MAGIC 
