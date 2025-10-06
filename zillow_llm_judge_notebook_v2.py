@@ -26,26 +26,19 @@
 
 # COMMAND ----------
 
-# Install required packages - Databricks-friendly approach with MLflow 3.0 support
-# This version installs only what's needed on top of Databricks pre-installed packages
+# Install required packages using %pip (Databricks best practice)
+# %pip automatically handles environment changes - no manual restart needed
 
-# First, upgrade MLflow to ensure we have 3.0+ for visualizations
-!pip install --upgrade mlflow>=3.0 --quiet
+%pip install mlflow>=3.0 --quiet
+%pip install langchain-community langchain-openai --quiet
+%pip install openai --quiet
+%pip install pandas --quiet
+%pip install plotly --quiet
+%pip install python-docx --quiet
 
-# Install LangChain components needed for MLflow metrics
-!pip install langchain-community langchain-openai --quiet
-
-# Install other required packages
-!pip install openai --quiet
-!pip install pandas --quiet
-!pip install plotly --quiet
-!pip install python-docx --quiet
-
-# Note: We're NOT touching protobuf, grpcio, etc. - use Databricks versions
-# This minimizes dependency conflicts while getting MLflow 3.0 features
-
-# Restart Python kernel
-dbutils.library.restartPython()
+print("✅ Packages installed successfully!")
+print("Databricks automatically handles the environment - no restart needed")
+print("Continue directly to Cell 2")
 
 # COMMAND ----------
 
