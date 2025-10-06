@@ -127,9 +127,10 @@ EXPERIMENT_NAME = "my_zillow_evaluation"  # Change to your project name
 # Your data file path (CSV file with prompts and responses)
 DATA_SOURCE = "/workspace/my_data.csv"  # Change to your CSV file path
 
-# Ground truth file path (optional - for verification against known good responses)
-GROUND_TRUTH_SOURCE = "/workspace/ground_truth.csv"  # Change to your ground truth file path
+# Ground truth file path (optional - CSV file with known good responses)
+GROUND_TRUTH_SOURCE = "/workspace/ground_truth.csv"  # Change to your ground truth CSV file path
 USE_GROUND_TRUTH = False  # Set to True if you want to verify against ground truth
+AUTO_CONSUME_GROUND_TRUTH = True  # Automatically use ground truth in all applicable metrics (recommended: True)
 
 # =============================================================================
 # METRICS SETTINGS - Turn metrics ON/OFF and set pass/fail thresholds
@@ -156,8 +157,9 @@ METRIC_THRESHOLDS = {
 # =============================================================================
 
 # Choose 1 or 2 models (more models = more reliable but slower)
-# Options: ["gpt-4o"], ["gpt-4o-mini"], ["databricks-llm"], or combinations
-JUDGE_MODELS = ["gpt-4o"]  # Change to ["databricks-llm"] to use Databricks default LLM
+# Options: ["gpt-4o"], ["gpt-4o-mini"], or combinations
+# Note: ["databricks-llm"] is available but not recommended for production use
+JUDGE_MODELS = ["gpt-4o"]  # Standard options: ["gpt-4o"], ["gpt-4o-mini"], ["gpt-4o", "gpt-4o-mini"]
 
 # How many evaluations to run at once (don't change unless you have issues)
 MAX_CONCURRENCY = 2  # Keep as 2 (or change to 1 if you get errors)
