@@ -26,31 +26,20 @@
 
 # COMMAND ----------
 
-# Install required packages with compatible versions
-# Handle all dependency conflicts properly
+# Install required packages - Databricks-friendly approach
+# This version works with pre-installed packages instead of fighting them
 
-# First, clean up any conflicting packages
-!pip uninstall -y protobuf grpcio grpcio-status googleapis-common-protos proto-plus google-api-core --quiet
-
-# Upgrade pip first
-!pip install --upgrade pip setuptools wheel --quiet
-
-# Install core dependencies with specific compatible versions
-# These versions are tested to work together without conflicts
-!pip install --no-deps protobuf==4.24.4 --quiet
-!pip install --no-deps grpcio==1.62.0 --quiet
-!pip install --no-deps grpcio-status==1.62.0 --quiet
-!pip install --no-deps googleapis-common-protos==1.62.0 --quiet
-
-# Install remaining packages
-!pip install mlflow>=3.0 --quiet
-!pip install langchain_openai langchain_core --quiet
+# Only install what we absolutely need, let Databricks handle the rest
+!pip install mlflow --quiet
+!pip install openai --quiet  # Use openai directly instead of langchain
+!pip install pandas --quiet
 !pip install plotly --quiet
 !pip install python-docx --quiet
-!pip install pandas --quiet
-!pip install anyio==3.7.1 --quiet  # Fix jupyter-server conflict
 
-# Restart Python kernel to ensure clean environment
+# Note: We're NOT installing protobuf, grpcio, etc. - use what Databricks provides
+# This avoids dependency conflicts with pre-installed packages
+
+# Restart Python kernel
 dbutils.library.restartPython()
 
 # COMMAND ----------
@@ -79,9 +68,6 @@ from plotly.subplots import make_subplots
 from docx import Document
 
 # LLM and MLflow
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
-from langchain_core.runnables import RunnableLambda
 from openai import OpenAI
 import mlflow
 
