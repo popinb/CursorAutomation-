@@ -37,8 +37,9 @@
 %pip install python-docx --quiet
 
 print("✅ Packages installed successfully!")
-print("Databricks automatically handles the environment - no restart needed")
-print("Continue directly to Cell 2")
+print("\n📌 Note: Dependency warnings about protobuf are expected and can be ignored.")
+print("   Databricks manages these dependencies internally.")
+print("\n➡️ Continue directly to Cell 2")
 
 # COMMAND ----------
 
