@@ -142,47 +142,109 @@ print("✅ System classes initialized")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Cell 4: ⚡ PM Configuration - Data Sources
-# MAGIC **🔧 MODIFY THIS CELL - Set your file paths here**
+# MAGIC ## Cell 4: ⚡ PM Configuration - Easy UI Setup
+# MAGIC **Run this cell to configure using the UI widgets at the top of the notebook**
 
 # COMMAND ----------
 
 # =============================================================================
-# DATA SOURCE CONFIGURATION - Set your file paths here
+# EASY UI CONFIGURATION - Use the widgets at the top of the notebook
 # =============================================================================
 
-# Your main data file (CSV with prompts and AI responses to evaluate)
-# This file must have at least two columns: "prompt" and "response"
-DATA_SOURCE = "/workspace/my_data.csv"  # 👈 Change this to your data file
+# Create UI widgets for easy configuration
+dbutils.widgets.text("data_source", "/workspace/my_data.csv", "📁 Main Data File (CSV)")
+dbutils.widgets.text("experiment_name", "/Users/your_email@zillowgroup.com/my_evaluation", "🔬 Experiment Name")
+dbutils.widgets.dropdown("use_ground_truth", "Yes", ["Yes", "No"], "📋 Use Ground Truth?")
+dbutils.widgets.text("ground_truth_files", "/workspace/ground_truth_1.csv,/workspace/ground_truth_2.csv", "📚 Ground Truth Files (comma-separated)")
 
-# Your ground truth files (CSV or DOCX files with reference answers)
-# Add as many ground truth files as you need - they will be combined
-# Each file should have "prompt" and "ground_truth" columns
-GROUND_TRUTH_SOURCES = [
-    "/workspace/ground_truth_1.csv",  # 👈 Change to your ground truth file 1
-    "/workspace/ground_truth_2.csv",  # 👈 Change to your ground truth file 2
-    # "/workspace/ground_truth_3.docx",  # 👈 Uncomment and add more files as needed
-]
+# Metric configuration widgets
+dbutils.widgets.multiselect(
+    "enabled_metrics",
+    "response_quality,helpfulness,ground_truth_accuracy",
+    ["response_quality", "personalization_accuracy", "helpfulness", "ground_truth_accuracy"],
+    "✅ Enable Metrics"
+)
 
-# Enable ground truth evaluation
-# Set to True if you have ground truth files, False otherwise
-USE_GROUND_TRUTH = True  # 👈 Set to False if you don't have ground truth
+# Judge model selection
+dbutils.widgets.dropdown(
+    "judge_model",
+    "gpt-4o-mini",
+    ["gpt-4o-mini", "gpt-4o", "gpt-4o,gpt-4o-mini", "claude-3-sonnet", "databricks-llm"],
+    "🤖 Judge Model(s)"
+)
 
-# Automatically include ground truth in all metrics (recommended)
-AUTO_CONSUME_GROUND_TRUTH = True  # 👈 Keep as True for better evaluation
+# Advanced options
+dbutils.widgets.dropdown("auto_consume_ground_truth", "Yes", ["Yes", "No"], "🔄 Auto-Use Ground Truth in All Metrics?")
+dbutils.widgets.dropdown("max_concurrency", "2", ["1", "2", "3", "4"], "⚡ Parallel Evaluations")
 
-# Your experiment name for MLflow tracking
-EXPERIMENT_NAME = "/Users/your_email@zillowgroup.com/my_zillow_evaluation"  # 👈 Change to your experiment name
+print("🎛️ UI WIDGETS CREATED!")
+print("="*60)
+print("📌 INSTRUCTIONS:")
+print("1. Look at the TOP of this notebook for the configuration widgets")
+print("2. Fill in your settings using the dropdown menus and text fields")
+print("3. Then run the next cell to apply your configuration")
+print("="*60)
 
-# Column names in your CSV (only change if your columns have different names)
-PROMPT_COLUMN = "prompt"  # Column containing user questions
-RESPONSE_COLUMN = "response"  # Column containing AI responses
-GROUND_TRUTH_COLUMN = "ground_truth"  # Column name for ground truth
+# COMMAND ----------
 
-print("✅ Data sources configured")
-print(f"   Main data: {DATA_SOURCE}")
-print(f"   Ground truth files: {len(GROUND_TRUTH_SOURCES)} files")
-print(f"   Experiment: {EXPERIMENT_NAME}")
+# =============================================================================
+# APPLY WIDGET CONFIGURATION - Run this after setting widgets above
+# =============================================================================
+
+# Get values from widgets
+DATA_SOURCE = dbutils.widgets.get("data_source")
+EXPERIMENT_NAME = dbutils.widgets.get("experiment_name")
+USE_GROUND_TRUTH = dbutils.widgets.get("use_ground_truth") == "Yes"
+AUTO_CONSUME_GROUND_TRUTH = dbutils.widgets.get("auto_consume_ground_truth") == "Yes"
+MAX_CONCURRENCY = int(dbutils.widgets.get("max_concurrency"))
+
+# Process ground truth files
+ground_truth_input = dbutils.widgets.get("ground_truth_files")
+GROUND_TRUTH_SOURCES = [f.strip() for f in ground_truth_input.split(",") if f.strip()]
+
+# Process enabled metrics
+enabled_metrics_list = dbutils.widgets.get("enabled_metrics").split(",")
+ENABLE_METRICS = {
+    "response_quality": "response_quality" in enabled_metrics_list,
+    "personalization_accuracy": "personalization_accuracy" in enabled_metrics_list,
+    "helpfulness": "helpfulness" in enabled_metrics_list,
+    "ground_truth_accuracy": "ground_truth_accuracy" in enabled_metrics_list,
+}
+
+# Process judge models
+judge_model_input = dbutils.widgets.get("judge_model")
+if "," in judge_model_input:
+    JUDGE_MODELS = [m.strip() for m in judge_model_input.split(",")]
+else:
+    JUDGE_MODELS = [judge_model_input]
+
+# Set default thresholds (these can be modified in the next section if needed)
+METRIC_THRESHOLDS = {
+    "response_quality": 1.0,
+    "personalization_accuracy": 1.0,
+    "helpfulness": 3.0,
+    "ground_truth_accuracy": 0.8,
+}
+
+# Column names (usually don't need to change)
+PROMPT_COLUMN = "prompt"
+RESPONSE_COLUMN = "response"
+GROUND_TRUTH_COLUMN = "ground_truth"
+
+# Display configuration
+print("✅ Configuration Applied from Widgets!")
+print("="*60)
+print(f"📁 Main data: {DATA_SOURCE}")
+print(f"🔬 Experiment: {EXPERIMENT_NAME}")
+print(f"📋 Ground truth: {'Enabled' if USE_GROUND_TRUTH else 'Disabled'}")
+if USE_GROUND_TRUTH:
+    print(f"   Files: {len(GROUND_TRUTH_SOURCES)} files")
+    for i, file in enumerate(GROUND_TRUTH_SOURCES, 1):
+        print(f"   {i}. {file}")
+print(f"🤖 Judge models: {', '.join(JUDGE_MODELS)}")
+print(f"✅ Enabled metrics: {', '.join([k for k, v in ENABLE_METRICS.items() if v])}")
+print(f"⚡ Max concurrency: {MAX_CONCURRENCY}")
+print("="*60)
 
 # COMMAND ----------
 
