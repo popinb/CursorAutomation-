@@ -29,8 +29,15 @@
 
 # Install required packages with proper dependency resolution
 # This cell installs all necessary libraries for the evaluation system
+
+# First, uninstall conflicting packages to ensure clean installation
+!pip uninstall -y protobuf grpcio grpcio-status --quiet
+
+# Install with specific versions to avoid conflicts
 !pip install --upgrade pip --quiet
-!pip install protobuf==3.20.3 --quiet
+!pip install protobuf==4.25.1 --quiet  # Updated to compatible version
+!pip install grpcio==1.60.0 --quiet
+!pip install grpcio-status==1.60.0 --quiet
 !pip install mlflow>=3.0 --quiet
 !pip install langchain_openai langchain_core --quiet
 !pip install plotly --quiet
