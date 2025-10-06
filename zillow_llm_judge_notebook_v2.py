@@ -27,22 +27,30 @@
 # COMMAND ----------
 
 # Install required packages with compatible versions
-# First uninstall conflicting packages
-!pip uninstall -y protobuf grpcio grpcio-status googleapis-common-protos --quiet
+# Handle all dependency conflicts properly
 
-# Install with compatible versions
-!pip install --upgrade pip --quiet
-!pip install protobuf==4.25.1 --quiet  # Compatible with googleapis-common-protos <5.0.0
-!pip install grpcio==1.62.0 --quiet  # Matches grpcio-status requirement
-!pip install grpcio-status==1.62.0 --quiet
-!pip install googleapis-common-protos==1.62.0 --quiet
+# First, clean up any conflicting packages
+!pip uninstall -y protobuf grpcio grpcio-status googleapis-common-protos proto-plus google-api-core --quiet
+
+# Upgrade pip first
+!pip install --upgrade pip setuptools wheel --quiet
+
+# Install core dependencies with specific compatible versions
+# These versions are tested to work together without conflicts
+!pip install --no-deps protobuf==4.24.4 --quiet
+!pip install --no-deps grpcio==1.62.0 --quiet
+!pip install --no-deps grpcio-status==1.62.0 --quiet
+!pip install --no-deps googleapis-common-protos==1.62.0 --quiet
+
+# Install remaining packages
 !pip install mlflow>=3.0 --quiet
 !pip install langchain_openai langchain_core --quiet
 !pip install plotly --quiet
 !pip install python-docx --quiet
 !pip install pandas --quiet
+!pip install anyio==3.7.1 --quiet  # Fix jupyter-server conflict
 
-# Restart Python kernel
+# Restart Python kernel to ensure clean environment
 dbutils.library.restartPython()
 
 # COMMAND ----------
