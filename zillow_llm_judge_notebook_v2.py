@@ -26,12 +26,16 @@
 
 # COMMAND ----------
 
-# Install required packages
-!pip uninstall -y protobuf grpcio grpcio-status --quiet
+# Install required packages with compatible versions
+# First uninstall conflicting packages
+!pip uninstall -y protobuf grpcio grpcio-status googleapis-common-protos --quiet
+
+# Install with compatible versions
 !pip install --upgrade pip --quiet
-!pip install protobuf==5.27.2 --quiet
-!pip install grpcio==1.60.0 --quiet
-!pip install grpcio-status==1.60.0 --quiet
+!pip install protobuf==4.25.1 --quiet  # Compatible with googleapis-common-protos <5.0.0
+!pip install grpcio==1.62.0 --quiet  # Matches grpcio-status requirement
+!pip install grpcio-status==1.62.0 --quiet
+!pip install googleapis-common-protos==1.62.0 --quiet
 !pip install mlflow>=3.0 --quiet
 !pip install langchain_openai langchain_core --quiet
 !pip install plotly --quiet
