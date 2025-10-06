@@ -1,62 +1,57 @@
-# PM Configuration File - Easy to Modify
-# This file contains simple configuration options for Product Managers
+# PM Configuration File - Simple Settings for Non-Technical Users
+# =============================================================================
+# INSTRUCTIONS: Change the values below to configure your evaluation
+# =============================================================================
 
 # =============================================================================
-# BASIC CONFIGURATION - Modify these settings
+# BASIC SETTINGS - Change these to match your project
 # =============================================================================
 
 # Your experiment name (will appear in MLflow UI)
-EXPERIMENT_NAME = "my_zillow_evaluation"
+EXPERIMENT_NAME = "my_zillow_evaluation"  # Change to your project name
 
-# Your data file path (CSV format)
-DATA_SOURCE = "/workspace/my_data.csv"
+# Your data file path (CSV file with prompts and responses)
+DATA_SOURCE = "/workspace/my_data.csv"  # Change to your CSV file path
 
-# Column names in your CSV file
+# =============================================================================
+# METRICS SETTINGS - Turn metrics ON/OFF and set pass/fail thresholds
+# =============================================================================
+
+# Turn metrics ON (True) or OFF (False)
+ENABLE_METRICS = {
+    "response_quality": True,           # Is the response helpful and relevant? (True/False)
+    "personalization_accuracy": True,   # Does it use user info correctly? (True/False)
+    "helpfulness": True,                # How helpful is the response? (True/False)
+}
+
+# Set what score counts as "PASS" for each metric
+METRIC_THRESHOLDS = {
+    "response_quality": 1.0,           # 1 = pass, 0 = fail (don't change)
+    "personalization_accuracy": 1.0,   # 1 = pass, 0 = fail (don't change)
+    "helpfulness": 3.0,                # 3+ = pass, 1-2 = fail (can change to 2.0, 3.0, 4.0)
+}
+
+# =============================================================================
+# JUDGE MODEL SETTINGS - Choose which AI model to use for evaluation
+# =============================================================================
+
+# Choose 1 or 2 models (more models = more reliable but slower)
+JUDGE_MODELS = ["gpt-4o"]  # Options: ["gpt-4o"] or ["gpt-4o", "gpt-4o-mini"]
+
+# How many evaluations to run at once (don't change unless you have issues)
+MAX_CONCURRENCY = 2  # Keep as 2 (or change to 1 if you get errors)
+
+# =============================================================================
+# ADVANCED SETTINGS - Usually don't need to change these
+# =============================================================================
+
+# Column names in your CSV file (only change if your CSV has different column names)
 PROMPT_COLUMN = "prompt"          # Column with user questions
 RESPONSE_COLUMN = "response"      # Column with AI responses
 USER_PROFILE_COLUMN = "user_profile"  # Column with user info (optional)
 
-# LLM models to use for evaluation (you can use multiple for more reliable results)
-JUDGE_MODELS = ["gpt-4o"]  # Options: "gpt-4o", "gpt-4o-mini", "gpt-4", etc.
-
-# How many evaluations to run at once (reduce if you hit rate limits)
-MAX_CONCURRENCY = 2
-
 # =============================================================================
-# METRICS CONFIGURATION - Add/remove metrics here
-# =============================================================================
-
-# Set to True to enable each metric, False to disable
-ENABLE_METRICS = {
-    "response_quality": True,           # Is the response helpful and relevant?
-    "personalization_accuracy": True,   # Does it use user info correctly?
-    "helpfulness": True,                # How helpful is the response (1-5)?
-    "safety_compliance": False,         # Does it follow safety guidelines?
-    "real_estate_accuracy": False,      # Is real estate info accurate?
-}
-
-# Customize thresholds (what score counts as "pass")
-METRIC_THRESHOLDS = {
-    "response_quality": 1.0,           # 1 = pass, 0 = fail
-    "personalization_accuracy": 1.0,   # 1 = pass, 0 = fail
-    "helpfulness": 3.0,                # 3+ = pass (out of 5)
-    "safety_compliance": 1.0,          # 1 = pass, 0 = fail
-    "real_estate_accuracy": 3.0,       # 3+ = pass (out of 5)
-}
-
-# =============================================================================
-# ADVANCED CONFIGURATION - Usually don't need to change these
-# =============================================================================
-
-# Response generation method
-RESPONSE_MODEL = "GOLDEN_RESPONSE"  # Options: "GOLDEN_RESPONSE", "FIRST_CALL", or specific LLM model
-
-# Output settings
-SAVE_RESULTS = True
-EXPORT_FORMAT = "csv"  # Options: "csv", "json"
-
-# =============================================================================
-# HELPER FUNCTIONS - Don't modify these
+# HELPER FUNCTIONS - Don't change these
 # =============================================================================
 
 def get_enabled_metrics():
@@ -73,94 +68,80 @@ def print_config():
     print("=" * 40)
     print(f"Experiment: {EXPERIMENT_NAME}")
     print(f"Data Source: {DATA_SOURCE}")
-    print(f"Judge Models: {JUDGE_MOD models}")
+    print(f"Judge Models: {JUDGE_MODELS}")
     print(f"Enabled Metrics: {get_enabled_metrics()}")
     print(f"Max Concurrency: {MAX_CONCURRENCY}")
 
 # =============================================================================
-# QUICK START EXAMPLES
+# QUICK SETUP FUNCTIONS - Use these for common configurations
 # =============================================================================
 
-# Example 1: Basic evaluation with default metrics
 def setup_basic_evaluation():
-    """Set up a basic evaluation with common metrics."""
+    """Set up basic evaluation with common metrics."""
     global ENABLE_METRICS
     ENABLE_METRICS = {
         "response_quality": True,
         "helpfulness": True,
-        "safety_compliance": True,
     }
-    print("Basic evaluation setup complete!")
+    print("✅ Basic evaluation setup complete!")
 
-# Example 2: Real estate focused evaluation
-def setup_real_estate_evaluation():
-    """Set up evaluation focused on real estate metrics."""
+def setup_full_evaluation():
+    """Set up full evaluation with all metrics."""
     global ENABLE_METRICS
     ENABLE_METRICS = {
         "response_quality": True,
         "personalization_accuracy": True,
-        "real_estate_accuracy": True,
-        "safety_compliance": True,
+        "helpfulness": True,
     }
-    print("Real estate evaluation setup complete!")
+    print("✅ Full evaluation setup complete!")
 
-# Example 3: High-quality evaluation with multiple judges
-def setup_high_quality_evaluation():
+def setup_reliable_evaluation():
     """Set up evaluation with multiple judge models for reliability."""
     global JUDGE_MODELS
     JUDGE_MODELS = ["gpt-4o", "gpt-4o-mini"]
     global MAX_CONCURRENCY
-    MAX_CONCURRENCY = 1  # Slower but more reliable
-    print("High-quality evaluation setup complete!")
+    MAX_CONCURRENCY = 1
+    print("✅ Reliable evaluation setup complete!")
 
 # =============================================================================
 # USAGE INSTRUCTIONS
 # =============================================================================
 
 """
-HOW TO USE THIS CONFIGURATION FILE:
+HOW TO USE THIS FILE:
 
-1. MODIFY BASIC SETTINGS:
-   - Change EXPERIMENT_NAME to your project name
-   - Set DATA_SOURCE to your CSV file path
-   - Adjust column names if needed
+1. CHANGE BASIC SETTINGS:
+   - EXPERIMENT_NAME: Your project name
+   - DATA_SOURCE: Path to your CSV file
 
 2. ENABLE/DISABLE METRICS:
-   - Set ENABLE_METRICS values to True/False
-   - Adjust METRIC_THRESHOLDS as needed
+   - Set to True to enable, False to disable
+   - Adjust thresholds if needed
 
 3. CHOOSE JUDGE MODELS:
-   - Use single model: ["gpt-4o"]
-   - Use multiple models: ["gpt-4o", "gpt-4o-mini"]
-   - Adjust MAX_CONCURRENCY if needed
+   - Single model: ["gpt-4o"] (faster)
+   - Multiple models: ["gpt-4o", "gpt-4o-mini"] (more reliable)
 
-4. RUN QUICK SETUPS:
-   - Call setup_basic_evaluation() for common metrics
-   - Call setup_real_estate_evaluation() for real estate focus
-   - Call setup_high_quality_evaluation() for reliability
+4. USE QUICK SETUPS:
+   - setup_basic_evaluation() - Common metrics only
+   - setup_full_evaluation() - All metrics
+   - setup_reliable_evaluation() - Multiple judges
 
-5. USE IN NOTEBOOK:
+5. IN YOUR NOTEBOOK:
    - Import: from pm_config import *
-   - Call print_config() to see your settings
-   - Use the variables in your evaluation code
+   - Check settings: print_config()
+   - Use the variables in your code
 
-EXAMPLE USAGE:
+EXAMPLE:
 ```python
 from pm_config import *
-
-# Print current config
-print_config()
-
-# Set up for real estate evaluation
-setup_real_estate_evaluation()
-
-# Use in evaluation
-evaluator = LLMJudgeEvaluator(config, get_enabled_metrics())
+print_config()  # See your settings
+setup_full_evaluation()  # Enable all metrics
 ```
 
 TIPS:
-- Start with basic evaluation and add more metrics gradually
-- Test with small datasets first
-- Use multiple judge models for important evaluations
-- Adjust thresholds based on your quality requirements
+- Start with basic evaluation
+- Use single judge model for testing
+- Use multiple judges for important evaluations
+- Keep thresholds as they are unless you have specific needs
 """
