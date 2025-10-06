@@ -26,18 +26,23 @@
 
 # COMMAND ----------
 
-# Install required packages - Databricks-friendly approach
-# This version works with pre-installed packages instead of fighting them
+# Install required packages - Databricks-friendly approach with MLflow 3.0 support
+# This version installs only what's needed on top of Databricks pre-installed packages
 
-# Only install what we absolutely need, let Databricks handle the rest
-!pip install mlflow --quiet
-!pip install openai --quiet  # Use openai directly instead of langchain
+# First, upgrade MLflow to ensure we have 3.0+ for visualizations
+!pip install --upgrade mlflow>=3.0 --quiet
+
+# Install LangChain components needed for MLflow metrics
+!pip install langchain-community langchain-openai --quiet
+
+# Install other required packages
+!pip install openai --quiet
 !pip install pandas --quiet
 !pip install plotly --quiet
 !pip install python-docx --quiet
 
-# Note: We're NOT installing protobuf, grpcio, etc. - use what Databricks provides
-# This avoids dependency conflicts with pre-installed packages
+# Note: We're NOT touching protobuf, grpcio, etc. - use Databricks versions
+# This minimizes dependency conflicts while getting MLflow 3.0 features
 
 # Restart Python kernel
 dbutils.library.restartPython()
@@ -68,6 +73,9 @@ from plotly.subplots import make_subplots
 from docx import Document
 
 # LLM and MLflow
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from langchain_core.runnables import RunnableLambda
 from openai import OpenAI
 import mlflow
 
@@ -509,11 +517,14 @@ class LLMJudgeEvaluator:
                 model_kwargs={"response_format": {"type": "json_object"}}
             )
         else:
-            # Zillow API models
-            def run_chat(messages: list) -> dict:
+            # Zillow API models using OpenAI client
+            def run_chat(messages: list) -> AIMessage:
+                # Extract content from first message
+                content = messages[0].content if messages else ""
+                
                 resp = client.chat.completions.create(
                     model=self.judge_model,
-                    messages=[{"role": "user", "content": messages[0].content}],
+                    messages=[{"role": "user", "content": content}],
                     max_tokens=1000,
                     temperature=0.0,
                     response_format={"type": "json_object"}
