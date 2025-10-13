@@ -285,6 +285,55 @@ if eval_df is None:
     eval_df = create_sample_data()
     print("✅ Sample data created")
 
+# Load ground truth if provided
+ground_truth_df = pd.DataFrame()
+if GROUND_TRUTH_PATHS and GROUND_TRUTH_PATHS.strip():
+    print("\n📚 Loading ground truth files...")
+    
+    ground_truth_files = [f.strip() for f in GROUND_TRUTH_PATHS.split(",")]
+    all_ground_truth = []
+    
+    for file_path in ground_truth_files:
+        if file_path:
+            print(f"   Loading: {file_path}")
+            gt_df = load_any_csv(file_path, "ground truth")
+            
+            if gt_df is not None:
+                all_ground_truth.append(gt_df)
+                print(f"   ✅ Loaded {len(gt_df)} entries")
+            else:
+                print(f"   ❌ Failed to load")
+    
+    if all_ground_truth:
+        ground_truth_df = pd.concat(all_ground_truth, ignore_index=True)
+        print(f"\n✅ Total ground truth entries: {len(ground_truth_df)}")
+        
+        # Try to merge if both datasets have a common column
+        common_cols = set(eval_df.columns) & set(ground_truth_df.columns)
+        if common_cols:
+            merge_col = list(common_cols)[0]  # Use first common column
+            print(f"   Merging on common column: '{merge_col}'")
+            
+            # Find ground truth column (any column that's not the merge column)
+            gt_cols = [col for col in ground_truth_df.columns if col != merge_col]
+            if gt_cols:
+                gt_col = gt_cols[0]  # Use first non-merge column as ground truth
+                print(f"   Using '{gt_col}' as ground truth column")
+                
+                eval_df = eval_df.merge(
+                    ground_truth_df[[merge_col, gt_col]], 
+                    on=merge_col, 
+                    how='left'
+                )
+                eval_df = eval_df.rename(columns={gt_col: 'ground_truth'})
+                
+                coverage = eval_df['ground_truth'].notna().sum()
+                print(f"✅ Ground truth matched for {coverage}/{len(eval_df)} samples")
+            else:
+                print("   ⚠️ No ground truth column found")
+        else:
+            print("   ⚠️ No common columns found for merging")
+
 # Load metrics configuration if provided
 metrics_config_df = load_metrics_config(METRICS_CONFIG_PATH)
 
@@ -372,6 +421,14 @@ print(f"\n🎯 Final Model Selection: {JUDGE_MODEL}")
 # MAGIC ## Cell 4: Define Your Custom Metrics
 # MAGIC **Option 1: Upload CSV file with metrics (use widget above)**
 # MAGIC **Option 2: Define metrics in code below**
+# MAGIC 
+# MAGIC ### 📊 CSV Format for Metrics (Option 1):
+# MAGIC Your CSV should have these columns:
+# MAGIC - `name`: Metric name (e.g., "accuracy_check")
+# MAGIC - `type`: Metric type ("binary", "scale_1_5", or "percentage") 
+# MAGIC - `description`: Human readable description
+# MAGIC - `evaluation_prompt`: Full LLM evaluation prompt with {prompt}, {response}, {ground_truth} placeholders
+# MAGIC - `threshold`: Pass/fail threshold (1.0 for binary, 3.0 for scale_1_5, 0.7 for percentage)
 
 # COMMAND ----------
 
@@ -382,6 +439,7 @@ print(f"\n🎯 Final Model Selection: {JUDGE_MODEL}")
 # 
 # OPTION 1: Upload a CSV file using the "Metrics Configuration File" widget above
 # CSV should have columns: name, type, description, evaluation_prompt, threshold
+# Alternative column names supported: metric_name, metric_type, grading_instructions, pass_threshold
 #
 # OPTION 2: Define metrics in code below (if no CSV file provided)
 # Three types supported: Binary (Pass/Fail), 1-5 Scale, and Percentage (0-100%)
@@ -1017,6 +1075,28 @@ print("✅ Evaluation methods added")
 # HELPER FUNCTIONS
 # =============================================================================
 
+def load_metrics_from_config_or_code():
+    """Load metrics from uploaded CSV or use code-defined metrics."""
+    if METRICS_CONFIG_DATA is not None:
+        print("📊 Loading metrics from uploaded CSV...")
+        metrics_list = []
+        
+        for _, row in METRICS_CONFIG_DATA.iterrows():
+            metric = {
+                'name': row['name'],
+                'type': row['type'],
+                'description': row['description'],
+                'evaluation_prompt': row['evaluation_prompt'],
+                'threshold': row['threshold']
+            }
+            metrics_list.append(metric)
+        
+        print(f"✅ Loaded {len(metrics_list)} metrics from CSV")
+        return metrics_list
+    else:
+        print("📊 Using code-defined CUSTOM_METRICS...")
+        return CUSTOM_METRICS
+
 def process_custom_metrics(custom_metrics: list) -> List[MetricConfig]:
     """Convert custom metric definitions to MetricConfig objects."""
     configs = []
@@ -1033,8 +1113,11 @@ def process_custom_metrics(custom_metrics: list) -> List[MetricConfig]:
             print(f"   Warning: Unknown metric type '{metric['type']}' for {metric.get('name', 'unknown')}")
             continue  # Skip invalid types
         
-        # Get threshold from global METRIC_THRESHOLDS or use default
-        threshold = METRIC_THRESHOLDS.get(metric['name'], 1.0)
+        # Get threshold - use from CSV or from METRIC_THRESHOLDS or default
+        if isinstance(metric.get('threshold'), (int, float)):
+            threshold = float(metric['threshold'])
+        else:
+            threshold = METRIC_THRESHOLDS.get(metric['name'], 1.0)
         
         config = MetricConfig(
             name=metric['name'],
@@ -1153,10 +1236,12 @@ print("✅ Helper functions defined")
 # =============================================================================
 
 print("✅ Databricks LLM system loaded with auto-discovery and improved display")
-print("📊 Using CUSTOM_METRICS from cell 4...")
 
-# Process metrics from the CUSTOM_METRICS defined earlier
-metric_configs = process_custom_metrics(CUSTOM_METRICS)
+# Load metrics from CSV file or code definition
+metrics_to_use = load_metrics_from_config_or_code()
+
+# Process metrics 
+metric_configs = process_custom_metrics(metrics_to_use)
 
 if not metric_configs:
     print("❌ No valid metrics to evaluate!")
@@ -1279,3 +1364,136 @@ else:
 # MAGIC - ✅ **Production ready** with comprehensive logging
 # MAGIC 
 # MAGIC **Happy evaluating!** 🎯
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 🧪 Test Your Setup (Optional)
+# MAGIC **Run this cell to test all functionality**
+
+# COMMAND ----------
+
+# =============================================================================
+# COMPREHENSIVE TESTING (OPTIONAL)
+# =============================================================================
+
+def test_system_functionality():
+    """Test all system components."""
+    print("🧪 TESTING SYSTEM FUNCTIONALITY")
+    print("="*50)
+    
+    # Test 1: Check data loading
+    print("\n1️⃣ Testing data loading...")
+    if 'EVALUATION_DATA' in globals() and len(EVALUATION_DATA) > 0:
+        print(f"   ✅ Evaluation data loaded: {len(EVALUATION_DATA)} samples")
+        required_cols = ['prompt', 'response']
+        missing_cols = [col for col in required_cols if col not in EVALUATION_DATA.columns]
+        if missing_cols:
+            print(f"   ❌ Missing required columns: {missing_cols}")
+        else:
+            print(f"   ✅ Required columns present: {required_cols}")
+    else:
+        print("   ❌ No evaluation data found")
+    
+    # Test 2: Check metrics configuration
+    print("\n2️⃣ Testing metrics configuration...")
+    try:
+        if 'METRICS_CONFIG_DATA' in globals() and METRICS_CONFIG_DATA is not None:
+            print(f"   ✅ Metrics loaded from CSV: {len(METRICS_CONFIG_DATA)} metrics")
+        elif 'CUSTOM_METRICS' in globals() and CUSTOM_METRICS:
+            print(f"   ✅ Metrics defined in code: {len(CUSTOM_METRICS)} metrics")
+        else:
+            print("   ❌ No metrics configuration found")
+            
+        # Test metrics processing
+        metrics_to_use = load_metrics_from_config_or_code()
+        metric_configs = process_custom_metrics(metrics_to_use)
+        print(f"   ✅ Processed {len(metric_configs)} valid metrics")
+        
+        for config in metric_configs:
+            print(f"     - {config.name} ({config.metric_type.value}): threshold={config.threshold}")
+            
+    except Exception as e:
+        print(f"   ❌ Metrics processing failed: {e}")
+    
+    # Test 3: Check model configuration
+    print("\n3️⃣ Testing model configuration...")
+    if 'JUDGE_MODEL' in globals():
+        print(f"   ✅ Judge model selected: {JUDGE_MODEL}")
+        
+        if JUDGE_MODEL == "databricks-llm":
+            print("   🏢 Databricks LLM mode - will auto-discover endpoints")
+        else:
+            if 'client' in globals() and client is not None:
+                print("   🤖 OpenAI client configured")
+            else:
+                print("   ❌ OpenAI client not configured")
+    else:
+        print("   ❌ No judge model selected")
+    
+    # Test 4: Check file paths
+    print("\n4️⃣ Testing file paths...")
+    paths_to_check = {
+        'EVAL_DATA_PATH': 'Evaluation data',
+        'GROUND_TRUTH_PATHS': 'Ground truth files', 
+        'METRICS_CONFIG_PATH': 'Metrics configuration'
+    }
+    
+    for var_name, description in paths_to_check.items():
+        if var_name in globals():
+            path = globals()[var_name]
+            if path and path.strip():
+                if os.path.exists(path) or any(os.path.exists(p.strip()) for p in path.split(',') if p.strip()):
+                    print(f"   ✅ {description}: Found")
+                else:
+                    print(f"   ⚠️ {description}: Path specified but file not found")
+            else:
+                print(f"   ➖ {description}: Not specified (optional)")
+        else:
+            print(f"   ❌ {description}: Variable not defined")
+    
+    # Test 5: Sample evaluation (if everything is ready)
+    print("\n5️⃣ Testing sample evaluation...")
+    try:
+        if (len(metric_configs) > 0 and 
+            'EVALUATION_DATA' in globals() and 
+            len(EVALUATION_DATA) > 0 and
+            'JUDGE_MODEL' in globals()):
+            
+            print("   🚀 Running sample evaluation on first row...")
+            
+            # Create evaluator
+            evaluator = LLMJudgeEvaluator(
+                judge_model=JUDGE_MODEL,
+                metrics=metric_configs[:1]  # Just test first metric
+            )
+            
+            # Test on first row only
+            sample_row = EVALUATION_DATA.iloc[0]
+            result = evaluator.evaluate_single(
+                prompt=sample_row['prompt'],
+                response=sample_row['response'], 
+                ground_truth=sample_row.get('ground_truth', ''),
+                metric=metric_configs[0]
+            )
+            
+            print(f"   ✅ Sample evaluation successful!")
+            print(f"     Score: {result['score']}")
+            print(f"     Status: {result['status']}")
+            print(f"     Explanation: {result['explanation'][:100]}...")
+            
+        else:
+            print("   ⚠️ Skipping sample evaluation - missing requirements")
+            
+    except Exception as e:
+        print(f"   ❌ Sample evaluation failed: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    print("\n" + "="*50)
+    print("🏁 TESTING COMPLETE")
+    print("If you see mostly ✅ marks above, your system is ready!")
+    print("If you see ❌ marks, check the configuration in previous cells.")
+
+# Uncomment the line below to run the test
+# test_system_functionality()
