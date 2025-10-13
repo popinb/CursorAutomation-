@@ -130,7 +130,7 @@ def load_metrics_config(file_path):
         if df is None:
             return None
         
-        # Map your column names to expected names
+        # Map alternative column names to expected names
         column_mapping = {
             'metric_name': 'name',
             'metric_type': 'type', 
@@ -148,9 +148,16 @@ def load_metrics_config(file_path):
         if missing_cols:
             print(f"❌ Missing required columns in metrics config: {missing_cols}")
             print(f"Available columns after mapping: {list(df.columns)}")
+            print(f"Required columns: {required_cols}")
             return None
         
+        # Add default ground_truth_column if not specified
+        if 'ground_truth_column' not in df.columns:
+            df['ground_truth_column'] = 'ground_truth'  # Default column name
+            print("   Added default ground_truth_column: 'ground_truth'")
+        
         print("✅ Metrics configuration loaded and mapped successfully")
+        print(f"   Columns: {list(df.columns)}")
         return df
         
     except Exception as e:
@@ -418,191 +425,53 @@ print(f"\n🎯 Final Model Selection: {JUDGE_MODEL}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Cell 4: Define Your Custom Metrics
-# MAGIC **Option 1: Upload CSV file with metrics (use widget above)**
-# MAGIC **Option 2: Define metrics in code below**
+# MAGIC ## Cell 4: Metrics Configuration
+# MAGIC **Upload your metrics CSV file using the widget above**
 # MAGIC 
-# MAGIC ### 📊 CSV Format for Metrics (Option 1):
-# MAGIC Your CSV should have these columns:
-# MAGIC - `name`: Metric name (e.g., "accuracy_check")
-# MAGIC - `type`: Metric type ("binary", "scale_1_5", or "percentage") 
+# MAGIC ### 📊 Required CSV Format for Metrics:
+# MAGIC Your metrics CSV must have these columns:
+# MAGIC - `name` (or `metric_name`): Metric identifier (e.g., "accuracy_check")
+# MAGIC - `type` (or `metric_type`): Metric type ("binary", "scale_1_5", or "percentage") 
 # MAGIC - `description`: Human readable description
-# MAGIC - `evaluation_prompt`: Full LLM evaluation prompt with {prompt}, {response}, {ground_truth} placeholders
-# MAGIC - `threshold`: Pass/fail threshold (1.0 for binary, 3.0 for scale_1_5, 0.7 for percentage)
+# MAGIC - `evaluation_prompt` (or `grading_instructions`): Full LLM prompt with {prompt}, {response}, {ground_truth} placeholders
+# MAGIC - `threshold` (or `pass_threshold`): Pass/fail threshold (1.0 for binary, 3.0 for scale_1_5, 0.7 for percentage)
+# MAGIC - `ground_truth_column` (optional): Which ground truth column to use for this metric
 
 # COMMAND ----------
 
 # =============================================================================
-# CUSTOM METRICS DEFINITION
+# METRICS VALIDATION
 # =============================================================================
-# You have TWO options for defining metrics:
-# 
-# OPTION 1: Upload a CSV file using the "Metrics Configuration File" widget above
-# CSV should have columns: name, type, description, evaluation_prompt, threshold
-# Alternative column names supported: metric_name, metric_type, grading_instructions, pass_threshold
-#
-# OPTION 2: Define metrics in code below (if no CSV file provided)
-# Three types supported: Binary (Pass/Fail), 1-5 Scale, and Percentage (0-100%)
+# Metrics are loaded from CSV file only - no code definition supported
 
-CUSTOM_METRICS = [
-    # ========================================
-    # EXAMPLE 1: BINARY METRIC (Pass/Fail)
-    # ========================================
-    {
-        "name": "accuracy_check",
-        "type": "binary",
-        "description": "Checks if the response contains accurate information",
-        "evaluation_prompt": """
-Evaluate if the response contains accurate information.
-
-User Query: {prompt}
-AI Response: {response}
-Ground Truth (if available): {ground_truth}
-
-Accuracy Criteria:
-- All facts must be correct
-- No misleading information
-- Numbers and statistics must be accurate
-- Procedures described correctly
-
-Scoring:
-- 1 (PASS): All information is accurate
-- 0 (FAIL): Contains any inaccurate information
-
-Return JSON:
-{{
-    "accuracy_check_score": 1,
-    "explanation": "All facts verified as accurate. The response correctly states..."
-}}
-"""
-    },
+# Validate that metrics CSV is provided
+if not METRICS_CONFIG_PATH or not METRICS_CONFIG_PATH.strip():
+    print("❌ ERROR: No metrics configuration file provided!")
+    print("📋 REQUIRED: Please upload a CSV file with your metrics using the widget above")
+    print("\n📊 CSV Format Required:")
+    print("   Columns: name, type, description, evaluation_prompt, threshold, ground_truth_column")
+    print("   Types: binary, scale_1_5, percentage")
+    print("   Example: accuracy_check,binary,Checks accuracy,\"Evaluate...\",1.0,correct_answer")
     
-    # ========================================
-    # EXAMPLE 2: 1-5 SCALE METRIC
-    # ========================================
-    {
-        "name": "helpfulness_rating",
-        "type": "scale_1_5",
-        "description": "Rates how helpful the response is on a 1-5 scale",
-        "evaluation_prompt": """
-Rate the helpfulness of this response from 1 to 5.
-
-User Query: {prompt}
-AI Response: {response}
-Ground Truth (if available): {ground_truth}
-
-Helpfulness Scale:
-5 = Extremely helpful - Comprehensive answer with actionable steps
-4 = Very helpful - Good answer with useful information
-3 = Moderately helpful - Adequate but could be better
-2 = Slightly helpful - Limited value, missing key information
-1 = Not helpful - Fails to address the question
-
-Consider:
-- Does it answer the user's question?
-- Is the information actionable?
-- Are next steps clear?
-
-Return JSON:
-{{
-    "helpfulness_rating_score": 4,
-    "explanation": "Very helpful response that answers the main question and provides clear next steps..."
-}}
-"""
-    },
-    
-    # ========================================
-    # EXAMPLE 3: PERCENTAGE METRIC (0-100%)
-    # ========================================
-    {
-        "name": "completeness_percentage",
-        "type": "percentage",
-        "description": "Measures what percentage of the question was addressed",
-        "evaluation_prompt": """
-Evaluate what percentage (0-100%) of the user's question was addressed.
-
-User Query: {prompt}
-AI Response: {response}
-Ground Truth (if available): {ground_truth}
-
-Assessment Process:
-1. Identify all components of the user's question
-2. Check which components were addressed
-3. Calculate percentage of coverage
-
-Examples:
-- 90-100%: Fully addresses all aspects
-- 70-89%: Most important parts covered
-- 50-69%: About half addressed
-- 30-49%: Some parts addressed
-- 0-29%: Minimal coverage
-
-Return JSON (use decimal, e.g., 0.85 for 85%):
-{{
-    "completeness_percentage_score": 0.85,
-    "explanation": "The response addresses 85% of the question. It covers the main topic well but misses..."
-}}
-"""
-    },
-    
-    # ========================================
-    # ADD YOUR CUSTOM METRICS HERE
-    # ========================================
-    # Copy any example above and modify it for your needs
-    
-]
-
-# =============================================================================
-# METRIC VALIDATION AND SUMMARY
-# =============================================================================
-
-print("📊 CUSTOM METRICS SUMMARY")
-print("="*60)
-
-if CUSTOM_METRICS:
-    # Count metrics by type
-    metric_types = {"binary": 0, "scale_1_5": 0, "percentage": 0}
-    
-    for i, metric in enumerate(CUSTOM_METRICS, 1):
-        print(f"\n{i}. {metric['name'].upper()}")
-        print(f"   Type: {metric['type']}")
-        print(f"   Description: {metric['description']}")
-        
-        # Validate metric
-        if metric['type'] not in metric_types:
-            print(f"   ❌ ERROR: Invalid type '{metric['type']}'. Must be: binary, scale_1_5, or percentage")
-        else:
-            metric_types[metric['type']] += 1
-            print(f"   ✅ Valid metric type")
-        
-        # Check for required placeholders
-        prompt = metric.get('evaluation_prompt', '')
-        if '{prompt}' not in prompt:
-            print(f"   ⚠️  WARNING: Missing {{prompt}} placeholder")
-        if '{response}' not in prompt:
-            print(f"   ⚠️  WARNING: Missing {{response}} placeholder")
-    
-    print(f"\n📈 TOTAL METRICS: {len(CUSTOM_METRICS)}")
-    print(f"   Binary: {metric_types['binary']}")
-    print(f"   1-5 Scale: {metric_types['scale_1_5']}")
-    print(f"   Percentage: {metric_types['percentage']}")
+elif METRICS_CONFIG_DATA is None:
+    print("❌ ERROR: Could not load metrics configuration file!")
+    print(f"   File path: {METRICS_CONFIG_PATH}")
+    print("   Please check the file path and format")
     
 else:
-    print("\n❌ No custom metrics defined!")
+    print("✅ Metrics configuration loaded successfully!")
+    print(f"   📊 Found {len(METRICS_CONFIG_DATA)} metrics in CSV")
+    
+    # Display metrics summary
+    for idx, row in METRICS_CONFIG_DATA.iterrows():
+        metric_name = row.get('name', row.get('metric_name', 'Unknown'))
+        metric_type = row.get('type', row.get('metric_type', 'Unknown'))
+        threshold = row.get('threshold', row.get('pass_threshold', 'Unknown'))
+        gt_column = row.get('ground_truth_column', 'Default')
+        
+        print(f"   {idx+1}. {metric_name} ({metric_type}) - threshold: {threshold}, GT: {gt_column}")
 
-# Set thresholds based on metric types
-METRIC_THRESHOLDS = {}
-for metric in CUSTOM_METRICS:
-    if metric['type'] == 'binary':
-        METRIC_THRESHOLDS[metric['name']] = 1.0  # Pass = 1
-    elif metric['type'] == 'scale_1_5':
-        METRIC_THRESHOLDS[metric['name']] = 3.0  # Pass = 3+
-    elif metric['type'] == 'percentage':
-        METRIC_THRESHOLDS[metric['name']] = 0.7  # Pass = 70%+
-
-print("\n🎯 Pass Thresholds:")
-for name, threshold in METRIC_THRESHOLDS.items():
-    print(f"   {name}: {threshold}")
+# No code-based metrics - all metrics must come from CSV file upload
 
 # COMMAND ----------
 
@@ -630,6 +499,7 @@ class MetricConfig:
     metric_type: MetricType    # Type of metric (binary, scale, percentage)
     prompt_template: str       # LLM evaluation prompt template
     threshold: float           # Pass/fail threshold
+    ground_truth_column: str   # Which ground truth column to use for this metric
 
 print("✅ Core classes defined")
 
@@ -858,8 +728,11 @@ def _call_openai_llm(self, prompt: str) -> str:
         print(f"   Error calling OpenAI LLM: {e}")
         raise
 
-def evaluate_single(self, prompt: str, response: str, ground_truth: str, metric: MetricConfig) -> dict:
+def evaluate_single(self, prompt: str, response: str, ground_truth_data: dict, metric: MetricConfig) -> dict:
     """Evaluate a single sample with one metric."""
+    # Get the specific ground truth for this metric
+    ground_truth = ground_truth_data.get(metric.ground_truth_column, "Not provided")
+    
     # Format the evaluation prompt with actual values
     eval_prompt = metric.prompt_template.format(
         prompt=prompt,
@@ -1011,10 +884,19 @@ def evaluate_dataset(self, df) -> 'pd.DataFrame':
             if idx > 0 and idx % 2 == 0:
                 print(f"   Progress: {idx}/{len(df)} samples")
             
+            # Prepare ground truth data as dictionary for this row
+            ground_truth_data = {}
+            for col in df.columns:
+                if col.startswith('ground_truth') or col in ['correct_answer', 'expected_response', 'reference_answer']:
+                    ground_truth_data[col] = row.get(col, '')
+            
+            # Also add default ground_truth column
+            ground_truth_data['ground_truth'] = row.get('ground_truth', '')
+            
             result = self.evaluate_single(
                 prompt=row['prompt'],
                 response=row['response'],
-                ground_truth=row.get('ground_truth', ''),
+                ground_truth_data=ground_truth_data,
                 metric=metric
             )
             
@@ -1059,27 +941,29 @@ print("✅ Evaluation methods added")
 # HELPER FUNCTIONS
 # =============================================================================
 
-def load_metrics_from_config_or_code():
-    """Load metrics from uploaded CSV or use code-defined metrics."""
-    if METRICS_CONFIG_DATA is not None:
-        print("📊 Loading metrics from uploaded CSV...")
-        metrics_list = []
-        
-        for _, row in METRICS_CONFIG_DATA.iterrows():
-            metric = {
-                'name': row['name'],
-                'type': row['type'],
-                'description': row['description'],
-                'evaluation_prompt': row['evaluation_prompt'],
-                'threshold': row['threshold']
-            }
-            metrics_list.append(metric)
-        
-        print(f"✅ Loaded {len(metrics_list)} metrics from CSV")
-        return metrics_list
-    else:
-        print("📊 Using code-defined CUSTOM_METRICS...")
-        return CUSTOM_METRICS
+def load_metrics_from_csv():
+    """Load metrics from uploaded CSV file only."""
+    if METRICS_CONFIG_DATA is None:
+        print("❌ ERROR: No metrics CSV file loaded!")
+        print("   Please upload a metrics configuration CSV file using the widget above")
+        return []
+    
+    print("📊 Loading metrics from uploaded CSV...")
+    metrics_list = []
+    
+    for _, row in METRICS_CONFIG_DATA.iterrows():
+        metric = {
+            'name': row['name'],
+            'type': row['type'],
+            'description': row['description'],
+            'evaluation_prompt': row['evaluation_prompt'],
+            'threshold': row['threshold'],
+            'ground_truth_column': row.get('ground_truth_column', 'ground_truth')
+        }
+        metrics_list.append(metric)
+    
+    print(f"✅ Loaded {len(metrics_list)} metrics from CSV")
+    return metrics_list
 
 def process_custom_metrics(custom_metrics: list) -> List[MetricConfig]:
     """Convert custom metric definitions to MetricConfig objects."""
@@ -1097,18 +981,27 @@ def process_custom_metrics(custom_metrics: list) -> List[MetricConfig]:
             print(f"   Warning: Unknown metric type '{metric['type']}' for {metric.get('name', 'unknown')}")
             continue  # Skip invalid types
         
-        # Get threshold - use from CSV or from METRIC_THRESHOLDS or default
+        # Get threshold from CSV
         if isinstance(metric.get('threshold'), (int, float)):
             threshold = float(metric['threshold'])
         else:
-            threshold = METRIC_THRESHOLDS.get(metric['name'], 1.0)
+            # Default thresholds by type
+            if metric_type == MetricType.BINARY:
+                threshold = 1.0
+            elif metric_type == MetricType.SCALE_1_5:
+                threshold = 3.0
+            elif metric_type == MetricType.PERCENTAGE:
+                threshold = 0.7
+            else:
+                threshold = 1.0
         
         config = MetricConfig(
             name=metric['name'],
             description=metric['description'],
             metric_type=metric_type,
             prompt_template=metric['evaluation_prompt'],
-            threshold=threshold
+            threshold=threshold,
+            ground_truth_column=metric.get('ground_truth_column', 'ground_truth')
         )
         configs.append(config)
     
@@ -1221,8 +1114,8 @@ print("✅ Helper functions defined")
 
 print("✅ Databricks LLM system loaded with auto-discovery and improved display")
 
-# Load metrics from CSV file or code definition
-metrics_to_use = load_metrics_from_config_or_code()
+# Load metrics from CSV file only
+metrics_to_use = load_metrics_from_csv()
 
 # Process metrics 
 metric_configs = process_custom_metrics(metrics_to_use)
@@ -1454,10 +1347,18 @@ def test_system_functionality():
             
             # Test on first row only
             sample_row = EVALUATION_DATA.iloc[0]
+            
+            # Prepare ground truth data
+            ground_truth_data = {}
+            for col in EVALUATION_DATA.columns:
+                if col.startswith('ground_truth') or col in ['correct_answer', 'expected_response', 'reference_answer']:
+                    ground_truth_data[col] = sample_row.get(col, '')
+            ground_truth_data['ground_truth'] = sample_row.get('ground_truth', '')
+            
             result = evaluator.evaluate_single(
                 prompt=sample_row['prompt'],
                 response=sample_row['response'], 
-                ground_truth=sample_row.get('ground_truth', ''),
+                ground_truth_data=ground_truth_data,
                 metric=metric_configs[0]
             )
             
