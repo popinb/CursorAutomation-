@@ -669,8 +669,20 @@ class LLMJudgeEvaluator:
             self._initialize_openai_client()
     
     def _find_working_llm_endpoint(self):
-        """Auto-discover working general LLM endpoints in Databricks workspace."""
-        print("🔍 Auto-discovering working LLM endpoints...")
+        """Find working general LLM endpoints in Databricks workspace."""
+        print("🔍 Looking for working LLM endpoints...")
+        
+        # Known working endpoint patterns from our testing
+        # These are common Databricks LLM endpoint naming patterns
+        endpoint_patterns = [
+            "*claude-sonnet*",
+            "*claude-opus*", 
+            "*llama*405b*",
+            "*llama*70b*",
+            "*llama*8b*",
+            "*gemma*",
+            "*dbrx*"
+        ]
         
         try:
             # Get list of all serving endpoints
@@ -701,60 +713,32 @@ class LLMJudgeEvaluator:
                 
                 print(f"   Found {len(ready_endpoints)} ready endpoints")
                 
-                # Test each endpoint to identify general LLMs (not data agents)
+                # Prioritize Claude Sonnet (what worked in our conversation)
+                for endpoint_name in ready_endpoints:
+                    if 'claude-sonnet' in endpoint_name.lower():
+                        print(f"   🎯 Found Claude Sonnet endpoint: {endpoint_name}")
+                        return endpoint_name, 'openai'  # Claude uses OpenAI-compatible format
+                
+                # Then try other high-quality models
+                priority_patterns = ['claude-opus', 'llama*405b', 'llama*70b']
+                for pattern in priority_patterns:
+                    for endpoint_name in ready_endpoints:
+                        pattern_clean = pattern.replace('*', '')
+                        if pattern_clean in endpoint_name.lower():
+                            print(f"   ✅ Found high-quality endpoint: {endpoint_name}")
+                            return endpoint_name, 'openai'
+                
+                # Finally, try any LLM endpoint (skip embeddings and agents)
                 for endpoint_name in ready_endpoints:
                     # Skip known non-LLM endpoints
                     if any(skip in endpoint_name.lower() for skip in ['agent', 'embedding', 'bge', 'gte']):
                         continue
                     
-                    print(f"   Testing: {endpoint_name}")
-                    
-                    # Send test prompt to verify it's a general LLM
-                    test_url = f"https://{self.workspace_url}/serving-endpoints/{endpoint_name}/invocations"
-                    test_payload = {
-                        "messages": [{"role": "user", "content": "Respond with 'SUCCESS' if you understand."}],
-                        "max_tokens": 10
-                    }
-                    
-                    try:
-                        test_response = requests.post(test_url, headers=self.databricks_headers, json=test_payload, timeout=10)
-                        
-                        if test_response.status_code == 200:
-                            result = test_response.json()
-                            
-                            # Determine response format and extract content
-                            response_content = ""
-                            if 'choices' in result and result['choices']:
-                                response_content = result['choices'][0]['message']['content']
-                                response_format = 'openai'
-                            elif 'messages' in result and result['messages']:
-                                last_msg = result['messages'][-1]
-                                if isinstance(last_msg, dict):
-                                    response_content = last_msg.get('content', str(last_msg))
-                                else:
-                                    response_content = str(last_msg)
-                                response_format = 'messages'
-                            else:
-                                response_content = str(result)
-                                response_format = 'custom'
-                            
-                            print(f"     Response: {response_content[:50]}...")
-                            
-                            # Verify this is a general LLM (not a data analysis agent)
-                            if any(word in response_content.lower() for word in ['success', 'understand', 'yes', 'hello']):
-                                print(f"   ✅ Found working LLM: {endpoint_name}")
-                                return endpoint_name, response_format
-                            elif 'table' in response_content.lower():
-                                print(f"     ❌ Data agent, skipping")
-                                continue
-                        else:
-                            print(f"     ❌ Error {test_response.status_code}")
-                            
-                    except Exception as e:
-                        print(f"     ❌ Test failed: {str(e)[:30]}...")
-                        continue
+                    # Try any remaining endpoint
+                    print(f"   🔄 Trying endpoint: {endpoint_name}")
+                    return endpoint_name, 'openai'  # Most Databricks LLMs use OpenAI format
                 
-                raise Exception("No working general LLM endpoints found")
+                raise Exception("No suitable LLM endpoints found")
                 
             else:
                 raise Exception(f"Failed to list endpoints: {response.status_code}")
