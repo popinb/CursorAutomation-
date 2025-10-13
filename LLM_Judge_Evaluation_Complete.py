@@ -86,14 +86,22 @@ dbutils.widgets.text(
     "📚 Ground Truth Files (comma-separated paths, optional)"
 )
 
+dbutils.widgets.text(
+    "metrics_config_path",
+    "",
+    "📊 Metrics Configuration File (CSV with metric definitions, optional)"
+)
+
 # Get file paths
 EVAL_DATA_PATH = dbutils.widgets.get("evaluation_data_path")
 GROUND_TRUTH_PATHS = dbutils.widgets.get("ground_truth_paths")
+METRICS_CONFIG_PATH = dbutils.widgets.get("metrics_config_path")
 
 print("📁 FILE CONFIGURATION")
 print("="*60)
 print(f"Evaluation Data: {EVAL_DATA_PATH}")
 print(f"Ground Truth Files: {GROUND_TRUTH_PATHS or 'None'}")
+print(f"Metrics Config: {METRICS_CONFIG_PATH or 'None'}")
 print("="*60)
 
 def load_any_csv(file_path, file_type="data"):
@@ -110,6 +118,43 @@ def load_any_csv(file_path, file_type="data"):
         
     except Exception as e:
         print(f"❌ Error loading {file_type}: {e}")
+        return None
+
+def load_metrics_config(file_path):
+    """Load metrics configuration from CSV file."""
+    if not file_path or not file_path.strip():
+        return None
+    
+    try:
+        df = load_any_csv(file_path, "metrics config")
+        if df is None:
+            return None
+        
+        # Map your column names to expected names
+        column_mapping = {
+            'metric_name': 'name',
+            'metric_type': 'type', 
+            'grading_instructions': 'evaluation_prompt',
+            'pass_threshold': 'threshold'
+        }
+        
+        # Rename columns to match expected format
+        df = df.rename(columns=column_mapping)
+        
+        # Validate required columns
+        required_cols = ['name', 'type', 'description', 'evaluation_prompt', 'threshold']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        
+        if missing_cols:
+            print(f"❌ Missing required columns in metrics config: {missing_cols}")
+            print(f"Available columns after mapping: {list(df.columns)}")
+            return None
+        
+        print("✅ Metrics configuration loaded and mapped successfully")
+        return df
+        
+    except Exception as e:
+        print(f"❌ Error loading metrics config: {e}")
         return None
 
 def create_sample_data():
@@ -240,6 +285,9 @@ if eval_df is None:
     eval_df = create_sample_data()
     print("✅ Sample data created")
 
+# Load metrics configuration if provided
+metrics_config_df = load_metrics_config(METRICS_CONFIG_PATH)
+
 # Ensure ground_truth column exists
 if 'ground_truth' not in eval_df.columns:
     eval_df['ground_truth'] = ''
@@ -251,6 +299,7 @@ display(eval_df.head(3))
 
 # Store data globally
 EVALUATION_DATA = eval_df
+METRICS_CONFIG_DATA = metrics_config_df
 
 # COMMAND ----------
 
@@ -321,14 +370,20 @@ print(f"\n🎯 Final Model Selection: {JUDGE_MODEL}")
 
 # MAGIC %md
 # MAGIC ## Cell 4: Define Your Custom Metrics
-# MAGIC **Add your evaluation metrics below - supports Binary, 1-5 Scale, and Percentage**
+# MAGIC **Option 1: Upload CSV file with metrics (use widget above)**
+# MAGIC **Option 2: Define metrics in code below**
 
 # COMMAND ----------
 
 # =============================================================================
 # CUSTOM METRICS DEFINITION
 # =============================================================================
-# Define your metrics by modifying the examples below
+# You have TWO options for defining metrics:
+# 
+# OPTION 1: Upload a CSV file using the "Metrics Configuration File" widget above
+# CSV should have columns: name, type, description, evaluation_prompt, threshold
+#
+# OPTION 2: Define metrics in code below (if no CSV file provided)
 # Three types supported: Binary (Pass/Fail), 1-5 Scale, and Percentage (0-100%)
 
 CUSTOM_METRICS = [
