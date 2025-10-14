@@ -34,9 +34,9 @@ Your metrics CSV now supports an additional column:
 
 ```csv
 name,type,description,evaluation_prompt,threshold,ground_truth_column,ground_truth_file_path
-accuracy_check,binary,Checks accuracy,"Evaluate...",1.0,correct_answer,accuracy_ground_truth.csv
-helpfulness,scale_1_5,Rate helpfulness,"Rate...",3.0,helpful_response,helpfulness_ground_truth.csv
-safety,binary,Check safety,"Check...",1.0,safe_content,safety_ground_truth.csv
+accuracy_check,binary,Checks accuracy,"Evaluate...",1.0,correct_answer,
+helpfulness,scale_1_5,Rate helpfulness,"Rate...",3.0,helpful_answer,
+safety,binary,Check safety,"Check...",1.0,safe_response,
 ```
 
 ### Ground Truth File Format
@@ -44,7 +44,7 @@ Each ground truth file should have:
 - A column that matches your evaluation data (for merging)
 - A column with the ground truth data (can be any name)
 
-**Example accuracy_ground_truth.csv:**
+**Example correct_answer.csv:**
 ```csv
 sample_id,correct_answer
 1,Paris is the capital of France
@@ -52,7 +52,7 @@ sample_id,correct_answer
 3,Chocolate cake requires flour, sugar, eggs, and cocoa
 ```
 
-**Example helpfulness_ground_truth.csv:**
+**Example helpful_answer.csv:**
 ```csv
 sample_id,helpful_answer
 1,This response provides clear, accurate information
@@ -88,10 +88,10 @@ sample_id,helpful_answer
 Databricks Workspace/
 ├── evaluation_data.csv                    # Main evaluation data
 ├── sample_metrics_config.csv             # Metrics configuration
-├── accuracy_ground_truth.csv             # Ground truth for accuracy metric
-├── helpfulness_ground_truth.csv          # Ground truth for helpfulness metric
-├── safety_ground_truth.csv               # Ground truth for safety metric
-├── completeness_ground_truth.csv         # Ground truth for completeness metric
+├── correct_answer.csv                    # Ground truth for accuracy metric
+├── helpful_answer.csv                    # Ground truth for helpfulness metric
+├── safe_response.csv                     # Ground truth for safety metric
+├── complete_answer.csv                   # Ground truth for completeness metric
 └── results/ (generated)
     ├── evaluation_results_YYYYMMDD_HHMMSS.csv
     └── summary_YYYYMMDD_HHMMSS.csv
@@ -103,23 +103,23 @@ Databricks Workspace/
 ```csv
 # sample_metrics_config.csv
 name,type,description,evaluation_prompt,threshold,ground_truth_column,ground_truth_file_path
-accuracy,binary,Check accuracy,"Evaluate accuracy: {response} vs {ground_truth}",1.0,correct_answer,accuracy_ground_truth.csv
+accuracy,binary,Check accuracy,"Evaluate accuracy: {response} vs {ground_truth}",1.0,correct_answer,
 ```
 
 ### Example 2: Multiple Metrics with Different Files
 ```csv
 # sample_metrics_config.csv
 name,type,description,evaluation_prompt,threshold,ground_truth_column,ground_truth_file_path
-factual_accuracy,binary,Check facts,"Check facts: {response} vs {ground_truth}",1.0,correct_facts,factual_ground_truth.csv
-tone_appropriateness,scale_1_5,Check tone,"Rate tone: {response} vs {ground_truth}",3.0,appropriate_tone,tone_ground_truth.csv
-safety_check,binary,Check safety,"Check safety: {response} vs {ground_truth}",1.0,safe_content,safety_ground_truth.csv
+factual_accuracy,binary,Check facts,"Check facts: {response} vs {ground_truth}",1.0,correct_facts,
+tone_appropriateness,scale_1_5,Check tone,"Rate tone: {response} vs {ground_truth}",3.0,appropriate_tone,
+safety_check,binary,Check safety,"Check safety: {response} vs {ground_truth}",1.0,safe_content,
 ```
 
 ### Example 3: No Ground Truth File (Optional)
 ```csv
 # sample_metrics_config.csv
 name,type,description,evaluation_prompt,threshold,ground_truth_column,ground_truth_file_path
-general_quality,scale_1_5,Rate quality,"Rate quality: {response}",3.0,quality_score,
+general_quality,scale_1_5,Rate quality,"Rate quality: {response}",3.0,,
 ```
 
 ## 🔍 Troubleshooting

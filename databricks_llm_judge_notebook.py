@@ -203,9 +203,15 @@ def load_ground_truth_for_metric(metric_config, eval_df):
     ground_truth_file = metric_config.get('ground_truth_file_path', '')
     ground_truth_column = metric_config.get('ground_truth_column', 'ground_truth')
     
+    # If no ground_truth_file_path specified, use ground_truth_column as filename
     if not ground_truth_file or not ground_truth_file.strip():
-        print(f"   No ground truth file specified for metric: {metric_config.get('name', 'unknown')}")
-        return eval_df
+        if ground_truth_column and ground_truth_column != 'ground_truth':
+            # Use ground_truth_column as filename and append .csv
+            ground_truth_file = f"{ground_truth_column}.csv"
+            print(f"   Using ground_truth_column as filename: {ground_truth_file}")
+        else:
+            print(f"   No ground truth file specified for metric: {metric_config.get('name', 'unknown')}")
+            return eval_df
     
     try:
         print(f"   Loading ground truth file: {ground_truth_file}")
@@ -227,12 +233,15 @@ def load_ground_truth_for_metric(metric_config, eval_df):
         merge_col = list(common_cols)[0]
         print(f"   Merging on column: '{merge_col}'")
         
-        # Find the ground truth column in the GT file
+        # Find the ground truth data column in the GT file
         gt_data_col = None
+        
+        # First, try to find a column that matches the ground_truth_column name
         if ground_truth_column in gt_df.columns:
             gt_data_col = ground_truth_column
+            print(f"   Found exact match for ground truth column: '{gt_data_col}'")
         else:
-            # Look for any column that could be ground truth data
+            # Look for any text column that could be ground truth data
             text_cols = gt_df.select_dtypes(include=['object']).columns.tolist()
             text_cols = [col for col in text_cols if col != merge_col]
             
@@ -250,9 +259,10 @@ def load_ground_truth_for_metric(metric_config, eval_df):
             how='left'
         )
         
-        # Rename the ground truth column to the expected name
+        # Rename the ground truth column to the expected name for this metric
         if gt_data_col != ground_truth_column:
             merged_df = merged_df.rename(columns={gt_data_col: ground_truth_column})
+            print(f"   Renamed '{gt_data_col}' to '{ground_truth_column}'")
         
         coverage = merged_df[ground_truth_column].notna().sum()
         print(f"   ✅ Ground truth loaded: {coverage}/{len(merged_df)} samples matched")
@@ -505,8 +515,8 @@ print(f"\n🎯 Final Model Selection: {JUDGE_MODEL}")
 # MAGIC - `description`: Human readable description
 # MAGIC - `evaluation_prompt` (or `grading_instructions`): Full LLM prompt with {prompt}, {response}, {ground_truth} placeholders
 # MAGIC - `threshold` (or `pass_threshold`): Pass/fail threshold (1.0 for binary, 3.0 for scale_1_5, 0.7 for percentage)
-# MAGIC - `ground_truth_column` (optional): Which ground truth column to use for this metric
-# MAGIC - `ground_truth_file_path` (optional): **Filename only** - ground truth file in workspace
+# MAGIC - `ground_truth_column` (optional): **Ground truth filename without .csv** (e.g., "correct_answer" → "correct_answer.csv")
+# MAGIC - `ground_truth_file_path` (optional): **Leave empty** - system uses ground_truth_column as filename
 # MAGIC 
 # MAGIC ### 🆕 New Ground Truth Features:
 # MAGIC - **Per-metric files**: Each metric can have its own ground truth file
@@ -518,9 +528,11 @@ print(f"\n🎯 Final Model Selection: {JUDGE_MODEL}")
 # MAGIC ### 📁 Example Metrics CSV:
 # MAGIC ```csv
 # MAGIC name,type,description,evaluation_prompt,threshold,ground_truth_column,ground_truth_file_path
-# MAGIC accuracy_check,binary,Checks accuracy,"Evaluate...",1.0,correct_answer,accuracy_ground_truth.csv
-# MAGIC helpfulness,scale_1_5,Rate helpfulness,"Rate...",3.0,helpful_response,helpfulness_ground_truth.csv
+# MAGIC accuracy_check,binary,Checks accuracy,"Evaluate...",1.0,correct_answer,
+# MAGIC helpfulness,scale_1_5,Rate helpfulness,"Rate...",3.0,helpful_answer,
 # MAGIC ```
+# MAGIC 
+# MAGIC **Note**: The system will automatically look for `correct_answer.csv` and `helpful_answer.csv` files in the workspace.
 
 # COMMAND ----------
 
