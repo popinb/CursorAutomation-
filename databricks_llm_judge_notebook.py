@@ -65,12 +65,19 @@ print("✅ All libraries imported successfully")
 
 # MAGIC %md
 # MAGIC ## Cell 2: Data Loading Configuration
-# MAGIC **Update the file paths below to point to your data**
+# MAGIC **Upload your files to the Databricks workspace and specify filenames below**
 # MAGIC 
 # MAGIC ### 📊 New Ground Truth Support:
 # MAGIC - **Per-metric ground truth files**: Each metric can have its own ground truth file
+# MAGIC - **Workspace-based files**: Just specify filenames, system finds them in workspace
 # MAGIC - **Flexible column mapping**: Ground truth files don't need specific column names
 # MAGIC - **Automatic merging**: System will intelligently match data based on common columns
+# MAGIC 
+# MAGIC ### 📁 File Upload Instructions:
+# MAGIC 1. **Upload evaluation data**: `evaluation_data.csv` to your workspace
+# MAGIC 2. **Upload metrics config**: `sample_metrics_config.csv` to your workspace  
+# MAGIC 3. **Upload ground truth files**: Upload all `*_ground_truth.csv` files to workspace
+# MAGIC 4. **Update filenames**: Modify the widget values below to match your files
 
 # COMMAND ----------
 
@@ -81,14 +88,14 @@ print("✅ All libraries imported successfully")
 # Create file upload widgets
 dbutils.widgets.text(
     "evaluation_data_path", 
-    "/Workspace/Users/your_username/your_eval_data.csv", 
-    "📁 Evaluation Data (CSV file)"
+    "evaluation_data.csv", 
+    "📁 Evaluation Data (CSV filename in workspace)"
 )
 
 dbutils.widgets.text(
     "metrics_config_path",
-    "",
-    "📊 Metrics Configuration File (CSV with metric definitions, REQUIRED)"
+    "sample_metrics_config.csv",
+    "📊 Metrics Configuration File (CSV filename in workspace)"
 )
 
 # Get file paths
@@ -102,14 +109,36 @@ print(f"Metrics Config: {METRICS_CONFIG_PATH or 'None'}")
 print("="*60)
 
 def load_any_csv(file_path, file_type="data"):
-    """Load any CSV file without assumptions."""
+    """Load any CSV file from workspace or local path."""
     try:
+        # Handle workspace files (just filename) vs full paths
+        if not os.path.isabs(file_path) and not file_path.startswith('/'):
+            # This is likely a workspace filename, try to find it
+            workspace_path = f"/Workspace/Users/{dbutils.notebook.entry_point.getDbutils().notebook().getContext().userName().get()}/{file_path}"
+            if os.path.exists(workspace_path):
+                file_path = workspace_path
+            else:
+                # Try current directory
+                current_dir_path = f"./{file_path}"
+                if os.path.exists(current_dir_path):
+                    file_path = current_dir_path
+                else:
+                    # Try /tmp directory
+                    tmp_path = f"/tmp/{file_path}"
+                    if os.path.exists(tmp_path):
+                        file_path = tmp_path
+        
         if not os.path.exists(file_path):
             print(f"❌ {file_type.title()} file not found: {file_path}")
+            print(f"   Searched locations:")
+            print(f"   - /Workspace/Users/.../{file_path}")
+            print(f"   - ./{file_path}")
+            print(f"   - /tmp/{file_path}")
             return None
             
         df = pd.read_csv(file_path)
         print(f"✅ Loaded {file_type}: {len(df)} rows, {len(df.columns)} columns")
+        print(f"   File: {file_path}")
         print(f"   Columns: {list(df.columns)}")
         return df
         
@@ -467,7 +496,7 @@ print(f"\n🎯 Final Model Selection: {JUDGE_MODEL}")
 
 # MAGIC %md
 # MAGIC ## Cell 4: Metrics Configuration
-# MAGIC **Upload your metrics CSV file using the widget above**
+# MAGIC **Upload your metrics CSV file to workspace and specify filename above**
 # MAGIC 
 # MAGIC ### 📊 Required CSV Format for Metrics:
 # MAGIC Your metrics CSV must have these columns:
@@ -477,13 +506,21 @@ print(f"\n🎯 Final Model Selection: {JUDGE_MODEL}")
 # MAGIC - `evaluation_prompt` (or `grading_instructions`): Full LLM prompt with {prompt}, {response}, {ground_truth} placeholders
 # MAGIC - `threshold` (or `pass_threshold`): Pass/fail threshold (1.0 for binary, 3.0 for scale_1_5, 0.7 for percentage)
 # MAGIC - `ground_truth_column` (optional): Which ground truth column to use for this metric
-# MAGIC - `ground_truth_file_path` (optional): Path to specific ground truth file for this metric
+# MAGIC - `ground_truth_file_path` (optional): **Filename only** - ground truth file in workspace
 # MAGIC 
 # MAGIC ### 🆕 New Ground Truth Features:
 # MAGIC - **Per-metric files**: Each metric can have its own ground truth file
+# MAGIC - **Workspace-based**: Just specify filenames, system finds files in workspace
 # MAGIC - **Flexible column names**: Ground truth files don't need specific column names
 # MAGIC - **Automatic merging**: System finds common columns between eval data and ground truth files
 # MAGIC - **Multiple formats**: Support for different ground truth file structures
+# MAGIC 
+# MAGIC ### 📁 Example Metrics CSV:
+# MAGIC ```csv
+# MAGIC name,type,description,evaluation_prompt,threshold,ground_truth_column,ground_truth_file_path
+# MAGIC accuracy_check,binary,Checks accuracy,"Evaluate...",1.0,correct_answer,accuracy_ground_truth.csv
+# MAGIC helpfulness,scale_1_5,Rate helpfulness,"Rate...",3.0,helpful_response,helpfulness_ground_truth.csv
+# MAGIC ```
 
 # COMMAND ----------
 
