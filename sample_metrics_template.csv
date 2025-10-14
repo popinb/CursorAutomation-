@@ -1,0 +1,55 @@
+name,type,description,evaluation_prompt,threshold,ground_truth_file,ground_truth_column
+accuracy_check,binary,Checks if response contains accurate information,"Evaluate if the response contains accurate information.
+
+User Query: {prompt}
+AI Response: {response}
+Ground Truth Reference: {ground_truth}
+
+Criteria:
+- All facts must be correct
+- No misleading information
+- Numbers and statistics must be accurate
+
+Scoring:
+- 1 (PASS): All information is accurate
+- 0 (FAIL): Contains any inaccurate information
+
+Return JSON:
+{{
+    ""accuracy_check_score"": 1,
+    ""explanation"": ""All facts verified as accurate...""
+}}",1.0,accuracy_ground_truth.csv,correct_answer
+helpfulness_rating,scale_1_5,Rates how helpful the response is on a 1-5 scale,"Rate the helpfulness of this response from 1 to 5.
+
+User Query: {prompt}
+AI Response: {response}
+Ground Truth Reference: {ground_truth}
+
+Helpfulness Scale:
+5 = Extremely helpful - Comprehensive answer with actionable steps
+4 = Very helpful - Good answer with useful information
+3 = Moderately helpful - Adequate but could be better
+2 = Slightly helpful - Limited value, missing key information
+1 = Not helpful - Fails to address the question
+
+Return JSON:
+{{
+    ""helpfulness_rating_score"": 4,
+    ""explanation"": ""Very helpful response that answers the main question...""
+}}",3.0,helpfulness_ground_truth.csv,expected_response
+completeness_percentage,percentage,Measures what percentage of the question was addressed,"Evaluate what percentage (0-100%) of the user's question was addressed.
+
+User Query: {prompt}
+AI Response: {response}
+Ground Truth Reference: {ground_truth}
+
+Assessment Process:
+1. Identify all components of the user's question
+2. Check which components were addressed
+3. Calculate percentage of coverage
+
+Return JSON (use decimal, e.g., 0.85 for 85%):
+{{
+    ""completeness_percentage_score"": 0.85,
+    ""explanation"": ""The response addresses 85% of the question...""
+}}",0.7,completeness_ground_truth.csv,completeness_score

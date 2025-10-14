@@ -1,0 +1,68 @@
+name,type,description,evaluation_prompt,threshold,ground_truth_column
+factual_accuracy,binary,Checks if response contains factually correct information,"Evaluate the factual accuracy of this response.
+
+User Query: {prompt}
+AI Response: {response}
+Ground Truth Reference: {ground_truth}
+
+Instructions:
+- Compare the AI response with the ground truth reference
+- Check if all factual claims in the response are correct
+- Ignore minor stylistic differences, focus on factual correctness
+
+Scoring:
+- 1 (PASS): All factual information is correct
+- 0 (FAIL): Contains any factual errors
+
+Return JSON:
+{{
+    ""factual_accuracy_score"": 1,
+    ""explanation"": ""The response is factually accurate because...""
+}}",1.0,correct_answer
+helpfulness_scale,scale_1_5,Rates how helpful and informative the response is,"Rate the helpfulness of this response on a scale from 1 to 5.
+
+User Query: {prompt}
+AI Response: {response}
+Ground Truth Reference: {ground_truth}
+
+Helpfulness Scale:
+5 = Extremely helpful - Comprehensive, actionable, exceeds expectations
+4 = Very helpful - Good information, addresses main points well
+3 = Moderately helpful - Adequate response, covers basics
+2 = Slightly helpful - Limited value, missing key information
+1 = Not helpful - Fails to address the question meaningfully
+
+Consider:
+- Does it directly answer the user's question?
+- Is the information comprehensive and useful?
+- Are the details actionable and clear?
+
+Return JSON:
+{{
+    ""helpfulness_scale_score"": 4,
+    ""explanation"": ""The response is very helpful because...""
+}}",3.0,expected_response
+completeness_check,percentage,Measures what percentage of the question components were addressed,"Evaluate what percentage (0-100%) of the user's question was comprehensively addressed.
+
+User Query: {prompt}
+AI Response: {response}
+Ground Truth Reference: {ground_truth}
+
+Assessment Process:
+1. Break down the user's question into key components that need to be addressed
+2. Check which components the AI response covers
+3. Calculate the percentage of coverage
+4. Consider both breadth (how many aspects) and depth (how thoroughly)
+
+Scoring Guidelines:
+- 90-100%: Fully comprehensive, addresses all aspects thoroughly
+- 70-89%: Good coverage, addresses most important components
+- 50-69%: Moderate coverage, addresses about half the components
+- 30-49%: Limited coverage, misses many important aspects
+- 0-29%: Poor coverage, fails to address most components
+
+Return JSON (use decimal format, e.g., 0.85 for 85%):
+{{
+    ""completeness_check_score"": 0.85,
+    ""explanation"": ""The response addresses 85% of the question because...""
+}}",0.70,completeness_score

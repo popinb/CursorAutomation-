@@ -1,0 +1,4 @@
+name,type,description,evaluation_prompt,threshold
+accuracy_test,binary,Tests factual accuracy,"Evaluate accuracy. User Query: {prompt} AI Response: {response} Ground Truth: {ground_truth} Return JSON: {{""accuracy_test_score"": 1, ""explanation"": ""Accurate response""}}",1.0
+quality_rating,scale_1_5,Rates response quality 1-5,"Rate quality 1-5. User Query: {prompt} AI Response: {response} Return JSON: {{""quality_rating_score"": 4, ""explanation"": ""Good quality""}}",3.0
+coverage_percent,percentage,Percentage of question covered,"What percentage covered? User Query: {prompt} AI Response: {response} Return JSON: {{""coverage_percent_score"": 0.85, ""explanation"": ""85% covered""}}",0.7
