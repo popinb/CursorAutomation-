@@ -1,0 +1,6 @@
+id,expected_response,completeness_score
+1,"Paris is the capital of France",0.95
+2,"Machine learning uses data to make predictions",0.85
+3,"Mix ingredients, bake at 350F for 30 minutes",0.90
+4,"Exercise improves health in multiple ways",0.88
+5,"Plants use sunlight to make food through photosynthesis",0.92
