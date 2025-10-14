@@ -1,0 +1,4 @@
+query_id,relevance_percentage,topic_match,intent_match
+1,85,geography,direct_answer
+2,90,technology_education,explanation
+3,75,cooking_instructions,how_to_guide

@@ -1,0 +1,4 @@
+question_id,correct_answer,source,confidence
+1,Paris,Encyclopedia Britannica,high
+2,Machine learning is a subset of artificial intelligence that uses algorithms to find patterns in data and make predictions,ML Textbook Chapter 1,high
+3,Mix flour cocoa powder eggs sugar butter and baking powder then bake at 350°F for 25-30 minutes,Betty Crocker Recipe,medium

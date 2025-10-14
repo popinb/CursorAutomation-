@@ -1,0 +1,29 @@
+name,type,description,evaluation_prompt,threshold,ground_truth_file_path,ground_truth_column
+accuracy_check,binary,Checks factual accuracy,"You are an expert evaluator. Compare the response to the ground truth and determine if it's factually accurate.
+
+Prompt: {prompt}
+Response: {response}
+Ground Truth: {ground_truth}
+
+Return JSON: {{""accuracy_check_score"": 1 or 0, ""explanation"": ""reason""}}",1.0,/workspace/sample_accuracy_gt.csv,correct_answer
+helpfulness_rating,scale_1_5,Rates response helpfulness,"Rate how helpful this response is on a scale of 1-5.
+
+Prompt: {prompt}
+Response: {response}
+Reference: {ground_truth}
+
+Return JSON: {{""helpfulness_rating_score"": score, ""explanation"": ""reason""}}",3.0,/workspace/sample_helpfulness_gt.csv,helpfulness_score
+relevance_score,percentage,Measures relevance percentage,"Score the relevance of this response as a percentage (0-100).
+
+Prompt: {prompt}
+Response: {response}
+Expected: {ground_truth}
+
+Return JSON: {{""relevance_score_score"": percentage, ""explanation"": ""reason""}}",70.0,/workspace/sample_relevance_gt.csv,relevance_percentage
+completeness,binary,Checks if response is complete,"Determine if the response completely addresses the prompt.
+
+Prompt: {prompt}
+Response: {response}
+Complete Answer: {ground_truth}
+
+Return JSON: {{""completeness_score"": 1 or 0, ""explanation"": ""reason""}}",1.0,,ground_truth

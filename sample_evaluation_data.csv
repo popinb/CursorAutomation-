@@ -1,0 +1,4 @@
+prompt,response,ground_truth
+What is the capital of France?,The capital of France is Paris a beautiful city known for its culture and history.,Paris
+Explain machine learning in simple terms,Machine learning is a type of AI where computers learn patterns from data to make predictions.,Machine learning uses algorithms to analyze data and make predictions
+How do I bake a chocolate cake?,To bake a chocolate cake mix flour cocoa eggs and sugar then bake at 350°F for 30 minutes.,Mix ingredients including flour cocoa powder eggs sugar and bake at 350°F for 25-30 minutes
