@@ -1,0 +1,64 @@
+name,type,description,evaluation_prompt,threshold,ground_truth_path,join_key
+accuracy_check,binary,"Checks if the response is factually accurate","Evaluate the factual accuracy of this response.
+
+Prompt: {prompt}
+
+Response: {response}
+
+Expected Answer: {ground_truth}
+
+Return your evaluation as JSON with the following format:
+{{
+  ""accuracy_check_score"": 1 if accurate or 0 if inaccurate,
+  ""explanation"": ""Brief explanation of your evaluation""
+}}",1.0,/workspace/ground_truth/accuracy_gt.csv,prompt_id
+completeness_check,scale_1_5,"Evaluates how complete and comprehensive the response is","Rate the completeness of this response on a scale of 1-5.
+
+Prompt: {prompt}
+
+Response: {response}
+
+Expected Key Points: {ground_truth}
+
+Scoring:
+1 = Very incomplete, missing most key points
+2 = Incomplete, missing several key points  
+3 = Moderately complete, covers basic points
+4 = Complete, covers most important points
+5 = Very complete, comprehensive coverage
+
+Return your evaluation as JSON:
+{{
+  ""completeness_check_score"": 1-5,
+  ""explanation"": ""Brief explanation of what was covered/missing""
+}}",3.0,/workspace/ground_truth/completeness_gt.csv,prompt_id
+style_check,percentage,"Assesses writing style, clarity, and professionalism","Rate the writing style and clarity as a percentage (0-100%).
+
+Prompt: {prompt}
+
+Response: {response}
+
+Consider:
+- Clarity and coherence
+- Professional tone
+- Grammar and structure
+- Appropriate for the context
+
+Return your evaluation as JSON:
+{{
+  ""style_check_score"": 0.0-1.0 (where 1.0 = 100%),
+  ""explanation"": ""Brief assessment of style quality""
+}}",0.7,,
+relevance_check,binary,"Checks if the response directly addresses the prompt","Does this response directly address what was asked?
+
+Prompt: {prompt}
+
+Response: {response}
+
+Reference Answer: {ground_truth}
+
+Return your evaluation as JSON:
+{{
+  ""relevance_check_score"": 1 if relevant or 0 if off-topic,
+  ""explanation"": ""Brief explanation""
+}}",1.0,/workspace/ground_truth/relevance_gt.csv,question_num
