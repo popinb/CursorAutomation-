@@ -1,0 +1,14 @@
+artifact_uri: file:///workspace/mlruns/257631179648541188/93739ceae4b24b079c1c347ac48a6181/artifacts
+end_time: 1761105108461
+entry_point_name: ''
+experiment_id: '257631179648541188'
+lifecycle_stage: active
+run_id: 93739ceae4b24b079c1c347ac48a6181
+run_name: example_evaluation_run
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761105108425
+status: 3
+tags: []
+user_id: ubuntu

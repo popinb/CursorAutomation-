@@ -1,0 +1,4 @@
+name,type,description,grading_rubric,threshold,ground_truth_column,ground_truth_file_path
+empathy,1-5_scale,Evaluates the level of empathy and understanding shown,"Rate from 1-5: 1=no empathy, dismissive; 2=minimal empathy; 3=some understanding; 4=good empathy and acknowledgment; 5=excellent empathy and emotional intelligence.",3.0,ground_truth,ground_truth_data.csv
+problem_solving,1-5_scale,Evaluates the quality of problem-solving approach,Rate from 1-5: 1=no solution provided; 2=generic response; 3=basic solution; 4=good step-by-step approach; 5=comprehensive solution with multiple options.,3.0,ground_truth,ground_truth_data.csv
+clarity,percentage,Evaluates how clear and understandable the response is,"Rate from 0-100%: Consider use of simple language, clear instructions, and avoidance of jargon.",80.0,ground_truth,ground_truth_data.csv

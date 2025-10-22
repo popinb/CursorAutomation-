@@ -1,0 +1,56 @@
+[
+  {
+    "sample_id":0,
+    "metric_name":"accuracy",
+    "score":null,
+    "explanation":"Error: '\\n  \"score\"'",
+    "threshold":0.5,
+    "status":"\u274c",
+    "prompt":"What is the capital of France?"
+  },
+  {
+    "sample_id":0,
+    "metric_name":"completeness",
+    "score":null,
+    "explanation":"Error: '\\n  \"score\"'",
+    "threshold":3.0,
+    "status":"\u274c",
+    "prompt":"What is the capital of France?"
+  },
+  {
+    "sample_id":0,
+    "metric_name":"helpfulness",
+    "score":null,
+    "explanation":"Error: '\\n  \"score\"'",
+    "threshold":70.0,
+    "status":"\u274c",
+    "prompt":"What is the capital of France?"
+  },
+  {
+    "sample_id":1,
+    "metric_name":"accuracy",
+    "score":null,
+    "explanation":"Error: '\\n  \"score\"'",
+    "threshold":0.5,
+    "status":"\u274c",
+    "prompt":"How do I bake a chocolate cake?"
+  },
+  {
+    "sample_id":1,
+    "metric_name":"completeness",
+    "score":null,
+    "explanation":"Error: '\\n  \"score\"'",
+    "threshold":3.0,
+    "status":"\u274c",
+    "prompt":"How do I bake a chocolate cake?"
+  },
+  {
+    "sample_id":1,
+    "metric_name":"helpfulness",
+    "score":null,
+    "explanation":"Error: '\\n  \"score\"'",
+    "threshold":70.0,
+    "status":"\u274c",
+    "prompt":"How do I bake a chocolate cake?"
+  }
+]

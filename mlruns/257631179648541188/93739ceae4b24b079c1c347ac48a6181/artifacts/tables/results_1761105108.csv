@@ -1,0 +1,7 @@
+sample_id,metric_name,score,explanation,threshold,status,prompt
+0,accuracy,,"Error: '\n  ""score""'",0.5,❌,What is the capital of France?
+0,completeness,,"Error: '\n  ""score""'",3.0,❌,What is the capital of France?
+0,helpfulness,,"Error: '\n  ""score""'",70.0,❌,What is the capital of France?
+1,accuracy,,"Error: '\n  ""score""'",0.5,❌,How do I bake a chocolate cake?
+1,completeness,,"Error: '\n  ""score""'",3.0,❌,How do I bake a chocolate cake?
+1,helpfulness,,"Error: '\n  ""score""'",70.0,❌,How do I bake a chocolate cake?

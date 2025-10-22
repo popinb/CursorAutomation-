@@ -1,0 +1,9 @@
+{
+  "name": "financial_advisory",
+  "description": "Evaluation for financial advisory responses (like Zillow Buyability)",
+  "metrics_config_path": "evaluation_configs/financial_advisory_metrics.csv",
+  "ground_truth_data": null,
+  "assets_directory": null,
+  "judge_model": "gpt-4",
+  "output_directory": "/tmp/evaluation_results/financial_advisory"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "basic_quality",
+  "description": "Basic quality assessment for general LLM responses",
+  "metrics_config_path": "evaluation_configs/basic_quality_metrics.csv",
+  "ground_truth_data": null,
+  "assets_directory": null,
+  "judge_model": "gpt-4",
+  "output_directory": "/tmp/evaluation_results/basic_quality"
+}

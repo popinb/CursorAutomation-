@@ -1,0 +1,4 @@
+name,type,description,grading_rubric,threshold,ground_truth_column,ground_truth_file_path
+syntax_correctness,binary,Evaluates if the code has correct syntax,"Check if the code follows proper syntax rules for the programming language. Look for syntax errors, missing semicolons, incorrect brackets, etc.",0.5,expected_syntax,code_examples.json
+code_quality,1-5_scale,Evaluates overall code quality,"Rate from 1-5: 1=very poor quality, many issues; 2=poor quality, several issues; 3=average quality, some issues; 4=good quality, minor issues; 5=excellent quality, clean code.",3.0,quality_standards,quality_standards.json
+efficiency,percentage,Evaluates code efficiency,"Rate from 0-100%: Consider time complexity, space complexity, and overall efficiency of the algorithm or approach used.",70.0,efficiency_benchmarks,efficiency_benchmarks.json

@@ -1,0 +1,6 @@
+artifact_location: file:///workspace/mlruns/257631179648541188
+creation_time: 1761104896643
+experiment_id: '257631179648541188'
+last_update_time: 1761104896643
+lifecycle_stage: active
+name: /llm_evaluation_experiment

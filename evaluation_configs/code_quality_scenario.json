@@ -1,0 +1,9 @@
+{
+  "name": "code_quality",
+  "description": "Evaluation for code quality and correctness",
+  "metrics_config_path": "evaluation_configs/code_quality_metrics.csv",
+  "ground_truth_data": null,
+  "assets_directory": null,
+  "judge_model": "gpt-4",
+  "output_directory": "/tmp/evaluation_results/code_quality"
+}
