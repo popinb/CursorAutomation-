@@ -545,8 +545,8 @@ class MetricsEditor:
                     
                     const code = `
 import json
-with open('${{tempPath}}', 'w') as f:
-    f.write('''${{dataStr}}''')
+with open('` + tempPath + `', 'w') as f:
+    f.write('''` + dataStr + `''')
 `;
                     
                     try {{
