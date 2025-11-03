@@ -393,6 +393,7 @@ print("   ? MetricConfig dataclass")
 
 import json
 import re
+import os
 import pandas as pd
 import requests
 
@@ -422,9 +423,9 @@ class LLMJudgeEvaluator:
             all_data = []
             for col, value in row.items():
                 if pd.notna(value) and str(value).strip():
-                    all_data.append(f"? {col}: {value}")
+                    all_data.append(f"- {col}: {value}")
             
-            return "?? Ground Truth:\n" + "\n".join(all_data) if all_data else "No data"
+            return "Ground Truth:\n" + "\n".join(all_data) if all_data else "No data"
         except Exception as e:
             return f"Error: {e}"
     
@@ -515,7 +516,7 @@ class LLMJudgeEvaluator:
             
             llm_response = self._call_llm(eval_prompt)
             score, explanation = self._parse_response(llm_response, metric)
-            status = "?" if score >= metric.threshold else "?"
+            status = "PASS" if score >= metric.threshold else "FAIL"
             
             return {
                 "score": score,
@@ -527,7 +528,7 @@ class LLMJudgeEvaluator:
             return {
                 "score": 0,
                 "explanation": f"Error: {str(e)}",
-                "status": "?",
+                "status": "FAIL",
                 "ground_truth_used": False
             }
     
@@ -696,8 +697,8 @@ else:
     
     # Overall summary
     total = len(results_df)
-    passed = len(results_df[results_df['status'] == '?'])
-    failed = len(results_df[results_df['status'] == '?'])
+    passed = len(results_df[results_df['status'] == 'PASS'])
+    failed = len(results_df[results_df['status'] == 'FAIL'])
     pass_rate = (passed / total * 100) if total > 0 else 0
     
     print(f"\n?? OVERALL SUMMARY:")
@@ -709,7 +710,7 @@ else:
     print(f"\n?? PER-METRIC RESULTS:")
     for metric_name in results_df['metric_name'].unique():
         metric_results = results_df[results_df['metric_name'] == metric_name]
-        metric_passed = len(metric_results[metric_results['status'] == '?'])
+        metric_passed = len(metric_results[metric_results['status'] == 'PASS'])
         metric_total = len(metric_results)
         metric_rate = (metric_passed / metric_total * 100) if metric_total > 0 else 0
         avg_score = metric_results['score'].mean()
