@@ -449,7 +449,12 @@ class LLMJudgeEvaluator:
                     if 'choices' in result and len(result['choices']) > 0:
                         return result['choices'][0]['message']['content']
                 
-                return f'{{"score": 0, "explanation": "Error: status {response.status_code}"}}'
+                # Log error details
+                error_msg = f"Databricks API error: status {response.status_code}"
+                print(f"ERROR: {error_msg}")
+                if response.status_code != 200:
+                    print(f"Response: {response.text[:500]}")
+                return f'{{"score": 0, "explanation": "{error_msg}"}}'
                 
             else:
                 # Call OpenAI
@@ -464,7 +469,11 @@ class LLMJudgeEvaluator:
                 )
                 return response.choices[0].message.content
         except Exception as e:
-            return f'{{"score": 0, "explanation": "Error calling LLM: {str(e)}"}}'
+            error_msg = f"Error calling LLM: {str(e)}"
+            print(f"ERROR: {error_msg}")
+            import traceback
+            print(traceback.format_exc())
+            return f'{{"score": 0, "explanation": "{error_msg}"}}'
     
     def _parse_response(self, response, metric):
         """Parse LLM response and normalize score."""
@@ -540,24 +549,25 @@ class LLMJudgeEvaluator:
         
         provider_name = f"Databricks Serving ({self.client['endpoint']})" if self.client_type == "databricks" else self.model
         
-        print(f"?? Starting evaluation with {provider_name}:")
-        print(f"   {len(eval_data)} samples ? {len(self.metrics)} metrics = {total} total evaluations")
-        print("="*80)
+        print("\n" + "="*80)
+        print(f"STARTING EVALUATION with {provider_name}")
+        print(f"{len(eval_data)} samples x {len(self.metrics)} metrics = {total} total evaluations")
+        print("="*80 + "\n")
         
         for idx, row in eval_data.iterrows():
             sample_id = row.get('sample_id', f'sample_{idx}')
             prompt = row.get('prompt', '')
             response = row.get('response', '')
             
-            print(f"\n?? Sample {idx+1}/{len(eval_data)}: ID {sample_id}")
+            print(f"Sample {idx+1}/{len(eval_data)}: ID {sample_id}")
             
             for metric in self.metrics:
                 current += 1
                 progress = (current / total) * 100
-                print(f"   [{progress:5.1f}%] {metric.name}...", end=' ')
+                print(f"  [{progress:5.1f}%] Evaluating {metric.name}...", end=' ', flush=True)
                 
                 result = self.evaluate_single(prompt, response, metric, idx)
-                print(f"{result['status']} (score: {result['score']:.2f})")
+                print(f"{result['status']} (score: {result['score']:.2f})", flush=True)
                 
                 results.append({
                     'sample_id': sample_id,
@@ -573,7 +583,8 @@ class LLMJudgeEvaluator:
                 })
         
         print("\n" + "="*80)
-        print("? Evaluation complete!")
+        print("Evaluation complete!")
+        print("="*80)
         return pd.DataFrame(results)
 
 print("? LLM Judge Evaluator created")
