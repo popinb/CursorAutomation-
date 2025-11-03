@@ -125,10 +125,10 @@ if JUDGE_MODEL == "databricks-llm":
     print("\n>>> Configuring Databricks Foundation Model...")
     
     try:
-        # Get workspace context
+        # Get workspace context (using correct Databricks API)
         dbutils_context = dbutils.notebook.entry_point.getDbutils().notebook().getContext()
         databricks_token = dbutils_context.apiToken().get()
-        workspace_url = dbutils_context.tags().get("browserHostName").get()
+        workspace_url = dbutils_context.browserHostName().get()
         
         print(f"  Workspace: {workspace_url}")
         
@@ -278,6 +278,28 @@ class LLMJudgeEvaluator:
         self.client_type = client_type
         print(f"[INIT] Evaluator created: {client_type}, {len(metrics)} metrics")
     
+    def _escape_prompt_template(self, template):
+        """Escape prompt template to handle JSON examples while preserving placeholders."""
+        # Save actual placeholders
+        placeholders = {
+            '{prompt}': '<<<PROMPT_PLACEHOLDER>>>',
+            '{response}': '<<<RESPONSE_PLACEHOLDER>>>',
+            '{ground_truth}': '<<<GROUND_TRUTH_PLACEHOLDER>>>'
+        }
+        
+        escaped = template
+        for placeholder, marker in placeholders.items():
+            escaped = escaped.replace(placeholder, marker)
+        
+        # Escape all remaining braces
+        escaped = escaped.replace('{', '{{').replace('}', '}}')
+        
+        # Restore placeholders
+        for placeholder, marker in placeholders.items():
+            escaped = escaped.replace(marker, placeholder)
+        
+        return escaped
+    
     def _get_ground_truth(self, metric, sample_idx):
         """Get ground truth for a sample."""
         try:
@@ -423,8 +445,9 @@ class LLMJudgeEvaluator:
             # Get ground truth
             ground_truth = self._get_ground_truth(metric, sample_idx)
             
-            # Format prompt
-            eval_prompt = metric.prompt_template.format(
+            # Escape template and format prompt
+            safe_template = self._escape_prompt_template(metric.prompt_template)
+            eval_prompt = safe_template.format(
                 prompt=prompt,
                 response=response,
                 ground_truth=ground_truth
@@ -554,15 +577,15 @@ Grading Rubric:
 {rubric}
 
 Evaluation Details:
-- User Query: {{{{prompt}}}}
-- AI Response: {{{{response}}}}
-- Ground Truth: {{{{ground_truth}}}}
+- User Query: {{prompt}}
+- AI Response: {{response}}
+- Ground Truth: {{ground_truth}}
 
 IMPORTANT: Respond with ONLY valid JSON (no other text):
-{{{{
+{{
   "score": <your_numeric_score>,
   "explanation": "Brief explanation"
-}}}}"""
+}}"""
 
 # Load metrics
 print("\nLoading metrics...")
