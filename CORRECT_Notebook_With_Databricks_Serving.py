@@ -539,16 +539,23 @@ class LLMJudgeEvaluator:
     def evaluate_single(self, prompt, response, metric, sample_idx):
         """Evaluate single sample against a metric."""
         try:
+            # Step 1: Get ground truth
             ground_truth = self._get_ground_truth(metric, sample_idx)
             
+            # Step 2: Format the prompt
             eval_prompt = metric.prompt_template.format(
                 prompt=prompt,
                 response=response,
                 ground_truth=ground_truth
             )
             
+            # Step 3: Call LLM
             llm_response = self._call_llm(eval_prompt)
+            
+            # Step 4: Parse response
             score, explanation = self._parse_response(llm_response, metric)
+            
+            # Step 5: Determine status
             status = "PASS" if score >= metric.threshold else "FAIL"
             
             return {
@@ -558,6 +565,14 @@ class LLMJudgeEvaluator:
                 "ground_truth_used": ground_truth != "Not provided"
             }
         except Exception as e:
+            # CRITICAL: Print the full error
+            print(f"\nCRITICAL ERROR in evaluate_single:")
+            print(f"  Metric: {metric.name if hasattr(metric, 'name') else 'unknown'}")
+            print(f"  Error: {str(e)}")
+            import traceback
+            print(f"  Traceback:")
+            print(traceback.format_exc())
+            
             return {
                 "score": 0,
                 "explanation": f"Error: {str(e)}",
