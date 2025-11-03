@@ -431,8 +431,14 @@ class LLMJudgeEvaluator:
     
     def _call_llm(self, prompt):
         """Call LLM judge (supports both OpenAI and Databricks Serving)."""
+        # DEBUG: Show we're entering this method
+        print(f"\n  DEBUG _call_llm: Attempting LLM call", flush=True)
+        print(f"    Client type: {self.client_type}", flush=True)
+        print(f"    Prompt length: {len(prompt)} chars", flush=True)
+        
         try:
             if self.client_type == "databricks":
+                print(f"    Using Databricks Serving Endpoint", flush=True)
                 # Call Databricks Serving Endpoint
                 url = f"https://{self.client['workspace_url']}/serving-endpoints/{self.client['endpoint']}/invocations"
                 
@@ -442,22 +448,28 @@ class LLMJudgeEvaluator:
                     "temperature": 0.1
                 }
                 
+                print(f"    Making POST request to endpoint...", flush=True)
                 response = requests.post(url, headers=self.client['headers'], json=payload, timeout=30)
+                print(f"    Response status: {response.status_code}", flush=True)
                 
                 if response.status_code == 200:
                     result = response.json()
                     if 'choices' in result and len(result['choices']) > 0:
-                        return result['choices'][0]['message']['content']
+                        content = result['choices'][0]['message']['content']
+                        print(f"    Success! Response length: {len(content)} chars", flush=True)
+                        return content
                 
                 # Log error details
                 error_msg = f"Databricks API error: status {response.status_code}"
-                print(f"ERROR: {error_msg}")
+                print(f"ERROR: {error_msg}", flush=True)
                 if response.status_code != 200:
-                    print(f"Response: {response.text[:500]}")
+                    print(f"Response: {response.text[:500]}", flush=True)
                 return f'{{"score": 0, "explanation": "{error_msg}"}}'
                 
             else:
+                print(f"    Using OpenAI (model: {self.model})", flush=True)
                 # Call OpenAI
+                print(f"    Calling OpenAI API...", flush=True)
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[
@@ -467,12 +479,14 @@ class LLMJudgeEvaluator:
                     temperature=0.1,
                     max_tokens=500
                 )
-                return response.choices[0].message.content
+                content = response.choices[0].message.content
+                print(f"    OpenAI success! Response length: {len(content)} chars", flush=True)
+                return content
         except Exception as e:
             error_msg = f"Error calling LLM: {str(e)}"
-            print(f"ERROR: {error_msg}")
+            print(f"\nERROR in _call_llm: {error_msg}", flush=True)
             import traceback
-            print(traceback.format_exc())
+            print(traceback.format_exc(), flush=True)
             return f'{{"score": 0, "explanation": "{error_msg}"}}'
     
     def _parse_response(self, response, metric):
@@ -490,11 +504,21 @@ class LLMJudgeEvaluator:
             data = json.loads(content)
             score = data.get('score', data.get('Score', 0))
             explanation = data.get('explanation', data.get('Explanation', 'No explanation'))
-        except:
+        except Exception as e:
+            # Better error handling with logging
+            print(f"\nERROR parsing JSON response:")
+            print(f"  Error: {str(e)}")
+            print(f"  Response (first 300 chars): {content[:300]}")
+            
             # Fallback: try regex
-            score_match = re.search(r'"score"\s*:\s*(\d+\.?\d*)', content, re.IGNORECASE)
-            score = float(score_match.group(1)) if score_match else 0
-            explanation = content[:500]
+            try:
+                score_match = re.search(r'"score"\s*:\s*(\d+\.?\d*)', content, re.IGNORECASE)
+                score = float(score_match.group(1)) if score_match else 0
+                explanation = f"Parse error: {str(e)[:200]}"
+            except Exception as e2:
+                print(f"  Regex fallback also failed: {str(e2)}")
+                score = 0
+                explanation = f"Complete parse failure: {str(e)[:200]}"
         
         # Normalize score based on metric type
         try:
