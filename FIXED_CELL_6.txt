@@ -1,0 +1,229 @@
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Cell 6: RUN EVALUATION (with Comprehensive Debugging)
+
+# COMMAND ----------
+
+import pandas as pd
+import time
+
+print("="*80)
+print("DEBUG: Starting Cell 6 execution")
+print("="*80)
+
+# Check if client is initialized
+print(f"\nDEBUG: Client status:")
+print(f"  client is None: {client is None}")
+if client is not None:
+    print(f"  client_type: {client_type}")
+    if client_type == "databricks":
+        print(f"  endpoint: {client.get('endpoint', 'NOT FOUND')}")
+    else:
+        print(f"  model: {JUDGE_MODEL}")
+
+# Check data
+print(f"\nDEBUG: Data status:")
+print(f"  EVALUATION_DATA rows: {len(EVALUATION_DATA)}")
+print(f"  METRICS_CONFIG_DATA rows: {len(METRICS_CONFIG_DATA)}")
+print(f"  GROUND_TRUTH_DATA keys: {list(GROUND_TRUTH_DATA.keys())}")
+
+# Helper functions with better error handling
+def safe_float_conversion(value, default=0.0, field_name="value"):
+    """Safely convert value to float."""
+    if pd.isna(value) or value is None:
+        return default
+    
+    str_value = str(value).strip().lower()
+    
+    if not str_value:
+        return default
+    
+    # Handle boolean-like strings
+    if str_value in ['true', '==true', 'yes', '1']:
+        return 1.0
+    elif str_value in ['false', '==false', 'no', '0']:
+        return 0.0
+    
+    # Handle percentage strings
+    if str_value.endswith('%'):
+        try:
+            return float(str_value[:-1])
+        except ValueError:
+            return default
+    
+    # Try direct float conversion
+    try:
+        return float(str_value)
+    except ValueError:
+        return default
+
+def auto_generate_evaluation_prompt(name, description, rubric):
+    """Generate evaluation prompt."""
+    rubric_section = f"\n**Grading Rubric:**\n{rubric}\n" if rubric else ""
+    
+    prompt = f"""You are an expert evaluator. Task: {description}
+
+{rubric_section}
+**Evaluation Details:**
+- User Query: {{prompt}}
+- AI Response: {{response}}
+- Ground Truth: {{ground_truth}}
+
+**Output Format:**
+Return ONLY valid JSON:
+{{
+  "score": <your_score>,
+  "explanation": "Brief explanation"
+}}"""
+    
+    return prompt
+
+# Load metrics with error handling
+print(f"\n{'='*80}")
+print(f"LOADING METRICS")
+print(f"{'='*80}")
+
+metric_configs = []
+for idx, row in METRICS_CONFIG_DATA.iterrows():
+    try:
+        name = str(row.get('name', f'unnamed_{idx}')).strip()
+        if not name or name.startswith('unnamed_'):
+            continue
+        
+        type_str = str(row.get('type', 'binary')).strip().lower()
+        
+        if type_str in ['binary', 'bool', 'boolean']:
+            mtype = MetricType.BINARY
+            default_threshold = 0.5
+        elif type_str in ['1-5_scale', 'scale_1_5', '1-5', 'scale']:
+            mtype = MetricType.SCALE_1_5
+            default_threshold = 3.0
+        else:
+            mtype = MetricType.PERCENTAGE
+            default_threshold = 70.0
+        
+        description = str(row.get('description', f'Evaluate {name}')).strip()
+        rubric = str(row.get('grading_rubric', '')).strip()
+        threshold = safe_float_conversion(row.get('threshold', default_threshold), default_threshold)
+        
+        gt_file = str(row.get('ground_truth_file_path', '')).strip()
+        gt_column = str(row.get('ground_truth_column', '')).strip()
+        
+        prompt_template = auto_generate_evaluation_prompt(name, description, rubric)
+        
+        metric_config = MetricConfig(
+            name=name,
+            metric_type=mtype,
+            description=description,
+            prompt_template=prompt_template,
+            threshold=threshold,
+            ground_truth_column=gt_column,
+            ground_truth_file_path=gt_file
+        )
+        
+        metric_configs.append(metric_config)
+        print(f"  Loaded: {name} ({mtype.value}, threshold={threshold})")
+        
+    except Exception as e:
+        print(f"  ERROR loading metric {idx}: {e}")
+        import traceback
+        print(traceback.format_exc())
+
+print(f"\nTotal metrics loaded: {len(metric_configs)}")
+
+if not metric_configs:
+    print("\nERROR: No valid metrics!")
+elif client is None:
+    print("\nERROR: LLM client not initialized!")
+else:
+    print(f"\n{'='*80}")
+    print(f"INITIALIZING EVALUATOR")
+    print(f"{'='*80}")
+    
+    evaluator = LLMJudgeEvaluator(
+        client=client,
+        model=JUDGE_MODEL,
+        metrics=metric_configs,
+        ground_truth_data=GROUND_TRUTH_DATA,
+        client_type=client_type
+    )
+    
+    print(f"  Evaluator created")
+    print(f"  Client type: {client_type}")
+    
+    print(f"\n{'='*80}")
+    print(f"RUNNING EVALUATION")
+    print(f"{'='*80}")
+    
+    print(f"\nDEBUG: About to call evaluate_dataset()")
+    print(f"  Number of samples: {len(EVALUATION_DATA)}")
+    print(f"  Number of metrics: {len(metric_configs)}")
+    print(f"  Total evaluations expected: {len(EVALUATION_DATA) * len(metric_configs)}")
+    
+    start_time = time.time()
+    
+    # Call with explicit flush
+    import sys
+    sys.stdout.flush()
+    
+    results_df = evaluator.evaluate_dataset(EVALUATION_DATA)
+    
+    eval_time = time.time() - start_time
+    
+    print(f"\n{'='*80}")
+    print(f"EVALUATION COMPLETE in {eval_time:.1f}s")
+    print(f"{'='*80}")
+    
+    # Analyze results
+    print(f"\nDEBUG: Results analysis:")
+    print(f"  Results DataFrame shape: {results_df.shape}")
+    print(f"  Results columns: {list(results_df.columns)}")
+    
+    if len(results_df) > 0:
+        print(f"\n  First result:")
+        first_result = results_df.iloc[0]
+        for col in results_df.columns:
+            print(f"    {col}: {first_result[col]}")
+    
+    # Summary
+    total = len(results_df)
+    if total > 0:
+        passed = len(results_df[results_df['status'] == 'PASS'])
+        failed = len(results_df[results_df['status'] == 'FAIL'])
+        pass_rate = (passed / total * 100)
+        
+        print(f"\n{'='*80}")
+        print(f"RESULTS SUMMARY")
+        print(f"{'='*80}")
+        print(f"  Total: {total}")
+        print(f"  Passed: {passed}")
+        print(f"  Failed: {failed}")
+        print(f"  Pass rate: {pass_rate:.1f}%")
+        print(f"  Time: {eval_time:.1f}s")
+        
+        # Per-metric
+        print(f"\nPer-Metric Results:")
+        for metric_name in results_df['metric_name'].unique():
+            metric_results = results_df[results_df['metric_name'] == metric_name]
+            m_passed = len(metric_results[metric_results['status'] == 'PASS'])
+            m_total = len(metric_results)
+            m_rate = (m_passed / m_total * 100) if m_total > 0 else 0
+            m_avg = metric_results['score'].mean()
+            
+            print(f"  {metric_name}:")
+            print(f"    Pass: {m_rate:.1f}% ({m_passed}/{m_total})")
+            print(f"    Avg score: {m_avg:.2f}")
+        
+        # Show detailed results
+        print(f"\nDetailed Results:")
+        display(results_df[['sample_id', 'metric_name', 'score', 'threshold', 'status', 'explanation']])
+        
+    else:
+        print("\nERROR: No results generated!")
+    
+    print(f"\n{'='*80}")
+    print(f"Cell 6 execution complete")
+    print(f"{'='*80}")
+
+# COMMAND ----------
