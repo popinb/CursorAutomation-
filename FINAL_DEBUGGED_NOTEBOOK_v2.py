@@ -18,7 +18,7 @@
 
 # COMMAND ----------
 
-%pip install openai pandas --quiet
+%pip install openai pandas requests --quiet
 dbutils.library.restartPython()
 
 # COMMAND ----------
@@ -94,54 +94,137 @@ print(f"\n{'='*80}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Cell 3: Configure OpenAI Client
+# MAGIC ## Cell 3: Configure LLM Judge Model
 
 # COMMAND ----------
 
 from openai import OpenAI
+import requests
 import os
 
 print("="*80)
-print("CELL 3: CONFIGURE LLM CLIENT")
+print("CELL 3: CONFIGURE LLM JUDGE MODEL")
 print("="*80)
 
-# Get API key
-try:
-    OPENAI_KEY = dbutils.secrets.get("popin-secure-scope", "openai_key")
-    print("  API key retrieved from popin-secure-scope")
-except Exception as e:
-    print(f"  ERROR: Could not get API key: {e}")
-    raise
-
-# Initialize client
-client = OpenAI(
-    base_url="https://api.zillowlabs.com/openai/v1",
-    api_key=OPENAI_KEY
+# Create widget for model selection
+dbutils.widgets.dropdown(
+    "judge_model",
+    "databricks-llm",
+    ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo", "databricks-llm"],
+    "?? Judge Model"
 )
 
-JUDGE_MODEL = "gpt-4o-mini"
-client_type = "openai"
+JUDGE_MODEL = dbutils.widgets.get("judge_model")
+print(f"\nSelected model: {JUDGE_MODEL}")
 
-print(f"  Client initialized")
-print(f"  Base URL: https://api.zillowlabs.com/openai/v1")
-print(f"  Model: {JUDGE_MODEL}")
-print(f"  Client type: {client_type}")
+client = None
+client_type = None
 
-# Test connection
-try:
-    print("\n  Testing connection...")
-    test_response = client.chat.completions.create(
-        model=JUDGE_MODEL,
-        messages=[{"role": "user", "content": "Say OK"}],
-        max_tokens=5
-    )
-    print(f"  Connection test: SUCCESS")
-except Exception as e:
-    print(f"  Connection test: FAILED - {e}")
-    raise
+# Configure based on selection
+if JUDGE_MODEL == "databricks-llm":
+    print("\n>>> Configuring Databricks Foundation Model...")
+    
+    try:
+        # Get workspace context
+        dbutils_context = dbutils.notebook.entry_point.getDbutils().notebook().getContext()
+        databricks_token = dbutils_context.apiToken().get()
+        workspace_url = dbutils_context.tags().get("browserHostName").get()
+        
+        print(f"  Workspace: {workspace_url}")
+        
+        # Find Claude Sonnet endpoint
+        endpoints_url = f"https://{workspace_url}/api/2.0/serving-endpoints"
+        headers = {"Authorization": f"Bearer {databricks_token}"}
+        
+        print(f"  Querying serving endpoints...")
+        response = requests.get(endpoints_url, headers=headers)
+        response.raise_for_status()
+        
+        endpoints = response.json().get("endpoints", [])
+        claude_endpoint = None
+        
+        for endpoint in endpoints:
+            endpoint_name = endpoint.get("name", "").lower()
+            if "claude" in endpoint_name and "sonnet" in endpoint_name:
+                claude_endpoint = endpoint.get("name")
+                break
+        
+        if not claude_endpoint:
+            raise ValueError("No Claude Sonnet endpoint found. Available endpoints: " + 
+                           ", ".join([e.get("name", "") for e in endpoints]))
+        
+        print(f"  Found endpoint: {claude_endpoint}")
+        
+        # Store client config
+        client = {
+            'type': 'databricks',
+            'workspace_url': workspace_url,
+            'token': databricks_token,
+            'headers': headers,
+            'endpoint': claude_endpoint
+        }
+        client_type = "databricks"
+        
+        # Test connection
+        print(f"\n  Testing Databricks endpoint...")
+        test_url = f"https://{workspace_url}/serving-endpoints/{claude_endpoint}/invocations"
+        test_payload = {
+            "messages": [{"role": "user", "content": "Say OK"}],
+            "max_tokens": 5
+        }
+        test_response = requests.post(test_url, json=test_payload, headers=headers)
+        test_response.raise_for_status()
+        print(f"  Connection test: SUCCESS")
+        
+    except Exception as e:
+        print(f"\n  ERROR configuring Databricks LLM: {e}")
+        raise
+
+else:
+    print(f"\n>>> Configuring OpenAI Model: {JUDGE_MODEL}")
+    
+    try:
+        # Try multiple secret scopes for API key
+        OPENAI_KEY = None
+        scopes = ["popin-secure-scope", "user", "common"]
+        
+        for scope in scopes:
+            try:
+                OPENAI_KEY = dbutils.secrets.get(scope, "openai_key")
+                print(f"  API key retrieved from: {scope}")
+                break
+            except:
+                continue
+        
+        if not OPENAI_KEY:
+            raise ValueError("Could not retrieve OpenAI API key from any scope")
+        
+        # Initialize OpenAI client with Zillow proxy
+        client = OpenAI(
+            base_url="https://api.zillowlabs.com/openai/v1",
+            api_key=OPENAI_KEY
+        )
+        client_type = "openai"
+        
+        print(f"  Base URL: https://api.zillowlabs.com/openai/v1")
+        print(f"  Model: {JUDGE_MODEL}")
+        
+        # Test connection
+        print(f"\n  Testing OpenAI connection...")
+        test_response = client.chat.completions.create(
+            model=JUDGE_MODEL,
+            messages=[{"role": "user", "content": "Say OK"}],
+            max_tokens=5
+        )
+        print(f"  Connection test: SUCCESS")
+        
+    except Exception as e:
+        print(f"\n  ERROR configuring OpenAI: {e}")
+        raise
 
 print(f"\n{'='*80}")
-print("READY TO EVALUATE")
+print(f"READY TO EVALUATE with {JUDGE_MODEL}")
+print(f"Client type: {client_type}")
 print(f"{'='*80}")
 
 # COMMAND ----------
@@ -182,6 +265,7 @@ import json
 import re
 import os
 import pandas as pd
+import requests
 
 class LLMJudgeEvaluator:
     """LLM Judge Evaluator with extensive debugging."""
@@ -226,17 +310,50 @@ class LLMJudgeEvaluator:
         try:
             print(f"      Making API call...", flush=True)
             
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "You are an expert evaluator. Respond with ONLY valid JSON: {\"score\": <number>, \"explanation\": \"<text>\"}"},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.1,
-                max_tokens=500
-            )
+            if self.client_type == "databricks":
+                # Databricks Serving Endpoint
+                import requests
+                
+                workspace_url = self.client['workspace_url']
+                endpoint = self.client['endpoint']
+                headers = self.client['headers']
+                
+                url = f"https://{workspace_url}/serving-endpoints/{endpoint}/invocations"
+                payload = {
+                    "messages": [
+                        {"role": "system", "content": "You are an expert evaluator. Respond with ONLY valid JSON: {\"score\": <number>, \"explanation\": \"<text>\"}"},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "max_tokens": 500,
+                    "temperature": 0.1
+                }
+                
+                print(f"      Calling Databricks endpoint: {endpoint}", flush=True)
+                response = requests.post(url, json=payload, headers=headers)
+                response.raise_for_status()
+                
+                response_json = response.json()
+                content = response_json.get("choices", [{}])[0].get("message", {}).get("content", "")
+                
+                if not content:
+                    raise ValueError(f"Empty response from Databricks: {response_json}")
+                
+            else:
+                # OpenAI client
+                print(f"      Calling OpenAI API (model: {self.model})", flush=True)
+                
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": "You are an expert evaluator. Respond with ONLY valid JSON: {\"score\": <number>, \"explanation\": \"<text>\"}"},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.1,
+                    max_tokens=500
+                )
+                
+                content = response.choices[0].message.content
             
-            content = response.choices[0].message.content
             print(f"      API call SUCCESS!", flush=True)
             print(f"      Response length: {len(content)} chars", flush=True)
             print(f"      Response preview: {content[:100]}...", flush=True)

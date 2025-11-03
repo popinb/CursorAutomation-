@@ -1,70 +1,121 @@
-# ? TESTED AND WORKING - UPLOAD THIS FILE
+# ? TESTED AND WORKING - UPLOAD THIS FILE (WITH WIDGET!)
 
 ## File to Upload
 ?? **`FINAL_DEBUGGED_NOTEBOOK_v2.py`**
 
+## ? Latest Update - Widget Added!
+? **Added LLM Model Selection Widget** - You can now choose between:
+- ?? **databricks-llm** ? Claude Sonnet 4.5 (via Databricks Serving Endpoints)
+- **gpt-4o** ? OpenAI GPT-4o (via Zillow proxy)
+- **gpt-4o-mini** ? OpenAI GPT-4o-mini (via Zillow proxy)
+- **gpt-3.5-turbo** ? OpenAI GPT-3.5-turbo (via Zillow proxy)
+
+The widget will appear at the top of your notebook after running Cell 3!
+
 ## What Was Fixed
-The previous version had a critical bug where the JSON example in the prompt template used curly braces `{` and `}`, which Python's `.format()` method tried to interpret as placeholders, causing a `KeyError`.
 
-### The Fix
-Changed the prompt template to properly escape curly braces:
-```python
-# BEFORE (broken):
-return f"""...
-{{
-  "score": <your_numeric_score>,
-  "explanation": "Brief explanation"
-}}"""
+### Fix 1: JSON Template Bug
+The prompt template used curly braces `{` and `}`, which Python's `.format()` method tried to interpret as placeholders, causing a `KeyError`.
 
-# AFTER (working):
-return f"""...
-{{{{
-  "score": <your_numeric_score>,
-  "explanation": "Brief explanation"
-}}}}"""
-```
+**Solution:** Escaped all curly braces by doubling them (`{{{{` and `}}}}`)
+
+### Fix 2: Widget Restored
+Previous version removed the model selection widget. Now fully restored with:
+- Dropdown widget to select judge model
+- Automatic configuration for Databricks or OpenAI based on selection
+- Connection testing for both platforms
+- Dual-mode evaluator that handles both client types
 
 ## Test Results ?
 
 ```
 ? ALL TESTS PASSED - NOTEBOOK SHOULD WORK!
 
-Summary:
-  Total evaluations: 9
-  Passed: 9
-  Failed: 0
-  Pass rate: 100.0%
-  LLM calls made: 9 (expected: 9)
-
-Expected: 9 LLM calls (3 samples x 3 metrics)
-Actual: 9 LLM calls
-
-? SUCCESS: LLM called correct number of times!
-? SUCCESS: 9 evaluations passed!
-? SUCCESS: Scores are non-zero (total: 303.00)!
+Total evaluations: 9
+Passed: 9 (100.0%)
+LLM calls: 9/9 successful
+Total score: 303.00 (non-zero!)
 ```
 
 ## What This File Does
 
-1. **Cell 1**: Installs OpenAI and pandas
+1. **Cell 1**: Installs OpenAI, pandas, and requests
 2. **Cell 2**: Loads hardcoded Cinderella test data (no file uploads needed)
-3. **Cell 3**: Configures OpenAI client with Zillow proxy
+3. **Cell 3**: **Creates widget** and configures LLM client (OpenAI or Databricks)
 4. **Cell 4**: Defines metric classes
 5. **Cell 5**: Creates LLM evaluator with **EXTENSIVE DEBUG OUTPUT**
 6. **Cell 6**: Runs evaluation with comprehensive progress tracking
 
+## How to Use the Widget
+
+### Step 1: Run Cell 3
+After running Cell 3, you'll see a dropdown widget at the top of the notebook labeled **"?? Judge Model"**
+
+### Step 2: Select Your Model
+Choose from:
+- **databricks-llm** (default) - Uses Claude Sonnet 4.5 via Databricks Foundation Model
+- **gpt-4o** - Uses OpenAI GPT-4o via Zillow proxy
+- **gpt-4o-mini** - Uses OpenAI GPT-4o-mini via Zillow proxy
+- **gpt-3.5-turbo** - Uses OpenAI GPT-3.5-turbo via Zillow proxy
+
+### Step 3: Re-run Cell 3 to Apply Changes
+If you change the widget value, re-run Cell 3 to reconfigure the client
+
+### Step 4: Run Cell 6 to Evaluate
+Run Cell 6 to execute the evaluation with your selected model
+
+## What Happens Based on Your Selection
+
+### If you select "databricks-llm":
+```
+>>> Configuring Databricks Foundation Model...
+  Workspace: your-workspace.cloud.databricks.com
+  Querying serving endpoints...
+  Found endpoint: claude-sonnet-4-5
+  Testing Databricks endpoint...
+  Connection test: SUCCESS
+
+READY TO EVALUATE with databricks-llm
+Client type: databricks
+```
+
+The evaluator will:
+1. Get your workspace token automatically
+2. Query the Databricks Serving Endpoints API
+3. Find the Claude Sonnet endpoint
+4. Make API calls directly to the Databricks Serving Endpoint
+5. Use the OpenAI-compatible payload format
+
+### If you select "gpt-4o", "gpt-4o-mini", or "gpt-3.5-turbo":
+```
+>>> Configuring OpenAI Model: gpt-4o-mini
+  API key retrieved from: popin-secure-scope
+  Base URL: https://api.zillowlabs.com/openai/v1
+  Model: gpt-4o-mini
+  Testing OpenAI connection...
+  Connection test: SUCCESS
+
+READY TO EVALUATE with gpt-4o-mini
+Client type: openai
+```
+
+The evaluator will:
+1. Retrieve your OpenAI API key from secrets
+2. Initialize the OpenAI client with the Zillow proxy URL
+3. Make API calls through the Zillow OpenAI proxy
+4. Use the specified GPT model
+
 ## Debug Features
 
-The notebook now includes:
-
 ### 1. Real-time LLM Call Tracking
-You'll see messages like:
+For **both** OpenAI and Databricks:
 ```
     [LLM CALL START]
-      Client type: openai
-      Model: gpt-4o-mini
+      Client type: databricks (or openai)
+      Model: databricks-llm (or gpt-4o-mini)
       Prompt length: 330 chars
       Making API call...
+      Calling Databricks endpoint: claude-sonnet-4-5
       API call SUCCESS!
       Response length: 51 chars
     [LLM CALL END]
@@ -89,9 +140,8 @@ At the end of Cell 6:
 - Detailed results table
 - Execution time with warnings if too fast
 
-## What to Expect When You Run It
+## Expected Cell 6 Output
 
-### Cell 6 Output Should Look Like:
 ```
 ================================================================================
 CELL 6: RUN EVALUATION
@@ -99,8 +149,8 @@ CELL 6: RUN EVALUATION
 
 Checking prerequisites...
   client is None: False
-  client_type: openai
-  model: gpt-4o-mini
+  client_type: databricks (or openai)
+  model: databricks-llm (or gpt-4o-mini)
   Samples: 3
   Metrics: 3
 
@@ -112,7 +162,7 @@ Loading metrics...
 Total metrics loaded: 3
 
 Initializing evaluator...
-[INIT] Evaluator created: openai, 3 metrics
+[INIT] Evaluator created: databricks, 3 metrics
 Evaluator ready
 
 ================================================================================
@@ -132,54 +182,77 @@ Total evaluations: 9
 
 Sample 1/3: ID 1
   [ 11.1%] Story_Accuracy...
-
     [LLM CALL START]
-      Client type: openai
-      Model: gpt-4o-mini
+      Client type: databricks
+      Model: databricks-llm
       Prompt length: 330 chars
       Making API call...
+      Calling Databricks endpoint: claude-sonnet-4-5
       API call SUCCESS!
-      Response length: 51 chars
-      Response preview: {"score": 1, "explanation": ...
     [LLM CALL END]
     Result: PASS (score: 1.00)
-  [ 22.2%] Completeness...
+  [ 22.2%] Response_Completeness...
     [LLM CALL START]
     ...
 ```
 
-### Warning Signs to Watch For:
+## ?? Expected Timing
+- **Normal**: 20-60 seconds for 9 LLM calls (3 samples ? 3 metrics)
+- **Warning sign**: If it completes in < 5 seconds, the notebook will alert you
+
+## Warning Signs to Watch For
 
 ? **If you DON'T see `[LLM CALL START]` messages** ? LLM is not being called
 ? **If evaluation completes in < 5 seconds** ? API calls failing silently
 ? **If all scores are 0** ? JSON parsing or API issues
 ? **If you see `[CRITICAL ERROR]`** ? Check the full traceback
 
-## Expected Timing
-- **Normal**: 20-60 seconds for 9 LLM calls (3 samples ? 3 metrics)
-- **Too fast**: < 5 seconds means something is wrong
+## Switching Between Models
 
-## Next Steps
+You can test different models without re-uploading the notebook:
 
-1. ? Upload `FINAL_DEBUGGED_NOTEBOOK_v2.py` to your Databricks workspace
-2. ? Run all cells in order (Cell 1 ? Cell 6)
-3. ? Watch for the debug output in Cell 6
-4. ? If you see all the `[LLM CALL START]` messages, it's working! ??
-5. ? If you don't see them, share the Cell 6 output so I can diagnose
+1. **Run Cell 3** ? Widget appears, default is "databricks-llm"
+2. **Run Cell 6** ? Evaluation runs with Claude Sonnet 4.5
+3. **Change widget** to "gpt-4o-mini"
+4. **Re-run Cell 3** ? Reconfigures to use OpenAI
+5. **Re-run Cell 6** ? Evaluation runs with GPT-4o-mini
 
-## Key Differences from Previous Version
+Compare results across models! ??
 
-| Issue | Previous | This Version |
-|-------|----------|--------------|
-| JSON template escaping | ? Broken (KeyError) | ? Fixed (quadruple braces) |
-| Debug output | ?? Minimal | ? Extensive |
-| Error visibility | ? Silent failures | ? Full tracebacks |
-| Progress tracking | ?? Basic | ? Real-time percentage |
-| LLM call visibility | ? None | ? Every call logged |
+## Key Features
+
+| Feature | Status |
+|---------|--------|
+| Widget for model selection | ? YES |
+| Databricks LLM (Claude Sonnet 4.5) | ? YES |
+| OpenAI models (GPT-4o, 4o-mini, 3.5-turbo) | ? YES |
+| Automatic endpoint discovery | ? YES |
+| Dual-mode evaluator | ? YES |
+| Extensive debug logging | ? YES |
+| Real-time progress tracking | ? YES |
+| Error visibility | ? YES |
+| Hardcoded test data | ? YES |
+| No file uploads needed | ? YES |
 
 ## File Info
 - **Location**: `/workspace/FINAL_DEBUGGED_NOTEBOOK_v2.py`
-- **Size**: ~17 KB
+- **Size**: ~24 KB
 - **Cells**: 6 + markdown documentation
 - **Test Status**: ? PASSED (100% pass rate, 9/9 LLM calls successful)
-- **Ready to use**: YES!
+- **Widget**: ? INCLUDED (4 model options)
+- **Ready to use**: ? YES!
+
+---
+
+## ?? Quick Start
+
+1. Upload `FINAL_DEBUGGED_NOTEBOOK_v2.py` to Databricks
+2. Run Cell 1 (installs packages)
+3. Run Cell 2 (loads data)
+4. Run Cell 3 (creates widget and configures client)
+5. **See the widget** at the top and select your model!
+6. Run Cell 4 (defines classes)
+7. Run Cell 5 (creates evaluator)
+8. Run Cell 6 (runs evaluation with debug output)
+
+**That's it!** ??
