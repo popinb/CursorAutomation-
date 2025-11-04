@@ -196,7 +196,12 @@ elif action == "delete":
         except:
             pass
 
-metrics_list = METRICS_CONFIG_DATA.to_dict('records')
+# Load metrics_list from storage (not from DataFrame - critical for delete!)
+stored_metrics = dbutils.widgets.get("__metrics_storage__")
+if stored_metrics:
+    metrics_list = json.loads(stored_metrics)
+else:
+    metrics_list = METRICS_CONFIG_DATA.to_dict('records')
 
 # Process actions
 action_performed = False
