@@ -155,12 +155,13 @@ if action == "view":
             
 elif action == "add":
     # ADD: Show only form widgets (NO ground truth fields - using hardcoded data)
+    # Create in proper order: Name, Type, Description, Rubric, Threshold
     try:
-        dbutils.widgets.text("m_name", "", "Name")
-        dbutils.widgets.dropdown("m_type", "binary", ["binary", "1-5_scale", "percentage"], "Type")
-        dbutils.widgets.text("m_desc", "", "Description")
-        dbutils.widgets.text("m_rubric", "", "Grading Rubric")
-        dbutils.widgets.text("m_threshold", "", "Threshold (1, 4, or 75)")
+        dbutils.widgets.text("m_name", "", "1. Name")
+        dbutils.widgets.dropdown("m_type", "binary", ["binary", "1-5_scale", "percentage"], "2. Type")
+        dbutils.widgets.text("m_desc", "", "3. Description")
+        dbutils.widgets.text("m_rubric", "", "4. Grading Rubric")
+        dbutils.widgets.text("m_threshold", "", "5. Threshold")
     except:
         pass
     # Remove row selector
@@ -171,13 +172,14 @@ elif action == "add":
         
 elif action == "edit":
     # EDIT: Show row selector + form widgets (NO ground truth fields)
+    # Create in proper order: Row, Name, Type, Description, Rubric, Threshold
     try:
-        dbutils.widgets.dropdown("row_select", "1", [str(i+1) for i in range(max(1, len(METRICS_CONFIG_DATA)))], "Row to Edit")
-        dbutils.widgets.text("m_name", "", "Name")
-        dbutils.widgets.dropdown("m_type", "binary", ["binary", "1-5_scale", "percentage"], "Type")
-        dbutils.widgets.text("m_desc", "", "Description")
-        dbutils.widgets.text("m_rubric", "", "Grading Rubric")
-        dbutils.widgets.text("m_threshold", "", "Threshold (1, 4, or 75)")
+        dbutils.widgets.dropdown("row_select", "1", [str(i+1) for i in range(max(1, len(METRICS_CONFIG_DATA)))], "1. Row to Edit")
+        dbutils.widgets.text("m_name", "", "2. Name")
+        dbutils.widgets.dropdown("m_type", "binary", ["binary", "1-5_scale", "percentage"], "3. Type")
+        dbutils.widgets.text("m_desc", "", "4. Description")
+        dbutils.widgets.text("m_rubric", "", "5. Grading Rubric")
+        dbutils.widgets.text("m_threshold", "", "6. Threshold")
     except:
         pass
         
