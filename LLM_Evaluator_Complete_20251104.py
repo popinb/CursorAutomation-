@@ -211,6 +211,7 @@ elif action == "delete" and save_action == "yes":
 stored_metrics = dbutils.widgets.get("__metrics_storage__")
 if stored_metrics:
     metrics_list = json.loads(stored_metrics)
+    METRICS_CONFIG_DATA = pd.DataFrame(metrics_list)  # UPDATE DataFrame too!
 else:
     metrics_list = METRICS_CONFIG_DATA.to_dict('records')
 
@@ -283,7 +284,7 @@ elif action == "delete" and save_action == "yes":
         
         # Reset save button
         dbutils.widgets.remove("save_action")
-        dbutils.widgets.dropdown("save_action", "no", ["no", "yes"], "2. ⚠️ Confirm Delete?")
+        dbutils.widgets.dropdown("save_action", "no", ["no", "yes"], "2. ?? Confirm Delete?")
         
         # Update row dropdown
         if len(metrics_list) > 0:
