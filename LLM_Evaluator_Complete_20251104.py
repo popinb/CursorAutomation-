@@ -155,7 +155,7 @@ action = dbutils.widgets.get("action")
 if action == "view":
     # VIEW: No extra widgets needed, just show table below
     # Remove all form widgets
-    for widget_name in ["row_select", "m_name", "m_type", "m_desc", "m_rubric", "m_threshold"]:
+    for widget_name in ["row_select", "m_name", "m_type", "m_desc", "m_rubric", "m_threshold", "save_action"]:
         try:
             dbutils.widgets.remove(widget_name)
         except:
@@ -163,13 +163,14 @@ if action == "view":
             
 elif action == "add":
     # ADD: Show only form widgets (NO ground truth fields - using hardcoded data)
-    # Create in proper order: Name, Type, Description, Rubric, Threshold
+    # Create in proper order: Name, Type, Description, Rubric, Threshold, SAVE BUTTON
     try:
         dbutils.widgets.text("m_name", "", "1. Name")
         dbutils.widgets.dropdown("m_type", "binary", ["binary", "1-5_scale", "percentage"], "2. Type")
         dbutils.widgets.text("m_desc", "", "3. Description")
         dbutils.widgets.text("m_rubric", "", "4. Grading Rubric")
         dbutils.widgets.text("m_threshold", "", "5. Threshold")
+        dbutils.widgets.dropdown("save_action", "no", ["no", "yes"], "6. ? Save Changes?")
     except:
         pass
     # Remove row selector
@@ -180,7 +181,7 @@ elif action == "add":
         
 elif action == "edit":
     # EDIT: Show row selector + form widgets (NO ground truth fields)
-    # Create in proper order: Row, Name, Type, Description, Rubric, Threshold
+    # Create in proper order: Row, Name, Type, Description, Rubric, Threshold, SAVE BUTTON
     try:
         dbutils.widgets.dropdown("row_select", "1", [str(i+1) for i in range(max(1, len(METRICS_CONFIG_DATA)))], "1. Row to Edit")
         dbutils.widgets.text("m_name", "", "2. Name")
@@ -188,13 +189,15 @@ elif action == "edit":
         dbutils.widgets.text("m_desc", "", "4. Description")
         dbutils.widgets.text("m_rubric", "", "5. Grading Rubric")
         dbutils.widgets.text("m_threshold", "", "6. Threshold")
+        dbutils.widgets.dropdown("save_action", "no", ["no", "yes"], "7. ? Save Changes?")
     except:
         pass
         
-elif action == "delete":
-    # DELETE: Show ONLY row selector (simplest interface)
+elif action == "delete" and save_action == "yes":
+    # DELETE: Show ONLY row selector + CONFIRM BUTTON
     try:
-        dbutils.widgets.dropdown("row_select", "1", [str(i+1) for i in range(max(1, len(METRICS_CONFIG_DATA)))], "Row to Delete")
+        dbutils.widgets.dropdown("row_select", "1", [str(i+1) for i in range(max(1, len(METRICS_CONFIG_DATA)))], "1. Row to Delete")
+        dbutils.widgets.dropdown("save_action", "no", ["no", "yes"], "2. ?? Confirm Delete?")
     except:
         pass
     # Remove all form widgets
@@ -211,10 +214,11 @@ if stored_metrics:
 else:
     metrics_list = METRICS_CONFIG_DATA.to_dict('records')
 
-# Process actions
+# Process actions (only if save_action == "yes")
 action_performed = False
+save_action = dbutils.widgets.get("save_action") if action in ["add", "edit", "delete"] else "no"
 
-if action == "add" and dbutils.widgets.get("m_name").strip():
+if action == "add" and save_action == "yes" and dbutils.widgets.get("m_name").strip():
     # ADD NEW METRIC (hardcoded ground truth)
     new_metric = {
         "name": dbutils.widgets.get("m_name"),
@@ -241,7 +245,7 @@ if action == "add" and dbutils.widgets.get("m_name").strip():
     print("?? Re-run this cell to see updated table")
     action_performed = True
 
-elif action == "edit" and dbutils.widgets.get("m_name").strip():
+elif action == "edit" and save_action == "yes" and dbutils.widgets.get("m_name").strip():
     # EDIT EXISTING METRIC
     row_idx = int(dbutils.widgets.get("row_select")) - 1
     if 0 <= row_idx < len(metrics_list):
@@ -265,7 +269,7 @@ elif action == "edit" and dbutils.widgets.get("m_name").strip():
         print("?? Set Action='view' and re-run to see changes")
         action_performed = True
 
-elif action == "delete":
+elif action == "delete" and save_action == "yes":
     # DELETE METRIC
     row_idx = int(dbutils.widgets.get("row_select")) - 1
     if 0 <= row_idx < len(metrics_list):
@@ -276,6 +280,10 @@ elif action == "delete":
         # Save to storage
         dbutils.widgets.remove("__metrics_storage__")
         dbutils.widgets.text("__metrics_storage__", json.dumps(metrics_list), "")
+        
+        # Reset save button
+        dbutils.widgets.remove("save_action")
+        dbutils.widgets.dropdown("save_action", "no", ["no", "yes"], "2. ⚠️ Confirm Delete?")
         
         # Update row dropdown
         if len(metrics_list) > 0:
