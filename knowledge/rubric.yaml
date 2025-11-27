@@ -1,0 +1,7 @@
+scoring_rubric:
+  1_poor: Significantly below expectations with major issues
+  2_needs_improvement: Below expectations with some inaccuracies or gaps
+  3_satisfactory: Partially meets expectations with mostly accurate content
+  4_good: Meets expectations with accurate and useful content
+  5_excellent: Exceeds expectations with comprehensive, accurate, and highly useful
+    content

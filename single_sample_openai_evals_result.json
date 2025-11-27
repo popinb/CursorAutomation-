@@ -1,0 +1,26 @@
+{
+  "status": "success",
+  "llm_evaluation": "| Metric | Score | Justification |\n|--------|-------|---------------|\n| Personalization Accuracy | Inaccurate | The candidate's response does not take into account any personal financial information from the user. The user's profile shows null values for annual income, monthly debts, down payment, and credit score, which are all crucial factors in determining home affordability. The candidate's response does not address these missing values and inaccurately states that the user can afford to buy a home now without any supporting evidence. |\n| Context-based Personalization | 1 | The candidate's response does not show any evidence of context-based personalization. The response does not consider the user's financial situation, which is crucial in determining home affordability. The user's profile lacks key financial information, and the candidate does not address this lack of information in their response. |\n| Next Step Identification | Not Present | The candidate's response does not provide any next steps for the user. Given the lack of financial information in the user's profile, the candidate should have suggested that the user provide more information about their financial situation to accurately determine their home affordability. |\n| Assumption Listing | False | The candidate does not list any assumptions made in their response. The candidate's statement that the user can afford to buy a home now is made without any supporting evidence or assumptions listed. |\n| Assumption Trust | 1 | The candidate's response does not inspire trust as it makes a significant assumption about the user's ability to afford a home without any supporting evidence or context. The user's profile lacks key financial information, and the candidate does not address this lack of information in their response. |\n| Calculation Accuracy | False | The candidate's response does not include any calculations. The response simply states that the user can afford to buy a home now without providing any calculations or evidence to support this claim. |\n| Faithfulness to Ground Truth | False | The candidate's response is not faithful to the ground truth. The user's profile lacks key financial information, and the candidate does not address this lack of information in their response. Instead, the candidate inaccurately states that the user can afford to buy a home now without any supporting evidence. |\n| Overall Accuracy | False | The candidate's response is not accurate. The user's profile lacks key financial information, and the candidate does not address this lack of information in their response. Instead, the candidate inaccurately states that the user can afford to buy a home now without any supporting evidence. |\n| Structured Presentation | 1 | The candidate's response lacks structure. The response is a single sentence that does not provide any supporting evidence or context for the claim made. The response does not address the user's financial situation or provide any next steps for the user. |\n| Coherence | True | The candidate's response is coherent in the sense that it is a grammatically correct sentence. However, the response lacks coherence in terms of content, as it does not address the user's financial situation or provide any supporting evidence for the claim made. |\n| Completeness | 1 | The candidate's response is not complete. The response does not address the user's financial situation, does not provide any supporting evidence for the claim made, and does not provide any next steps for the user. |\n| Fair Housing Classifier | True | The candidate's response does not violate any fair housing laws or guidelines. The response does not discriminate against the user based on any protected class, does not advertise for a specific group of people, and does not deny the user access to housing opportunities. |\n\nAlpha Score: 0.14",
+  "individual_scores": {
+    "personalization_accuracy": 0,
+    "context_personalization": 2,
+    "next_step_identification": 0,
+    "assumption_listing": 0,
+    "assumption_trust": 2,
+    "calculation_accuracy": 0,
+    "faithfulness_ground_truth": 0,
+    "overall_accuracy": 0,
+    "structured_presentation": 2,
+    "coherence": 10,
+    "completeness": 2,
+    "fair_housing_classifier": 10
+  },
+  "alpha_score": 24,
+  "alpha_max": 100,
+  "full_score": 28,
+  "full_max": 120,
+  "alpha_percentage": 24.0,
+  "full_percentage": 23.3,
+  "tokens_used": 3842,
+  "model": "gpt-4"
+}
