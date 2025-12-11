@@ -1,0 +1,4 @@
+name,type,description,grading_rubric,threshold,ground_truth_column,ground_truth_file_path
+accuracy,binary,Evaluates if the response is factually accurate,Check if the response contains correct information and facts. Look for any false statements or misleading information.,0.5,ground_truth,ground_truth_data.csv
+completeness,1-5_scale,Evaluates how complete the response is,"Rate from 1-5: 1=very incomplete, missing key information; 2=mostly incomplete; 3=partially complete; 4=mostly complete; 5=completely addresses all aspects of the question.",3.0,ground_truth,ground_truth_data.csv
+helpfulness,percentage,Evaluates how helpful the response is to the user,"Rate from 0-100%: Consider how actionable, clear, and useful the response is for the user's specific needs.",70.0,ground_truth,ground_truth_data.csv

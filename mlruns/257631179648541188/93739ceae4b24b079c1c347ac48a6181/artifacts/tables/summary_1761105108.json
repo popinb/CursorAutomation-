@@ -1,0 +1,29 @@
+{
+  "total_evaluations": 6,
+  "passed_evaluations": 0,
+  "failed_evaluations": 6,
+  "overall_pass_rate": 0.0,
+  "metrics_summary": {
+    "accuracy": {
+      "pass_rate": 0.0,
+      "passed": 0,
+      "total": 2,
+      "average_score": null,
+      "threshold": 0.5
+    },
+    "completeness": {
+      "pass_rate": 0.0,
+      "passed": 0,
+      "total": 2,
+      "average_score": null,
+      "threshold": 3.0
+    },
+    "helpfulness": {
+      "pass_rate": 0.0,
+      "passed": 0,
+      "total": 2,
+      "average_score": null,
+      "threshold": 70.0
+    }
+  }
+}

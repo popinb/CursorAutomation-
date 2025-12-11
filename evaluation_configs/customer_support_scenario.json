@@ -1,0 +1,9 @@
+{
+  "name": "customer_support",
+  "description": "Evaluation for customer support responses",
+  "metrics_config_path": "evaluation_configs/customer_support_metrics.csv",
+  "ground_truth_data": null,
+  "assets_directory": null,
+  "judge_model": "gpt-4",
+  "output_directory": "/tmp/evaluation_results/customer_support"
+}
