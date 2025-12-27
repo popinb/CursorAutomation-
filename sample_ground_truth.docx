@@ -1,0 +1,11 @@
+# This is a placeholder for a DOCX file
+# In practice, this would be a Microsoft Word document with a table containing:
+# - Column 1: prompt
+# - Column 2: ground_truth  
+# - Column 3: user_profile
+#
+# The table would look like:
+# | prompt | ground_truth | user_profile |
+# |--------|--------------|--------------|
+# | What's the best way to buy a house in Seattle? | To buy a house in Seattle, you should first get pre-approved for a mortgage... | Location: Seattle, WA; Income: $120k; Credit Score: 720 |
+# | I have a credit score of 750, can I get a mortgage? | With a credit score of 750, you're in excellent position... | Location: Seattle, WA; Income: $120k; Credit Score: 750 |
