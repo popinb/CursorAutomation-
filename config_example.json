@@ -1,0 +1,21 @@
+{
+  "directories": {
+    "data": "data",
+    "results": "results", 
+    "logs": "logs",
+    "configs": "configs",
+    "metrics": "metrics",
+    "ground_truth": "ground_truth",
+    "reports": "reports",
+    "artifacts": "artifacts",
+    "mlflow": "mlflow_runs",
+    "temp": "temp"
+  },
+  "auto_create_dirs": true,
+  "framework": {
+    "judge_model": "gpt-4",
+    "mlflow_enabled": true,
+    "save_artifacts": true,
+    "cleanup_temp": true
+  }
+}
