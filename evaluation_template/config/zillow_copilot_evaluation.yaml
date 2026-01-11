@@ -1,0 +1,288 @@
+# Zillow Co-Pilot Evaluation Configuration
+# Focused on 4 key metrics for real estate assistant evaluation
+
+dataset:
+  file_path: "./data/zillow_copilot_test_data.csv"
+  columns:
+    prompt: "user_query"
+    response: "copilot_response"
+    ground_truth: "expected_response"
+    metadata: "user_context"
+
+experiment:
+  name: "zillow_copilot_evaluation"
+  run_name_prefix: "copilot_eval"
+  output_directory: "./results/zillow_copilot/"
+
+judges:
+  models:
+    - "gpt-4o"
+    - "gpt-4o-mini"
+  api:
+    openai_api_key_env: "OPENAI_API_KEY"
+    openai_base_url_env: "OPENAI_API_BASE"
+    temperature: 0
+    timeout: 90
+
+metrics:
+  structured_presentation:
+    enabled: true
+    description: "Evaluates use of logical headings, bullets, and tabular structure for improved comprehension"
+    prompt_template: |
+      You are an impartial evaluator assessing the structural presentation quality of real estate assistant responses.
+      
+      ### Materials
+      
+      * **User Query:**
+        ```
+        {prompt}
+        ```
+      
+      * **Co-Pilot Response:**
+        ```
+        {response}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      Rate the structured presentation on a scale of 1-5 based on:
+      
+      **Structure Elements to Look For:**
+      - Logical headings and subheadings
+      - Bullet points for lists and key information
+      - Tables or structured data presentation
+      - Clear organization that improves comprehension
+      - Proper formatting for readability
+      
+      **Scoring Criteria:**
+      - 1: Poor - No structure, wall of text, hard to follow
+      - 2: Below Average - Minimal structure, some organization attempts
+      - 3: Average - Basic structure with some headings or bullets
+      - 4: Good - Well-structured with clear headings, bullets, good organization
+      - 5: Excellent - Exceptional structure with logical flow, comprehensive use of formatting elements
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "structured_presentation_score": <1-5 integer>,
+        "explanation": "<concise explanation noting specific structural elements present or missing>"
+      }}
+      ```
+    
+    score_key: "structured_presentation_score"
+    threshold: 3
+    scale: 5
+
+  personalization_accuracy:
+    enabled: true
+    description: "Binary assessment of whether financial facts (credit score, income, down payment, etc.) are correctly used"
+    prompt_template: |
+      You are an impartial evaluator assessing personalization accuracy in real estate assistant responses.
+      
+      ### Materials
+      
+      * **User Query:**
+        ```
+        {prompt}
+        ```
+      
+      * **Co-Pilot Response:**
+        ```
+        {response}
+        ```
+      
+      * **User Context (includes financial profile):**
+        ```
+        {metadata}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      **Financial Facts to Check:**
+      - Credit score
+      - Income/salary
+      - Down payment amount
+      - Monthly payment capacity
+      - Debt-to-income ratio
+      - Pre-approval amount
+      - Location/market information
+      
+      **Assessment Criteria:**
+      - ALL referenced financial facts must be accurate
+      - No contradictory or fabricated financial information
+      - Personal details must match the user context exactly
+      - If no financial facts are referenced, score as 1 (accurate)
+      
+      **Binary Scoring:**
+      - 0: Inaccurate - Contains incorrect financial facts or contradicts user context
+      - 1: Accurate - All financial facts are correct or none are incorrectly stated
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "personalization_accuracy_score": <0 or 1>,
+        "explanation": "<specific explanation of financial fact accuracy or inaccuracies found>"
+      }}
+      ```
+    
+    score_key: "personalization_accuracy_score"
+    threshold: 1
+    scale: 1
+
+  actionability_guidance:
+    enabled: true
+    description: "Binary assessment of whether response clearly points to concrete next steps"
+    prompt_template: |
+      You are an impartial evaluator assessing actionability and guidance in real estate assistant responses.
+      
+      ### Materials
+      
+      * **User Query:**
+        ```
+        {prompt}
+        ```
+      
+      * **Co-Pilot Response:**
+        ```
+        {response}
+        ```
+      
+      * **User Context:**
+        ```
+        {metadata}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      **Next Step Requirements:**
+      - Response must clearly identify at least one concrete next step
+      - Next steps should be actionable and specific
+      - Guidance should be tailored to the user's current status
+      - Steps should be realistic and achievable
+      
+      **Examples of Good Next Steps:**
+      - "Schedule a showing for [specific property]"
+      - "Contact [specific lender] for pre-approval"
+      - "Review these 3 properties that match your criteria"
+      - "Update your budget to include HOA fees"
+      
+      **Examples of Poor Guidance:**
+      - Vague suggestions like "consider your options"
+      - Generic advice not tailored to user situation
+      - No clear action items provided
+      
+      **Binary Scoring:**
+      - 0: No clear next steps or guidance is too vague/generic
+      - 1: Contains clear, concrete, actionable next steps
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "actionability_guidance_score": <0 or 1>,
+        "explanation": "<specific explanation of next steps identified or why guidance is insufficient>"
+      }}
+      ```
+    
+    score_key: "actionability_guidance_score"
+    threshold: 1
+    scale: 1
+
+  coherence:
+    enabled: true
+    description: "Binary assessment of logical consistency, avoiding contradictions and repetition"
+    prompt_template: |
+      You are an impartial evaluator assessing coherence and logical consistency in real estate assistant responses.
+      
+      ### Materials
+      
+      * **User Query:**
+        ```
+        {prompt}
+        ```
+      
+      * **Co-Pilot Response:**
+        ```
+        {response}
+        ```
+      
+      ### Evaluation Guidelines
+      
+      **Coherence Requirements:**
+      - No internal contradictions within the response
+      - No unnecessary repetition of information
+      - Logical flow from one point to the next
+      - Consistent terminology and facts throughout
+      - Clear and organized presentation of ideas
+      
+      **Check for Issues:**
+      - Contradictory statements about prices, timelines, or processes
+      - Repetitive information that doesn't add value
+      - Illogical sequence of recommendations
+      - Inconsistent use of terms or facts
+      - Confusing or unclear connections between ideas
+      
+      **Binary Scoring:**
+      - 0: Contains contradictions, excessive repetition, or logical inconsistencies
+      - 1: Logically consistent with clear flow and no contradictions
+      
+      ### Output Format
+      
+      Return only this JSON (no extra text):
+      ```json
+      {{
+        "coherence_score": <0 or 1>,
+        "explanation": "<specific explanation of coherence assessment, noting any contradictions or repetition found>"
+      }}
+      ```
+    
+    score_key: "coherence_score"
+    threshold: 1
+    scale: 1
+
+composite_metrics:
+  copilot_readiness:
+    description: "Overall Co-Pilot readiness - all binary metrics must pass"
+    method: "minimum"
+    metrics:
+      - "personalization_accuracy"
+      - "actionability_guidance"
+      - "coherence"
+
+  delivery_effectiveness:
+    description: "Delivery effectiveness combining structure and accuracy"
+    method: "weighted_average"
+    metrics:
+      - "structured_presentation"
+      - "personalization_accuracy"
+    weights:
+      structured_presentation: 0.6
+      personalization_accuracy: 0.4
+
+  overall_quality:
+    description: "Overall response quality across all metrics"
+    method: "weighted_average"
+    metrics:
+      - "structured_presentation"
+      - "personalization_accuracy"
+      - "actionability_guidance"
+      - "coherence"
+    weights:
+      structured_presentation: 0.25
+      personalization_accuracy: 0.35  # High importance
+      actionability_guidance: 0.25
+      coherence: 0.15
+
+mlflow:
+  enabled: true
+  tracking_uri: null
+  experiment_tags:
+    evaluation_type: "zillow_copilot"
+    version: "1.0"
+    focus: "delivery_effectiveness"
+    priority_metrics: "personalization_accuracy,actionability_guidance"

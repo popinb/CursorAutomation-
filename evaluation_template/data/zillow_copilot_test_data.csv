@@ -1,0 +1,102 @@
+user_query,copilot_response,expected_response,user_context
+"I'm looking for a house in Seattle with a budget of $800k. What should I do next?","Based on your $800k budget in Seattle, here are your next steps:
+
+## Immediate Actions
+• **Get pre-approved for a mortgage** - Contact a lender to confirm your buying power
+• **Connect with a real estate agent** - Find someone familiar with Seattle market trends
+• **Start your home search** - Focus on neighborhoods within your price range
+
+## Seattle Market Insights
+Your $800k budget will likely get you:
+- Condos/townhomes in Capitol Hill, Fremont, or Wallingford
+- Single-family homes in neighborhoods like Delridge or South Seattle
+- Properties typically range from 1,200-1,800 sq ft in this price range
+
+**Next Step**: I can help you get pre-approved or connect you with top-rated agents in Seattle. Which would you prefer?","Well-structured response with clear next steps and market-specific guidance","financial_profile: {budget: 800000, location: Seattle, first_time_buyer: true, credit_score: 720, down_payment: 160000}"
+"What can I afford with my income?","With your annual income of $95,000 and excellent credit score of 750, here's what you can afford:
+
+## Affordability Analysis
+• **Maximum home price**: ~$420,000-$450,000
+• **Monthly payment range**: $2,200-$2,500 (including taxes/insurance)  
+• **Recommended down payment**: $84,000-$90,000 (20%)
+
+## Your Financial Strengths
+- Excellent credit score (750) = better interest rates
+- Strong income stability
+- Good debt-to-income ratio at 28%
+
+## Next Steps
+1. **Get pre-approved** - Lock in your rate with this strong profile
+2. **Explore neighborhoods** - Focus on areas under $450k
+3. **Review properties** - I can show you homes matching your criteria
+
+Would you like me to connect you with a lender for pre-approval?","Good personalization with accurate financial details and clear guidance","financial_profile: {annual_income: 95000, credit_score: 750, monthly_debts: 800, down_payment_saved: 85000, dti_ratio: 0.28}"
+"Tell me about homes in Austin Texas","Austin has a diverse real estate market with something for everyone. The median home price is around $550,000. Popular neighborhoods include Downtown, South Austin, and Cedar Park. The market is competitive with homes selling quickly. Interest rates are currently around 7%. You should consider getting pre-approved and working with a local agent. There are many great schools and amenities. Austin is known for its music scene and food culture. The job market is strong with many tech companies. Traffic can be challenging during rush hours.","Lacks structure and specific guidance","financial_profile: {budget: 600000, location_preference: Austin, family_size: 4}"
+"I want to buy a $900k house but my income is only $60k annually","I understand you're interested in a $900k property. However, there's a significant gap between your income and this price point.
+
+## Financial Reality Check
+• **Current affordability**: ~$220,000-$250,000 (based on $60k income)
+• **Target property**: $900,000
+• **Gap**: $650,000+ above recommended range
+
+## This Creates Risks
+- Monthly payments would consume 80%+ of your income
+- Debt-to-income ratio far exceeds lending standards (typically max 43%)
+- No room for emergency expenses or other financial goals
+
+## Realistic Next Steps
+1. **Increase income** - Consider career advancement, side income, or co-borrower
+2. **Save larger down payment** - Reduces loan amount needed
+3. **Explore lower-priced markets** - Consider areas with better affordability
+4. **Wait and build equity** - Start with a more affordable property
+
+**Recommendation**: Let's find properties in your $250k range to start building equity. Would you like to see what's available in your price range?","Honest assessment with realistic guidance and alternatives","financial_profile: {annual_income: 60000, credit_score: 680, savings: 45000, target_price: 900000}"
+"Should I refinance my current mortgage?","You should refinance your mortgage when rates drop below your current rate. Check with lenders about current rates. Consider closing costs. Your credit score matters for getting good rates. Refinancing can lower monthly payments. You might want to switch from adjustable to fixed rate. Cash-out refinancing is another option. Talk to your financial advisor. Market conditions change frequently. Different lenders offer different rates. Shop around for the best deal.","Lacks personalization and specific guidance","financial_profile: {current_rate: 6.5, loan_balance: 380000, home_value: 550000, credit_score: 740, monthly_payment: 2400}"
+"I need to sell my house quickly due to job relocation","Given your urgent job relocation timeline, here's your fast-track selling strategy:
+
+## Immediate Actions (Week 1)
+• **Price competitively** - 5-10% below market value for quick sale
+• **Hire experienced agent** - Choose someone with proven fast-sale record  
+• **Professional staging** - Make your home show-ready immediately
+• **Professional photos** - List with high-quality marketing materials
+
+## Timeline Expectations
+- **Week 1-2**: List and start showings
+- **Week 3-4**: Receive and negotiate offers
+- **Week 5-8**: Close (expedited process)
+
+## Your Advantages
+- $420k home value in good market
+- Move-in ready condition
+- Desirable neighborhood (based on your location)
+
+## Critical Decision
+**Cash offers vs. higher prices** - Cash buyers close faster (2-3 weeks) but may offer 5-10% less
+
+**Next Step**: I can connect you with top agents who specialize in quick sales in your area. When do you need to relocate?","Fast, actionable guidance with clear timeline","financial_profile: {home_value: 420000, mortgage_balance: 280000, location: Denver, relocation_deadline: 60_days}"
+"What's the difference between FHA and conventional loans?","FHA loans require lower down payments (3.5% minimum) compared to conventional loans which typically need 20%. FHA loans have mortgage insurance that lasts for the life of the loan. Conventional loans may have PMI that can be removed. FHA loans have lower credit score requirements. Conventional loans often have better rates for qualified borrowers. FHA loans have property condition requirements. Conventional loans are more flexible. Both have different debt-to-income requirements. The choice depends on your financial situation.","Repetitive and poorly structured explanation","financial_profile: {credit_score: 685, down_payment_available: 25000, annual_income: 78000, first_time_buyer: true}"
+"I'm interested in investment properties in Miami","Investment properties in Miami offer great potential! Here's what you need to know:
+
+## Market Overview
+• **Rental yields**: 6-8% in popular areas
+• **Appreciation**: Strong historical growth
+• **Demand**: High tourist and resident rental demand
+
+## Your Investment Strategy
+**Based on your $1.2M budget:**
+- Luxury condos in Brickell/Downtown: $800k-$1.2M
+- Multi-family properties: $900k-$1.1M  
+- Waterfront condos: $1M+ (premium locations)
+
+## Key Considerations
+• **Property management** - Essential for out-of-state investors
+• **HOA fees** - Can be $500-$1,500/month in luxury buildings
+• **Hurricane insurance** - Factor into ROI calculations
+• **Tax implications** - Consult with tax advisor on depreciation benefits
+
+## Next Steps
+1. **Market analysis** - I'll send you current listings matching your criteria
+2. **Local connections** - Connect with Miami-based property managers
+3. **Financing** - Investment property loan requirements (25% down typically)
+
+Ready to review specific properties in your target areas?","Well-structured with specific information and clear guidance","financial_profile: {investment_budget: 1200000, experience: experienced_investor, target_yield: 7_percent, location_preference: Miami, current_properties: 2}"
