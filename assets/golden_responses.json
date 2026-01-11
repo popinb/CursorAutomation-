@@ -1,44 +1,42 @@
 {
-    "questions": {
-        "1": {
-            "question": "What factors and inputs were considered to calculate my Buyability? How does each impact the Buyability?",
-            "response_template": "Your personalized BuyAbility estimate is ${buyability}, and it is calculated using the following inputs you provided. We leveraged real-time market conditions to determine a customized rate estimate:\nAnnual Income: ${annual_income}\nMonthly Debts: ${monthly_debts}\nDown Payment: ${down_payment}\nCredit Score Range: ${credit_score_range}\nTarget Monthly Payment: ${target_monthly_payment}\nLocation: ${location}\nInterest rate estimate: ${interest_rate}%\n\nHere's how each input impacts your BuyAbility:\n1. Income and Debt-to-Income Ratio (DTI)\n Lenders typically recommend up to 36% of your gross monthly income to go toward debts (for financial stability), including the mortgage. Based on your ${annual_income} annual income (or ${monthly_income}/month), this means up to ${max_dti_payment}/month could be available for all debt obligations. Subtracting your current ${monthly_debts}/month debt leaves around ${available_payment}/month for a potential mortgage payment, which aligns with your target.\n\n2. Down Payment and Loan Amount\n You have saved ${down_payment} for a down payment. That amount influences how much you need to borrow and impacts the kind of loans available to you:\n • As low as 3% down payment is generally the minimum required for most loans.\n • With ${down_payment}, the maximum purchase price you could target is approximately ${max_purchase_price} assuming a 3% down payment.\n • However, for your BuyAbility to be ${buyability}, this down payment puts you above the minimum threshold, which slightly helps reduce your overall loan amount and thus your monthly payments.\n\n3. Credit Score and Interest Rate\n Your credit score range of ${credit_score_range} places you in a good position to get a mortgage in most cases:\n • Higher scores (720+) could further improve your rate (${interest_rate}%), reducing monthly payments and increasing BuyAbility.\n\n4. Location: ${location} (Property Taxes & Insurance)\n BuyAbility also factors in location-based expenses like property taxes and homeowners insurance:\n • ${location} typically has an avg X% property tax rates, which is favorable.\n • Homeowners insurance, which is mandatory, is also location-sensitive and is included in the estimated monthly payment.\n\n5. Mortgage Insurance (PMI)\n Because your down payment is less than 20% of the home price, lenders will require Private Mortgage Insurance (PMI):\n • PMI adds an additional monthly cost and slightly reduces your BuyAbility.\n • However, once you reach 20% equity, you may be able to remove PMI.",
-            "variables": ["buyability", "annual_income", "monthly_debts", "down_payment", "credit_score_range", "target_monthly_payment", "location", "interest_rate", "monthly_income", "max_dti_payment", "available_payment", "max_purchase_price"]
-        },
-        "2": {
-            "question": "How was my Buyability calculated? Is it based on what I told you? Is this personalized to me?",
-            "response_template": "Yes, your BuyAbility is fully personalized to your unique financial profile. It reflects the actual income, debt, credit score, down payment, and location you provided. Your estimated interest rate of ${interest_rate}% is tailored to you, based on the inputs you provided us. This means the estimate of ${buyability} is tailored specifically to you—not a generic or national average.\n\nIt takes into account:\n• Your ${annual_income} annual income\n• Your current debt load of ${monthly_debts}/month\n• The ${down_payment} you've saved for a down payment\n• Your credit score range of ${credit_score_range}\n• The property tax and insurance assumptions specific to ${location}\n• And your personal comfort target of ${target_monthly_payment}/month for a mortgage payment\n\nBuyAbility is designed to provide a realistic and individualized estimate of what you could afford in the housing market today.",
-            "variables": ["buyability", "interest_rate", "annual_income", "monthly_debts", "down_payment", "credit_score_range", "location", "target_monthly_payment"]
-        },
-        "3": {
-            "question": "What's included in the total monthly payment?",
-            "response_template": "What's Included in Your Target Monthly Payment?\nYour target monthly payment of ${target_monthly_payment} reflects the full estimated cost of owning a home each month—not just the mortgage. Here's how that total breaks down:\n\nBreakdown of Your ${target_monthly_payment} Monthly Payment\n• Principal & Interest: ${principal_interest} This reflects the mortgage payment, based on a 30-year fixed loan at an interest rate of ${interest_rate}%. It covers the amount borrowed (principal) and the cost of borrowing (interest).\n• Property Taxes: ${property_taxes} This is an estimate using the average property tax rate for the state you selected. Zillow applies this rate to your estimated home value to calculate monthly taxes.\n• Homeowners Insurance: ${homeowners_insurance} This covers typical property insurance requirements for mortgage approval, providing financial protection against damage or loss.\n• Private Mortgage Insurance (PMI): ${pmi} Because your down payment is below 20%, this monthly cost protects the lender in case of default. It's common in low-down-payment loans.\n\nAssumptions to Know\n• HOA fees are not included in this estimate. If you're considering a home with a homeowners association, that monthly cost would be additional.\n• Property tax estimates use the average rate for your selected state, not county-specific rates.",
-            "variables": ["target_monthly_payment", "principal_interest", "interest_rate", "property_taxes", "homeowners_insurance", "pmi"]
-        },
-        "4": {
-            "question": "Can I afford to buy a home right now, given my current financial situation, income, debts, and expenses?",
-            "response_template": "Yes, based on your BuyAbility of ${buyability}, you can afford to buy a home in ${location}!\n\nYour financial readiness aligns well with current market dynamics. With your BuyAbility at ${buyability_short}, and DTI < 36% (as recommended by experts for financial stability) you're in a strong position to shop for homes in many parts of ${location}, especially in suburban and rural regions.\n\nGiven the improving inventory and balanced market conditions, this is a promising time to take the next step toward homeownership. Many homes in the ${price_range} range are becoming more accessible and well-aligned to your estimated budget.",
-            "variables": ["buyability", "location", "buyability_short", "price_range"]
-        }
-    },
-    "example_values": {
-        "buyability": "$318,431",
-        "annual_income": "$90,000",
-        "monthly_debts": "$200",
-        "down_payment": "$18,000",
-        "credit_score_range": "660–719",
-        "target_monthly_payment": "$2,500",
-        "location": "Georgia",
-        "interest_rate": "6.88",
-        "monthly_income": "$7,500",
-        "max_dti_payment": "$2,700",
-        "available_payment": "$2,500",
-        "max_purchase_price": "$514,000",
-        "principal_interest": "$1,975",
-        "property_taxes": "$212",
-        "homeowners_insurance": "$106",
-        "pmi": "$207",
-        "buyability_short": "$318K",
-        "price_range": "$250K–$350K"
-    }
+  "mortgage_calculation": {
+    "question": "What's my monthly payment?",
+    "response": "Based on your BuyAbility score of {buyability_score} and the loan amount of ${loan_amount}, your projected monthly payment would be approximately ${monthly_payment} at the current interest rate of {interest_rate}%. This calculation assumes a 30-year fixed-rate mortgage with a 20% down payment. Your BuyAbility score indicates strong creditworthiness, which helps secure favorable terms. To get the most accurate estimate, I recommend applying for pre-approval with our lending partners.",
+    "variables": ["buyability_score", "monthly_payment", "interest_rate", "loan_amount", "down_payment"],
+    "next_steps": ["apply for pre-approval", "schedule consultation", "contact mortgage specialist"],
+    "assumptions": ["30-year fixed-rate mortgage", "20% down payment", "current market rates", "credit score remains stable"],
+    "fair_housing_compliance": true
+  },
+  "buyability_explanation": {
+    "question": "What does my BuyAbility score mean?",
+    "response": "Your BuyAbility score of {buyability_score} is a comprehensive assessment of your home buying readiness. This score considers multiple factors including your credit history, income stability, debt-to-income ratio, and savings patterns. A score of {buyability_score} places you in the {score_category} category, indicating {score_description}. This means you're well-positioned to qualify for competitive mortgage rates and terms. Your monthly payment capacity of ${monthly_payment} suggests you can comfortably afford homes in the ${price_range} range.",
+    "variables": ["buyability_score", "score_category", "score_description", "monthly_payment", "price_range"],
+    "next_steps": ["review credit report", "improve debt-to-income ratio", "save for down payment"],
+    "assumptions": ["current financial situation remains stable", "no major credit changes", "income consistency"],
+    "fair_housing_compliance": true
+  },
+  "interest_rate_impact": {
+    "question": "How do interest rates affect my payment?",
+    "response": "Interest rates significantly impact your monthly payment. With your current BuyAbility score of {buyability_score}, a 1% increase in interest rate from {current_rate}% to {new_rate}% would increase your monthly payment from ${current_payment} to approximately ${new_payment} on a ${loan_amount} loan. Your strong credit profile helps you qualify for competitive rates. To lock in favorable terms, consider getting pre-approved now, as rates can fluctuate based on market conditions and Federal Reserve policy changes.",
+    "variables": ["buyability_score", "current_rate", "new_rate", "current_payment", "new_payment", "loan_amount"],
+    "next_steps": ["lock in current rates", "get pre-approved", "monitor rate trends"],
+    "assumptions": ["loan amount remains constant", "credit score stays stable", "market conditions"],
+    "fair_housing_compliance": true
+  },
+  "down_payment_guidance": {
+    "question": "How much should I save for a down payment?",
+    "response": "For your target home price of ${home_price} and BuyAbility score of {buyability_score}, I recommend saving ${recommended_down_payment} for a down payment. This represents a {down_payment_percentage}% down payment, which will help you avoid private mortgage insurance (PMI) and secure better interest rates. With your monthly payment capacity of ${monthly_payment}, you can comfortably afford the resulting mortgage payment. Consider setting up automatic savings transfers to reach your down payment goal within {timeline_months} months.",
+    "variables": ["home_price", "buyability_score", "recommended_down_payment", "down_payment_percentage", "monthly_payment", "timeline_months"],
+    "next_steps": ["set up savings plan", "open high-yield savings account", "reduce expenses"],
+    "assumptions": ["home price appreciation", "savings rate consistency", "no major expenses"],
+    "fair_housing_compliance": true
+  },
+  "credit_score_improvement": {
+    "question": "How can I improve my BuyAbility score?",
+    "response": "To improve your BuyAbility score from {current_score} to your target of {target_score}, focus on these key areas: 1) Pay all bills on time (35% of score), 2) Reduce credit utilization below 30% (currently at {current_utilization}%), 3) Maintain credit history length, and 4) Avoid opening new credit accounts. With your current monthly payment capacity of ${monthly_payment}, improving your score could reduce your interest rate by {rate_reduction}% and save you approximately ${monthly_savings} per month on a ${loan_amount} mortgage.",
+    "variables": ["current_score", "target_score", "current_utilization", "monthly_payment", "rate_reduction", "monthly_savings", "loan_amount"],
+    "next_steps": ["review credit report", "set up payment reminders", "create debt reduction plan"],
+    "assumptions": ["consistent payment history", "no new credit applications", "stable income"],
+    "fair_housing_compliance": true
+  }
 }
