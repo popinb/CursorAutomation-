@@ -11,6 +11,7 @@ import os
 from decimal import Decimal
 from typing import Dict, Any, List, Tuple, Optional
 from pathlib import Path
+from directory_manager import DirectoryManager, create_directory_manager
 
 
 class ZillowJudgeEvaluator:
@@ -19,15 +20,18 @@ class ZillowJudgeEvaluator:
     ground truth documents and buyability profiles.
     """
     
-    def __init__(self):
+    def __init__(self, directory_manager: Optional[DirectoryManager] = None):
         """Initialize the evaluator with ground truth data."""
-        # Get the directory where this script is located
-        script_dir = Path(__file__).parent
+        # Initialize directory manager
+        if directory_manager is None:
+            self.dir_manager = create_directory_manager()
+        else:
+            self.dir_manager = directory_manager
         
-        # Load ground truth data
-        self.golden_responses = self._load_json(script_dir / "assets" / "golden_responses.json")
-        self.buyability_profiles = self._load_json(script_dir / "assets" / "buyability_profiles.json")
-        self.fair_housing_guide = self._load_json(script_dir / "assets" / "fair_housing_guide.json")
+        # Load ground truth data using directory manager
+        self.golden_responses = self._load_json(self.dir_manager.get_asset_path("golden_responses"))
+        self.buyability_profiles = self._load_json(self.dir_manager.get_asset_path("buyability_profiles"))
+        self.fair_housing_guide = self._load_json(self.dir_manager.get_asset_path("fair_housing_guide"))
         
     def _load_json(self, filepath: Path) -> Dict[str, Any]:
         """Load JSON data from file."""
