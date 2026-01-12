@@ -1,0 +1,50 @@
+experiment_name: "/workspace/mlflow_experiments/golden_prompt_template"
+run_name: "example_run"
+
+dataset:
+  path: "/workspace/eval_template/examples/example_dataset.csv"  # Change to your dataset
+  format: "csv"
+
+fields:
+  prompt: "prompt"
+  response: "response"
+  user_personalization_features: "user_personalization_features"
+  user_context_personalization_features: "user_personalization_features"
+
+ground_truth:
+  dir: "/workspace/assets"  # Any directory of reference docs
+  globs:
+    - "**/*.json"
+    - "**/*.md"
+    - "**/*.txt"
+
+judges:
+  - "gpt-4o"
+
+dry_run: true
+
+metrics:
+  - name: "Personalization_accuracy"
+    template_path: "/workspace/eval_template/prompts/personalization_accuracy.jinja"
+    score_key: "personalization_accuracy_score"
+    threshold: 1
+    aggregation: "majority"
+
+  - name: "Context_personalization"
+    template_path: "/workspace/eval_template/prompts/context_personalization.jinja"
+    score_key: "context_personalization_score"
+    threshold: 3
+    aggregation: "average"
+
+  - name: "General_personalization"
+    template_path: "/workspace/eval_template/prompts/general_personalization.jinja"
+    score_key: "general_personalization_score"
+    threshold: 3
+    aggregation: "average"
+
+  - name: "Faithfulness"
+    template_path: "/workspace/eval_template/prompts/faithfulness.jinja"
+    score_key: "faithfulness_score"
+    threshold: 1
+    aggregation: "majority"
+

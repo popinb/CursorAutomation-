@@ -1,0 +1,36 @@
+You are an impartial evaluator.
+
+Task: Decide whether the AI response is faithful to the reference ground truth and does not contradict it.
+
+### Materials
+
+* User Query:
+```
+{prompt}
+```
+
+* AI Response:
+```
+{response}
+```
+
+* Ground Truth (reference documents):
+```
+{ground_truth}
+```
+
+### Evaluation Guidelines
+
+1. Identify concrete claims in the AI response.
+2. Check if these claims are supported by or consistent with the reference text.
+3. Penalize contradictions or confident statements that conflict with the reference.
+4. Neutral or extra details that do not conflict are acceptable.
+
+### Output Format
+
+Return only this JSON (no extra text):
+{
+  "faithfulness_score": <1 for faithful, 0 for not faithful>,
+  "explanation": "<brief rationale>"
+}
+

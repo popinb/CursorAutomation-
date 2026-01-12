@@ -1,0 +1,148 @@
+[
+  {
+    "index": 0,
+    "metrics": {
+      "Personalization_accuracy": {
+        "final_score": 1.0,
+        "threshold": 1,
+        "status": true,
+        "votes": [
+          1.0
+        ],
+        "per_model": [
+          {
+            "model": "gpt-4o",
+            "result": {
+              "personalization_accuracy_score": 1.0,
+              "explanation": "dry_run"
+            }
+          }
+        ]
+      },
+      "Context_personalization": {
+        "final_score": 4.0,
+        "threshold": 3,
+        "status": true,
+        "votes": [
+          4.0
+        ],
+        "per_model": [
+          {
+            "model": "gpt-4o",
+            "result": {
+              "context_personalization_score": 4.0,
+              "explanation": "dry_run"
+            }
+          }
+        ]
+      },
+      "General_personalization": {
+        "final_score": 4.0,
+        "threshold": 3,
+        "status": true,
+        "votes": [
+          4.0
+        ],
+        "per_model": [
+          {
+            "model": "gpt-4o",
+            "result": {
+              "general_personalization_score": 4.0,
+              "explanation": "dry_run"
+            }
+          }
+        ]
+      },
+      "Faithfulness": {
+        "final_score": 1.0,
+        "threshold": 1,
+        "status": true,
+        "votes": [
+          1.0
+        ],
+        "per_model": [
+          {
+            "model": "gpt-4o",
+            "result": {
+              "faithfulness_score": 1.0,
+              "explanation": "dry_run"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "index": 1,
+    "metrics": {
+      "Personalization_accuracy": {
+        "final_score": 1.0,
+        "threshold": 1,
+        "status": true,
+        "votes": [
+          1.0
+        ],
+        "per_model": [
+          {
+            "model": "gpt-4o",
+            "result": {
+              "personalization_accuracy_score": 1.0,
+              "explanation": "dry_run"
+            }
+          }
+        ]
+      },
+      "Context_personalization": {
+        "final_score": 4.0,
+        "threshold": 3,
+        "status": true,
+        "votes": [
+          4.0
+        ],
+        "per_model": [
+          {
+            "model": "gpt-4o",
+            "result": {
+              "context_personalization_score": 4.0,
+              "explanation": "dry_run"
+            }
+          }
+        ]
+      },
+      "General_personalization": {
+        "final_score": 4.0,
+        "threshold": 3,
+        "status": true,
+        "votes": [
+          4.0
+        ],
+        "per_model": [
+          {
+            "model": "gpt-4o",
+            "result": {
+              "general_personalization_score": 4.0,
+              "explanation": "dry_run"
+            }
+          }
+        ]
+      },
+      "Faithfulness": {
+        "final_score": 1.0,
+        "threshold": 1,
+        "status": true,
+        "votes": [
+          1.0
+        ],
+        "per_model": [
+          {
+            "model": "gpt-4o",
+            "result": {
+              "faithfulness_score": 1.0,
+              "explanation": "dry_run"
+            }
+          }
+        ]
+      }
+    }
+  }
+]
