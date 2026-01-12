@@ -1,0 +1,4 @@
+prompt,response,ground_truth,user_features
+"What is the capital of France?","The capital of France is Paris.","Paris","{"location": "New York"}"
+"How do I cook pasta?","Boil water, add pasta, cook for 8-10 minutes.","Boil water, add pasta, cook","{"cooking_level": "beginner"}"
+"What is 2+2?","2+2 equals 4.","4","{"math_level": "basic"}"

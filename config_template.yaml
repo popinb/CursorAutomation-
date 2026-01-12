@@ -1,0 +1,103 @@
+# Universal Evaluation Template Configuration
+# ==========================================
+
+# Dataset Configuration
+dataset:
+  path: "data/your_dataset.csv"  # Path to your dataset
+  prompt_column: "prompt"        # Column name containing user questions/prompts
+  response_column: "response"    # Column name containing model responses
+  ground_truth_column: "ground_truth"  # Optional: column with ground truth answers
+  user_features_column: "user_features"  # Optional: column with user personalization features
+
+# Model Configuration
+models:
+  response_model: "GOLDEN_RESPONSE"  # Options: GOLDEN_RESPONSE, LLM_gpt-4o, LLM_gpt-4, FIRST_CALL
+  judge_models:  # Models to use for evaluation (ensemble)
+    - "gpt-4o"
+    - "gpt-4"
+
+# API Keys and Endpoints
+api_keys:
+  openai_api_key: "your-openai-api-key"  # Required for LLM models
+  openai_base_url: "https://api.openai.com/v1"  # Optional: custom OpenAI-compatible endpoint
+
+# Optional API Configuration (for FIRST_CALL model)
+api:
+  base_url: "https://your-api-endpoint.com"
+  headers:
+    apikey: "your-api-key"
+  timeout: 60.0
+
+# Evaluation Configuration
+evaluation:
+  experiment_name: "my_evaluation_experiment"  # MLflow experiment name
+  run_name: "evaluation_run_1"  # Optional: specific run name
+  metrics:
+    # Define your custom metrics here
+    accuracy:
+      prompt_template: |
+        You are an impartial evaluator.
+        Evaluate the accuracy of the response.
+        
+        User Query: {prompt}
+        Model Response: {response}
+        Ground Truth: {ground_truth}
+        
+        Rate accuracy from 1-5 where:
+        1 = Completely inaccurate
+        2 = Mostly inaccurate  
+        3 = Partially accurate
+        4 = Mostly accurate
+        5 = Completely accurate
+        
+        Return JSON: {"accuracy_score": <1-5>, "explanation": "<reasoning>"}
+      threshold: 3.0
+      output_schema:
+        fields:
+          accuracy_score: int
+          explanation: str
+    
+    relevance:
+      prompt_template: |
+        You are an impartial evaluator.
+        Evaluate how relevant the response is to the user query.
+        
+        User Query: {prompt}
+        Model Response: {response}
+        
+        Rate relevance from 1-5 where:
+        1 = Completely irrelevant
+        2 = Mostly irrelevant
+        3 = Partially relevant
+        4 = Mostly relevant
+        5 = Completely relevant
+        
+        Return JSON: {"relevance_score": <1-5>, "explanation": "<reasoning>"}
+      threshold: 3.0
+      output_schema:
+        fields:
+          relevance_score: int
+          explanation: str
+    
+    personalization:
+      prompt_template: |
+        You are an impartial evaluator.
+        Evaluate how well the response incorporates user personalization.
+        
+        User Query: {prompt}
+        Model Response: {response}
+        User Features: {user_features}
+        
+        Rate personalization from 1-5 where:
+        1 = No personalization
+        2 = Minimal personalization
+        3 = Moderate personalization
+        4 = Good personalization
+        5 = Excellent personalization
+        
+        Return JSON: {"personalization_score": <1-5>, "explanation": "<reasoning>"}
+      threshold: 3.0
+      output_schema:
+        fields:
+          personalization_score: int
+          explanation: str
