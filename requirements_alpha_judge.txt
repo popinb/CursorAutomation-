@@ -1,0 +1,8 @@
+openai>=1.40.0
+rapidfuzz
+python-docx
+striprtf
+tiktoken
+pydantic
+tenacity
+pandas
