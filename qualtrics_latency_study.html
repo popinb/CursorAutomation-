@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Qualtrics Latency Perception Study - Complete Implementation</title>
+<style>
+/* Styles for the streaming effect */
+.response-container {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    margin: 20px 0;
+    min-height: 100px;
+    display: none;
+}
+
+.prompt-container {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.loading-indicator {
+    color: #666;
+    font-style: italic;
+    padding: 15px;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================ -->
+<!-- QUESTION 1: Instructions & Consent -->
+<!-- ============================================ -->
+<div class="question-block">
+<h3>Question Type: Text/Graphic</h3>
+<h4>Question Text:</h4>
+<pre>
+Welcome to our study on response timing preferences!
+
+In this brief study, you'll see 5 questions with their answers. We're interested in understanding how different response timings affect your experience.
+
+What you'll do:
+- Read 5 short questions
+- Wait for the answer to appear
+- Rate your experience with each response
+
+This should take about 5-7 minutes total.
+
+Your participation is voluntary and your responses are anonymous.
+
+By clicking "Next", you consent to participate in this study.
+</pre>
+</div>
+
+<!-- ============================================ -->
+<!-- QUESTIONS 2-6: Trial Questions (5 total) -->
+<!-- ============================================ -->
+<div class="question-block">
+<h3>Question Type: Matrix Table (for each trial)</h3>
+<h4>Question Text: [Leave blank - will be filled by JavaScript]</h4>
+<h4>HTML View (paste this in the HTML editor):</h4>
+<pre><code>
+<div class="prompt-container" id="prompt-text">
+  <!-- Prompt will be inserted here by JavaScript -->
+</div>
+
+<div id="loading-message" class="loading-indicator" style="display: none;">
+  Generating response...
+</div>
+
+<div class="response-container" id="response-container">
+  <div id="response-text"></div>
+</div>
+
+<script>
+Qualtrics.SurveyEngine.addOnload(function() {
+    // Trial configuration - these would be set via Embedded Data
+    // For testing, using defaults
+    var promptId = "${e://Field/prompt_id}" || "1";
+    var modality = "${e://Field/modality}" || "nonstream";
+    var latencyMs = parseInt("${e://Field/latency_ms}") || 2000;
+    var tftMs = parseInt("${e://Field/tft_ms}") || 300;
+    
+    // Stimulus content
+    var prompts = {
+        "1": {
+            question: "Define 'compound interest' in one sentence.",
+            answer: "Compound interest is the interest calculated on both the initial principal and the accumulated interest from previous periods, causing wealth to grow exponentially over time rather than linearly."
+        },
+        "2": {
+            question: "Give 3 dinner ideas using only rice, eggs, and spinach.",
+            answer: "You could make spinach fried rice with scrambled eggs mixed throughout, a savory rice bowl topped with a poached egg and wilted garlic spinach, or egg-fried rice cakes pan-seared and served over a bed of sautéed spinach with soy sauce."
+        },
+        "3": {
+            question: "Fix this one-line Python bug: pritn('hi')",
+            answer: "The bug is a typo in the function name. The corrected code should be: print('hi'). The function 'pritn' doesn't exist in Python, while 'print' is the built-in function for displaying output to the console."
+        },
+        "4": {
+            question: "Summarize this in one sentence: 'The new museum opened last Tuesday after three years of construction. It features interactive exhibits about local history and has already attracted over 5,000 visitors.'",
+            answer: "A new local history museum with interactive exhibits opened last Tuesday after three years of construction and has already drawn over 5,000 visitors."
+        },
+        "5": {
+            question: "Recommend a weekend activity for a rainy day.",
+            answer: "Visit a local bookstore café where you can browse new releases while enjoying coffee, then settle into a cozy corner to read your finds while listening to the rain—it's the perfect blend of exploration and relaxation for a wet weekend."
+        }
+    };
+    
+    // Get the current prompt
+    var currentPrompt = prompts[promptId] || prompts["1"];
+    
+    // Display the prompt
+    document.getElementById("prompt-text").textContent = currentPrompt.question;
+    
+    // Show loading message
+    setTimeout(function() {
+        document.getElementById("loading-message").style.display = "block";
+    }, 100);
+    
+    // Response display logic
+    if (modality === "stream" || modality === "streaming") {
+        // Streaming mode
+        setTimeout(function() {
+            document.getElementById("loading-message").style.display = "none";
+            document.getElementById("response-container").style.display = "block";
+            
+            var fullText = currentPrompt.answer;
+            var charIndex = 0;
+            var responseDiv = document.getElementById("response-text");
+            responseDiv.textContent = "";
+            
+            // Calculate interval for streaming
+            var totalStreamTime = latencyMs - tftMs;
+            var interval = totalStreamTime / fullText.length;
+            
+            var streamInterval = setInterval(function() {
+                if (charIndex < fullText.length) {
+                    responseDiv.textContent += fullText[charIndex];
+                    charIndex++;
+                } else {
+                    clearInterval(streamInterval);
+                }
+            }, interval);
+        }, tftMs);
+    } else {
+        // Non-streaming mode
+        setTimeout(function() {
+            document.getElementById("loading-message").style.display = "none";
+            document.getElementById("response-container").style.display = "block";
+            document.getElementById("response-text").textContent = currentPrompt.answer;
+        }, latencyMs);
+    }
+});
+
+Qualtrics.SurveyEngine.addOnReady(function() {
+    // Hide the Next button initially
+    this.hideNextButton();
+    
+    // Show it after the response appears
+    var that = this;
+    var showButtonDelay = "${e://Field/latency_ms}" || 2000;
+    setTimeout(function() {
+        that.showNextButton();
+    }, parseInt(showButtonDelay) + 500);
+});
+</script>
+</code></pre>
+
+<h4>Matrix Table Setup:</h4>
+<p>Scale: 1-7 (Strongly Disagree to Strongly Agree)</p>
+<p>Statements (rows):</p>
+<ol>
+<li>Overall quality of the response</li>
+<li>The wait felt long</li>
+<li>The wait negatively affected my quality judgment</li>
+<li>I would accept this wait time regularly</li>
+</ol>
+</div>
+
+<!-- ============================================ -->
+<!-- QUESTION 7: Post-Trial Perception Sliders -->
+<!-- ============================================ -->
+<div class="question-block">
+<h3>Question Type: Slider</h3>
+<h4>Question Text:</h4>
+<pre>
+Now, thinking back to each of the 5 trials you just completed:
+
+How long did the wait feel for each trial (in seconds)?
+</pre>
+
+<h4>Slider Configuration:</h4>
+<ul>
+<li>Type: Multi-slider</li>
+<li>Number of sliders: 5</li>
+<li>Labels: Trial A, Trial B, Trial C, Trial D, Trial E</li>
+<li>Min: 0</li>
+<li>Max: 10</li>
+<li>Decimals: 0</li>
+<li>Grid lines: Every 1 second</li>
+</ul>
+
+<h4>JavaScript (add to question):</h4>
+<pre><code>
+Qualtrics.SurveyEngine.addOnload(function() {
+    // Store mapping of trial letters to actual trial data
+    var trialMapping = {
+        "A": "${e://Field/trial1_prompt_id}",
+        "B": "${e://Field/trial2_prompt_id}",
+        "C": "${e://Field/trial3_prompt_id}",
+        "D": "${e://Field/trial4_prompt_id}",
+        "E": "${e://Field/trial5_prompt_id}"
+    };
+    
+    // Store this mapping as embedded data for analysis
+    Qualtrics.SurveyEngine.setEmbeddedData("trial_letter_mapping", JSON.stringify(trialMapping));
+});
+</code></pre>
+</div>
+
+<!-- ============================================ -->
+<!-- QUESTION 8: Maximum Acceptable Wait -->
+<!-- ============================================ -->
+<div class="question-block">
+<h3>Question Type: Slider</h3>
+<h4>Question Text:</h4>
+<pre>
+For similar AI-powered tasks (quick questions, definitions, recommendations), what is the longest wait time you would find acceptable for regular use?
+</pre>
+
+<h4>Slider Configuration:</h4>
+<ul>
+<li>Type: Single slider</li>
+<li>Min: 0 seconds</li>
+<li>Max: 10 seconds</li>
+<li>Decimals: 1</li>
+<li>Grid lines: Every 1 second</li>
+<li>Show value: Yes</li>
+</ul>
+</div>
+
+<!-- ============================================ -->
+<!-- QUESTION 9: Streaming Preference -->
+<!-- ============================================ -->
+<div class="question-block">
+<h3>Question Type: Multiple Choice</h3>
+<h4>Question Text:</h4>
+<pre>
+In this study, some responses appeared all at once after a delay, while others started appearing quickly and then filled in gradually.
+
+For similar AI-powered tasks, which response style do you prefer?
+</pre>
+
+<h4>Answer Choices:</h4>
+<ol>
+<li>Responses that appear all at once (even if I wait longer)</li>
+<li>Responses that start appearing quickly and fill in gradually</li>
+<li>No preference</li>
+</ol>
+</div>
+
+<!-- ============================================ -->
+<!-- SURVEY FLOW SETUP -->
+<!-- ============================================ -->
+<div class="setup-block">
+<h2>Survey Flow Configuration</h2>
+
+<h3>1. Embedded Data Block (at the beginning):</h3>
+<pre>
+Set Embedded Data:
+- participant_id = ${e://Field/ResponseID}
+- trial1_prompt_id = [Set via Randomizer]
+- trial1_modality = [Set via Randomizer]
+- trial1_latency_ms = [Set via Randomizer]
+- trial1_tft_ms = [Set via Randomizer]
+[Repeat for trials 2-5]
+- trial_order = [Set via Randomizer]
+</pre>
+
+<h3>2. Randomizer Setup:</h3>
+<pre>
+Randomizer (Evenly Present Elements)
+├── Element 1: Condition Assignment A
+│   └── Set Embedded Data:
+│       - trial1_prompt_id = 1, trial1_modality = nonstream, trial1_latency_ms = 500
+│       - trial2_prompt_id = 2, trial2_modality = nonstream, trial2_latency_ms = 2000
+│       - trial3_prompt_id = 3, trial3_modality = nonstream, trial3_latency_ms = 6000
+│       - trial4_prompt_id = 4, trial4_modality = stream, trial4_latency_ms = 2000, trial4_tft_ms = 300
+│       - trial5_prompt_id = 5, trial5_modality = stream, trial5_latency_ms = 6000, trial5_tft_ms = 300
+├── Element 2: Condition Assignment B
+│   └── Set Embedded Data: [Different prompt-condition mappings]
+├── Element 3: Condition Assignment C
+│   └── Set Embedded Data: [Different prompt-condition mappings]
+├── Element 4: Condition Assignment D
+│   └── Set Embedded Data: [Different prompt-condition mappings]
+└── Element 5: Condition Assignment E
+    └── Set Embedded Data: [Different prompt-condition mappings]
+</pre>
+
+<h3>3. Trial Order Randomizer:</h3>
+<pre>
+Randomizer (Randomly Present All)
+├── Q2: Trial 1 (with embedded data: prompt_id=${e://Field/trial1_prompt_id}, etc.)
+├── Q3: Trial 2 (with embedded data: prompt_id=${e://Field/trial2_prompt_id}, etc.)
+├── Q4: Trial 3 (with embedded data: prompt_id=${e://Field/trial3_prompt_id}, etc.)
+├── Q5: Trial 4 (with embedded data: prompt_id=${e://Field/trial4_prompt_id}, etc.)
+└── Q6: Trial 5 (with embedded data: prompt_id=${e://Field/trial5_prompt_id}, etc.)
+</pre>
+
+<h3>4. Complete Survey Flow:</h3>
+<ol>
+<li>Embedded Data Block</li>
+<li>Condition Assignment Randomizer</li>
+<li>Q1: Instructions & Consent</li>
+<li>Trial Order Randomizer (Q2-Q6)</li>
+<li>Q7: Perception Sliders</li>
+<li>Q8: Max Acceptable Wait</li>
+<li>Q9: Streaming Preference</li>
+<li>End of Survey</li>
+</ol>
+</div>
+
+<!-- ============================================ -->
+<!-- ADDITIONAL SETUP NOTES -->
+<!-- ============================================ -->
+<div class="notes-block">
+<h2>Implementation Notes</h2>
+
+<h3>1. Timing Question Setup:</h3>
+<p>Add a Timing question to each trial page (Q2-Q6) with these settings:</p>
+<ul>
+<li>Page Submit</li>
+<li>First Click</li>
+<li>Last Click</li>
+<li>Click Count</li>
+</ul>
+
+<h3>2. Attention Check:</h3>
+<p>In one of the stimulus answers (e.g., prompt 3), add: "Please select 'Strongly Agree' for statement 2 in the rating below."</p>
+
+<h3>3. Data Export Variables:</h3>
+<p>Key variables to export:</p>
+<ul>
+<li>All embedded data fields</li>
+<li>Matrix responses (Q2-Q6)</li>
+<li>Slider values (Q7, Q8)</li>
+<li>Preference choice (Q9)</li>
+<li>Timing data for each page</li>
+<li>trial_letter_mapping (for connecting perception sliders to trials)</li>
+</ul>
+
+<h3>4. Mobile Optimization:</h3>
+<p>Add to Look & Feel → Style → Custom CSS:</p>
+<pre><code>
+@media (max-width: 768px) {
+    .response-container {
+        font-size: 14px;
+        padding: 10px;
+    }
+    .prompt-container {
+        font-size: 14px;
+    }
+}
+</code></pre>
+</div>
+
+</body>
+</html>
+</code></pre>

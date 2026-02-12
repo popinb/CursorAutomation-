@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Other Question Types - Latency Study</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 770px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .question-container {
+            background: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #007AC0;
+            padding-bottom: 10px;
+        }
+        
+        /* Slider styling */
+        .slider-container {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .slider-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .slider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            outline: none;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            margin: 0 15px;
+        }
+        
+        .slider:hover {
+            opacity: 1;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #007AC0;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #007AC0;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        
+        .slider-value {
+            min-width: 50px;
+            text-align: center;
+            font-weight: bold;
+            color: #007AC0;
+        }
+        
+        .slider-ticks {
+            display: flex;
+            justify-content: space-between;
+            margin: 0 15px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Multiple choice styling */
+        .choice-container {
+            margin: 20px 0;
+        }
+        
+        .choice-option {
+            display: block;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f9f9f9;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .choice-option:hover {
+            border-color: #007AC0;
+            background: #f0f8ff;
+        }
+        
+        .choice-option input[type="radio"] {
+            margin-right: 10px;
+        }
+        
+        .choice-option.selected {
+            background: #e6f3ff;
+            border-color: #007AC0;
+        }
+        
+        /* Instructions styling */
+        .instructions {
+            background: #fff3cd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .test-button {
+            background: #007AC0;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .test-button:hover {
+            background: #005a90;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Other Question Types</h1>
+    
+    <!-- Question 7: Perception Sliders -->
+    <div class="question-container">
+        <h2>Question 7: Post-Trial Perception Sliders</h2>
+        <div class="instructions">
+            Now, thinking back to each of the 5 trials you just completed:<br>
+            How long did the wait feel for each trial (in seconds)?
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-label">Trial A</div>
+            <div class="slider-wrapper">
+                <span>0s</span>
+                <input type="range" class="slider" id="slider1" min="0" max="10" value="2" step="0.5">
+                <span class="slider-value" id="value1">2.0s</span>
+            </div>
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-label">Trial B</div>
+            <div class="slider-wrapper">
+                <span>0s</span>
+                <input type="range" class="slider" id="slider2" min="0" max="10" value="3" step="0.5">
+                <span class="slider-value" id="value2">3.0s</span>
+            </div>
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-label">Trial C</div>
+            <div class="slider-wrapper">
+                <span>0s</span>
+                <input type="range" class="slider" id="slider3" min="0" max="10" value="5" step="0.5">
+                <span class="slider-value" id="value3">5.0s</span>
+            </div>
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-label">Trial D</div>
+            <div class="slider-wrapper">
+                <span>0s</span>
+                <input type="range" class="slider" id="slider4" min="0" max="10" value="1.5" step="0.5">
+                <span class="slider-value" id="value4">1.5s</span>
+            </div>
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-label">Trial E</div>
+            <div class="slider-wrapper">
+                <span>0s</span>
+                <input type="range" class="slider" id="slider5" min="0" max="10" value="4" step="0.5">
+                <span class="slider-value" id="value5">4.0s</span>
+            </div>
+        </div>
+        
+        <button class="test-button" onclick="logSliderValues()">Log Values</button>
+    </div>
+    
+    <!-- Question 8: Maximum Acceptable Wait -->
+    <div class="question-container">
+        <h2>Question 8: Maximum Acceptable Wait</h2>
+        <div class="instructions">
+            For similar AI-powered tasks (quick questions, definitions, recommendations), what is the longest wait time you would find acceptable for regular use?
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-wrapper">
+                <span>0s</span>
+                <input type="range" class="slider" id="maxWaitSlider" min="0" max="10" value="3" step="0.1">
+                <span class="slider-value" id="maxWaitValue">3.0s</span>
+            </div>
+            <div class="slider-ticks">
+                <span>0</span>
+                <span>1</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+                <span>5</span>
+                <span>6</span>
+                <span>7</span>
+                <span>8</span>
+                <span>9</span>
+                <span>10</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Question 9: Streaming Preference -->
+    <div class="question-container">
+        <h2>Question 9: Streaming Preference</h2>
+        <div class="instructions">
+            In this study, some responses appeared all at once after a delay, while others started appearing quickly and then filled in gradually.<br><br>
+            For similar AI-powered tasks, which response style do you prefer?
+        </div>
+        
+        <div class="choice-container">
+            <label class="choice-option">
+                <input type="radio" name="preference" value="nonstream">
+                Responses that appear all at once (even if I wait longer)
+            </label>
+            
+            <label class="choice-option">
+                <input type="radio" name="preference" value="stream">
+                Responses that start appearing quickly and fill in gradually
+            </label>
+            
+            <label class="choice-option">
+                <input type="radio" name="preference" value="none">
+                No preference
+            </label>
+        </div>
+        
+        <button class="test-button" onclick="logPreference()">Log Selection</button>
+    </div>
+    
+    <!-- Results Display -->
+    <div class="question-container">
+        <h2>Test Results</h2>
+        <div id="results" style="font-family: monospace; white-space: pre-wrap; background: #f0f0f0; padding: 15px; border-radius: 5px;">
+Click the buttons above to test each question type...
+        </div>
+    </div>
+
+    <script>
+        // Update slider values in real time
+        for (let i = 1; i <= 5; i++) {
+            const slider = document.getElementById(`slider${i}`);
+            const value = document.getElementById(`value${i}`);
+            
+            slider.addEventListener('input', function() {
+                value.textContent = parseFloat(this.value).toFixed(1) + 's';
+            });
+        }
+        
+        // Max wait slider
+        const maxWaitSlider = document.getElementById('maxWaitSlider');
+        const maxWaitValue = document.getElementById('maxWaitValue');
+        
+        maxWaitSlider.addEventListener('input', function() {
+            maxWaitValue.textContent = parseFloat(this.value).toFixed(1) + 's';
+        });
+        
+        // Choice selection visual feedback
+        const choiceOptions = document.querySelectorAll('.choice-option');
+        choiceOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                choiceOptions.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+        
+        // Logging functions
+        function logSliderValues() {
+            const values = {};
+            for (let i = 1; i <= 5; i++) {
+                const slider = document.getElementById(`slider${i}`);
+                values[`Trial ${String.fromCharCode(64 + i)}`] = parseFloat(slider.value);
+            }
+            
+            const results = document.getElementById('results');
+            results.textContent = 'Perception Slider Values:\n' + JSON.stringify(values, null, 2);
+            
+            // Simulate Qualtrics embedded data storage
+            console.log('Storing trial letter mapping:', {
+                "A": "prompt_1",
+                "B": "prompt_2", 
+                "C": "prompt_3",
+                "D": "prompt_4",
+                "E": "prompt_5"
+            });
+        }
+        
+        function logPreference() {
+            const selected = document.querySelector('input[name="preference"]:checked');
+            if (selected) {
+                const results = document.getElementById('results');
+                results.textContent = `Streaming Preference: ${selected.value}\n\nMax Acceptable Wait: ${maxWaitSlider.value}s`;
+            } else {
+                alert('Please select a preference option');
+            }
+        }
+        
+        // Test the embedded data functionality that would be in Qualtrics
+        console.log('Simulating Qualtrics embedded data for trial mapping...');
+        const trialMapping = {
+            "A": "1",
+            "B": "2",
+            "C": "3", 
+            "D": "4",
+            "E": "5"
+        };
+        
+        // This would be: Qualtrics.SurveyEngine.setEmbeddedData("trial_letter_mapping", JSON.stringify(trialMapping));
+        console.log('Trial letter mapping:', trialMapping);
+    </script>
+</body>
+</html>
