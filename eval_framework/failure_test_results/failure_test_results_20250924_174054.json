@@ -1,0 +1,173 @@
+{
+  "samples": [
+    {
+      "prompt": "What's my mortgage rate?",
+      "response": "Mortgage rates vary widely depending on many factors.",
+      "user_personalization_features": "credit_score: 750, income: $95000"
+    },
+    {
+      "prompt": "How much can I borrow?",
+      "response": "Based on your income of $95,000 and credit score of 750, you could qualify for a loan up to $380,000.",
+      "user_personalization_features": "credit_score: 750, income: $95000"
+    },
+    {
+      "prompt": "Should I get a 15 or 30 year loan?",
+      "response": "Both have pros and cons. 15-year loans have lower rates but higher payments.",
+      "user_personalization_features": "loan_amount: $300000, income: $95000"
+    },
+    {
+      "prompt": "What's the process to buy a home?",
+      "response": "The home buying process involves getting pre-approved, finding a home, making an offer, getting inspections, and closing. Based on your $95,000 income, you're in a good position to start.",
+      "user_personalization_features": "income: $95000"
+    },
+    {
+      "prompt": "Can I afford a $400k house?",
+      "response": "That might be stretching your budget. Generally, you should keep your housing costs under 28% of income.",
+      "user_personalization_features": "income: $95000, current_savings: $80000"
+    }
+  ],
+  "evaluations": {
+    "personalization_accuracy": [
+      {
+        "personalization_accuracy_score": 0,
+        "explanation": "No personal data referenced"
+      },
+      {
+        "personalization_accuracy_score": 1,
+        "explanation": "Uses specific personal data"
+      },
+      {
+        "personalization_accuracy_score": 0,
+        "explanation": "No personal data referenced"
+      },
+      {
+        "personalization_accuracy_score": 1,
+        "explanation": "Uses specific personal data"
+      },
+      {
+        "personalization_accuracy_score": 0,
+        "explanation": "No personal data referenced"
+      }
+    ],
+    "specificity": [
+      {
+        "specificity_score": 2,
+        "explanation": "Contains 0 specific elements"
+      },
+      {
+        "specificity_score": 4,
+        "explanation": "Contains 2 specific elements"
+      },
+      {
+        "specificity_score": 3,
+        "explanation": "Contains 1 specific elements"
+      },
+      {
+        "specificity_score": 4,
+        "explanation": "Contains 2 specific elements"
+      },
+      {
+        "specificity_score": 3,
+        "explanation": "Contains 1 specific elements"
+      }
+    ],
+    "actionability": [
+      {
+        "actionability_score": 2,
+        "explanation": "Contains 0 actionable elements"
+      },
+      {
+        "actionability_score": 2,
+        "explanation": "Contains 0 actionable elements"
+      },
+      {
+        "actionability_score": 2,
+        "explanation": "Contains 0 actionable elements"
+      },
+      {
+        "actionability_score": 4,
+        "explanation": "Contains 2 actionable elements"
+      },
+      {
+        "actionability_score": 4,
+        "explanation": "Contains 2 actionable elements"
+      }
+    ],
+    "completeness": [
+      {
+        "completeness_score": 2,
+        "explanation": "Response has 8 words"
+      },
+      {
+        "completeness_score": 3,
+        "explanation": "Response has 20 words"
+      },
+      {
+        "completeness_score": 2,
+        "explanation": "Response has 13 words"
+      },
+      {
+        "completeness_score": 4,
+        "explanation": "Response has 29 words"
+      },
+      {
+        "completeness_score": 3,
+        "explanation": "Response has 17 words"
+      }
+    ]
+  },
+  "summary": {
+    "personalization_accuracy": {
+      "scores": [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "mean": 0.4,
+      "pass_rate": 0.4,
+      "threshold": 1,
+      "failures": 3
+    },
+    "specificity": {
+      "scores": [
+        2,
+        4,
+        3,
+        4,
+        3
+      ],
+      "mean": 3.2,
+      "pass_rate": 0.4,
+      "threshold": 4,
+      "failures": 3
+    },
+    "actionability": {
+      "scores": [
+        2,
+        2,
+        2,
+        4,
+        4
+      ],
+      "mean": 2.8,
+      "pass_rate": 0.4,
+      "threshold": 4,
+      "failures": 3
+    },
+    "completeness": {
+      "scores": [
+        2,
+        3,
+        2,
+        4,
+        3
+      ],
+      "mean": 2.8,
+      "pass_rate": 0.2,
+      "threshold": 4,
+      "failures": 4
+    }
+  }
+}

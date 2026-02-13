@@ -1,0 +1,6 @@
+sample_id,prompt,personalization_accuracy,relevance,advice_quality,actionability
+1,What's the best mortgage rate I can get?...,1,5,4,5
+2,How much house can I afford?...,1,5,4,3
+3,Should I refinance my mortgage?...,1,4,4,5
+4,What are closing costs like in my area?...,1,4,3,3
+5,Can I get a loan with my credit score?...,1,4,3,5

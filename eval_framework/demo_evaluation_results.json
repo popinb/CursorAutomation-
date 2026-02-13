@@ -1,0 +1,86 @@
+{
+  "timestamp": "2025-09-24T17:36:50.936665",
+  "total_samples": 5,
+  "metrics_summary": {
+    "personalization_accuracy": {
+      "mean": 0.8,
+      "min": 0,
+      "max": 1,
+      "pass_rate": 0.8,
+      "threshold": 1
+    },
+    "relevance": {
+      "mean": 4.8,
+      "min": 4,
+      "max": 5,
+      "pass_rate": 1.0,
+      "threshold": 4
+    },
+    "advice_quality": {
+      "mean": 4.0,
+      "min": 3,
+      "max": 5,
+      "pass_rate": 1.0,
+      "threshold": 3
+    },
+    "actionability": {
+      "mean": 4.2,
+      "min": 3,
+      "max": 5,
+      "pass_rate": 1.0,
+      "threshold": 3
+    }
+  },
+  "detailed_results": [
+    {
+      "sample_id": 1,
+      "prompt": "What's the best mortgage rate I can get?",
+      "scores": {
+        "personalization_accuracy": 1,
+        "relevance": 5,
+        "advice_quality": 4,
+        "actionability": 3
+      }
+    },
+    {
+      "sample_id": 2,
+      "prompt": "How much house can I afford?",
+      "scores": {
+        "personalization_accuracy": 1,
+        "relevance": 5,
+        "advice_quality": 5,
+        "actionability": 4
+      }
+    },
+    {
+      "sample_id": 3,
+      "prompt": "Should I refinance my mortgage?",
+      "scores": {
+        "personalization_accuracy": 1,
+        "relevance": 4,
+        "advice_quality": 4,
+        "actionability": 5
+      }
+    },
+    {
+      "sample_id": 4,
+      "prompt": "What are closing costs like in my area?",
+      "scores": {
+        "personalization_accuracy": 1,
+        "relevance": 5,
+        "advice_quality": 3,
+        "actionability": 4
+      }
+    },
+    {
+      "sample_id": 5,
+      "prompt": "Can I get a loan with my credit score?",
+      "scores": {
+        "personalization_accuracy": 0,
+        "relevance": 5,
+        "advice_quality": 4,
+        "actionability": 5
+      }
+    }
+  ]
+}

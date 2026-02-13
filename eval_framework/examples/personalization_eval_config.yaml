@@ -1,0 +1,73 @@
+# Example: Personalization Evaluation Configuration
+# This example shows how to evaluate personalization in AI responses
+
+experiment:
+  name: "personalization_evaluation"
+  run_name_prefix: "personalization_run"
+  
+data:
+  ground_truth_dir: "./ground_truth_data/"
+  columns:
+    prompt: "prompt"
+    response: "response"
+    personalization: "user_personalization_features"
+    
+models:
+  response_generation:
+    type: "ground_truth"  # Use existing responses from CSV
+    
+  judge_models:
+    - "gpt-4o"
+    # Add more models for ensemble evaluation:
+    # - "gpt-4-turbo"
+    # - "claude-3-opus"
+    
+metrics:
+  - name: "personalization_accuracy"
+    description: "Checks if personalized information is used accurately"
+    prompt_template: |
+      You are an impartial evaluator.
+      Check if the AI response accurately uses the user's personal information.
+      
+      User Query: {prompt}
+      User Information: {personalization}
+      AI Response: {response}
+      
+      Score 1 if all personal details mentioned are accurate, 0 if any are wrong.
+      
+      Return JSON: {"personalization_accuracy_score": <0 or 1>, "explanation": "<reason>"}
+    
+    score_range: [0, 1]
+    threshold: 1
+    output_format: "json"
+    
+  - name: "personalization_coverage"
+    description: "Measures how well the response uses available personal context"
+    prompt_template: |
+      You are an impartial evaluator.
+      Evaluate how well the response uses the user's personal information.
+      
+      User Query: {prompt}
+      User Information: {personalization}
+      AI Response: {response}
+      
+      Score from 1-5:
+      1 = No personalization used
+      3 = Some personalization used
+      5 = Excellent use of personal context
+      
+      Return JSON: {"personalization_coverage_score": <1-5>, "explanation": "<reason>"}
+    
+    score_range: [1, 5]
+    threshold: 3
+    output_format: "json"
+
+output:
+  results_dir: "./evaluation_results/"
+  save_raw_responses: true
+  save_detailed_scores: true
+  generate_summary: true
+  
+mlflow:
+  enable_logging: true
+  experiment_name: "{experiment.name}"

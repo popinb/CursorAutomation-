@@ -1,0 +1,88 @@
+# Example: Simple Q&A Evaluation Configuration
+# This example shows a basic setup for evaluating question-answering systems
+
+experiment:
+  name: "qa_evaluation"
+  run_name_prefix: "qa_eval"
+  
+data:
+  ground_truth_dir: "./qa_data/"
+  columns:
+    prompt: "question"
+    response: "answer"
+    
+models:
+  response_generation:
+    type: "ground_truth"
+    
+  judge_models:
+    - "gpt-4o"
+    
+metrics:
+  - name: "correctness"
+    description: "Evaluates if the answer is correct"
+    prompt_template: |
+      Evaluate if this answer correctly responds to the question.
+      
+      Question: {prompt}
+      Answer: {response}
+      
+      Score from 1-5:
+      1 = Completely incorrect
+      2 = Mostly incorrect
+      3 = Partially correct
+      4 = Mostly correct
+      5 = Completely correct
+      
+      Return JSON: {"correctness_score": <1-5>, "explanation": "<brief reason>"}
+    
+    score_range: [1, 5]
+    threshold: 4
+    output_format: "json"
+    
+  - name: "completeness"
+    description: "Checks if the answer is complete"
+    prompt_template: |
+      Evaluate if this answer completely addresses all aspects of the question.
+      
+      Question: {prompt}
+      Answer: {response}
+      
+      Score from 1-5:
+      1 = Misses all key points
+      3 = Addresses some points
+      5 = Thoroughly complete
+      
+      Return JSON: {"completeness_score": <1-5>, "explanation": "<what's missing if any>"}
+    
+    score_range: [1, 5]
+    threshold: 4
+    output_format: "json"
+    
+  - name: "clarity"
+    description: "Evaluates answer clarity"
+    prompt_template: |
+      Rate the clarity and understandability of this answer.
+      
+      Question: {prompt}
+      Answer: {response}
+      
+      Score from 1-5:
+      1 = Very unclear/confusing
+      3 = Somewhat clear
+      5 = Crystal clear
+      
+      Return JSON: {"clarity_score": <1-5>, "explanation": "<brief reason>"}
+    
+    score_range: [1, 5]
+    threshold: 3
+    output_format: "json"
+
+output:
+  results_dir: "./qa_results/"
+  save_raw_responses: true
+  save_detailed_scores: true
+  generate_summary: true
+  
+mlflow:
+  enable_logging: true
